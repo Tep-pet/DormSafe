@@ -1,41 +1,74 @@
 # DormSafe
 
-A Real-Time Student Housing Management System for Ateneo Students.
+A student housing platform for Ateneo de Davao — search nearby dorms, manage stays and tenants, and review listings through a verified workflow.
 
 **Capstone 2 Project** — Aguirre, Pacatang, Palima  
 Ateneo de Davao University · SY 2025–2026
 
 ## Tech Stack
 
-- **Frontend:** React.js, Tailwind CSS, Vite
-- **Backend:** Node.js, Express.js
-- **Database:** Supabase (PostgreSQL, Auth, Storage, Realtime)
-- **Maps:** Google Maps API
+| Layer | Stack |
+|-------|--------|
+| Frontend | React 19, Vite, Tailwind CSS, React Router |
+| Backend | Node.js, Express |
+| Database | Supabase (PostgreSQL, Auth, Storage) |
+| Maps | Google Maps JavaScript, Directions, Distance Matrix, Geocoding |
 
 ## Project Structure
 
 ```
 DormSafe/
-├── client/                 # Presentation Layer (React + Tailwind)
-├── server/                 # Logic Layer (Node.js + Express)
-├── supabase/               # Data Layer (migrations, seed)
-├── docs/
-├── .gitignore
+├── client/          # React app (Vite)
+├── server/          # Express API
+├── supabase/        # SQL migrations
+├── Places/          # Local seed assets (photos, property info)
 └── README.md
 ```
+
+## Features
+
+### Students
+- Search approved listings within **2 km** of Jacinto or Roxas gate (walking time)
+- Property detail with map route, rooms, availability, and reservations
+- **Saved listings** — bookmark and compare side-by-side
+- **My Stay** — timeline, move-out confirm/dispute, payment status, lease summary print, maintenance requests
+- Room **reservations** when a unit is occupied (queue position shown)
+- **Reviews** (after completed stay, admin-moderated) and **report listing**
+
+### Owners
+- Account verification (ID + business permit)
+- Add / **edit** listings (photos, price, rules, contact) — edits do not require full resubmit
+- Manage tenants (link student by email → invite notification)
+- Manual **payment log** + rent reminders (no online gateway)
+- **Analytics** — vacancy rate, revenue trend, occupancy calendar, maintenance inbox
+
+### Admins
+- Dashboard with **system health** and **campus-wide stats** (Jacinto vs Roxas)
+- Verify accounts and approve/reject listings (with filters, pagination, bulk actions)
+- Manage users, tenants, reviews, and listing reports
+- **Audit log** of approval/rejection actions
 
 ## Setup
 
 ### 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Run migrations in order via **SQL Editor**:
-   - `supabase/migrations/001_initial_schema.sql`
-   - `supabase/migrations/002_rls_policies.sql`
-   - `supabase/migrations/004_fix_signup_trigger.sql`
-   - `supabase/migrations/005_contact_and_receipts.sql` (contact info + payment receipts)
+2. Run migrations **in order** via **SQL Editor**:
+   - `001_initial_schema.sql`
+   - `002_rls_policies.sql`
+   - `004_fix_signup_trigger.sql`
+   - `005_contact_and_receipts.sql`
+   - `006_verifications_notifications.sql`
+   - `007_stays_reservations.sql`
+   - `008_extended_features.sql`
 3. Enable **Email** auth under Authentication → Providers
-4. Seed demo data from `server/`: `npm run seed` (requires `SUPABASE_INSECURE_SSL=1` on some networks)
+4. Seed demo listings (from `server/`):
+
+```powershell
+cd server
+$env:SUPABASE_INSECURE_SSL="1"   # Windows — only if seed fails with SSL errors
+npm run seed
+```
 
 **Demo accounts** (after seed):
 
@@ -44,165 +77,142 @@ DormSafe/
 | Admin | `admin@dormsafe.test` | `Admin123!` |
 | Owner (per property) | `owner.ivory1104@dormsafe.test`, etc. | `Owner123!` |
 
-Each property has its own owner account. Cezar Verbata remains pending until admin approves.
+Students are **not** seeded — register at `/register`, then have an admin approve the account under **Verify Accounts**.
+
+Each seeded property has its own owner. `owner.cezar@dormsafe.test` stays pending until admin approval (demo pending-owner flow).
 
 ### 2. Environment variables
 
-#### Create the `.env` files (first time only)
-
-Open **VS Code** → **Terminal → New Terminal**, then run these from the **project root** (`DormSafe`):
+From the project root (first time only):
 
 ```powershell
-cd path\to\DormSafe
-
 copy client\.env.example client\.env
 copy server\.env.example server\.env
 ```
 
-> **Do not run `copy` again** if `client/.env` or `server/.env` already exist and have your keys — it will overwrite them with blanks.
+Do **not** re-run `copy` if your `.env` files already have real keys — it overwrites them.
 
-If a file already exists, open it in VS Code and edit it directly instead.
+**Supabase** — Dashboard → **Project Settings** → **API**:
 
-#### Get your keys
+| Supabase value | Client (`client/.env`) | Server (`server/.env`) |
+|----------------|------------------------|-------------------------|
+| Project URL | `VITE_SUPABASE_URL` | `SUPABASE_URL` |
+| anon public key | `VITE_SUPABASE_ANON_KEY` | — |
+| service_role key | — | `SUPABASE_SERVICE_ROLE_KEY` |
 
-**Supabase** — [supabase.com/dashboard](https://supabase.com/dashboard) → your project → **Project Settings** (gear) → **API**:
+**Google Maps** — enable in [Google Cloud Console](https://console.cloud.google.com/):
 
-| Copy from Supabase | Paste into |
-|--------------------|------------|
-| **Project URL** | `VITE_SUPABASE_URL` in `client/.env` |
-| **Project URL** | `SUPABASE_URL` in `server/.env` |
-| **anon public** key | `VITE_SUPABASE_ANON_KEY` in `client/.env` |
-| **service_role** key | `SUPABASE_SERVICE_ROLE_KEY` in `server/.env` |
+- Maps JavaScript API + Directions API (client)
+- Distance Matrix API + Geocoding API (server)
 
-> `VITE_` is **not** a Supabase label — it is a Vite naming rule for browser env vars. You rename values when pasting them into `client/.env`.
+Use **two keys** in production/dev when possible:
 
-**Google Maps** — [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → enable:
+| Key | Restrictions | Variable |
+|-----|--------------|----------|
+| Browser | HTTP referrers: `http://localhost:5173/*` | `VITE_GOOGLE_MAPS_API_KEY` |
+| Server | No referrer restriction | `GOOGLE_MAPS_API_KEY` |
 
-- **Maps JavaScript API** (client map)
-- **Directions API** (walking route on property detail page)
-- **Distance Matrix API** (server walking times)
-- **Geocoding API** (owner add-property address lookup)
-
-Use **two API keys** (recommended) so server-side calls are not blocked by browser referrer restrictions:
-
-| Key | Restrictions | Env var |
-|-----|--------------|---------|
-| Browser key | HTTP referrers: `http://localhost:5173/*`, your production domain | `VITE_GOOGLE_MAPS_API_KEY` in `client/.env` |
-| Server key | No referrer restriction (IP restrict in production if needed) | `GOOGLE_MAPS_API_KEY` in `server/.env` |
-
-For local dev you may use one unrestricted key in both files. If walking times look like estimates only, check the server logs for `REQUEST_DENIED` and verify Distance Matrix is enabled on the **server** key.
-
-#### Example files (use your own values)
-
-`client/.env`:
+`client/.env` example:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-public-key
-VITE_GOOGLE_MAPS_API_KEY=your-google-maps-key
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_GOOGLE_MAPS_API_KEY=your-browser-maps-key
 VITE_API_URL=http://localhost:5000
 ```
 
-`server/.env`:
+`server/.env` example:
 
 ```env
 PORT=5000
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-google-maps-key
+GOOGLE_MAPS_API_KEY=your-server-maps-key
 CORS_ORIGIN=http://localhost:5173
+SUPABASE_INSECURE_SSL=1
 ```
 
-Rules:
+Rules: no quotes around values, no spaces around `=`, never commit `.env` or put **service_role** in the client.
 
-- No quotes around values
-- No spaces around `=`
-- Never put **service_role** in `client/.env` or commit `.env` to Git
-
-### 3. Install dependencies (first time only)
-
-From the project root, in **two separate terminals** (or one after the other):
+### 3. Install dependencies
 
 ```powershell
-cd path\to\DormSafe\server
+cd server
 npm install
 
-cd path\to\DormSafe\client
+cd ..\client
 npm install
 ```
 
-### 4. Run the app (every time)
+### 4. Run the app
 
-You need **two terminals** running at the same time.
-
-**Terminal 1 — API server:**
+Two terminals:
 
 ```powershell
-cd path\to\DormSafe\server
+# Terminal 1 — API
+cd server
+npm run dev
+
+# Terminal 2 — Frontend
+cd client
 npm run dev
 ```
 
-Expected output: `DormSafe server running on http://localhost:5000`
+- App: http://localhost:5173  
+- API health: http://localhost:5000/api/auth/health  
 
-**Terminal 2 — Frontend (Vite):**
+Restart whichever process you changed `.env` for.
 
-```powershell
-cd path\to\DormSafe\client
-npm run dev
-```
+## App routes (quick reference)
 
-Expected output: `Local: http://localhost:5173/`
+| Role | Main pages |
+|------|------------|
+| Student | `/student/search`, `/student/saved`, `/student/my-stay`, `/student/property/:id` |
+| Owner | `/owner/dashboard`, `/owner/listings`, `/owner/add-property`, `/owner/tenants`, `/owner/payments`, `/owner/analytics`, `/owner/verification` |
+| Admin | `/admin/dashboard`, `/admin/verify-accounts`, `/admin/approve-listings`, `/admin/manage-users`, `/admin/manage-tenants`, `/admin/audit-log`, `/admin/moderate` |
 
-Open the URL Vite prints in your browser (usually http://localhost:5173).
+Unverified students and owners land on their verification page until an admin approves the account.
 
-- API health check: http://localhost:5000/api/auth/health
+## API overview
 
-#### VS Code tips
+Base URL: `http://localhost:5000/api`
 
-- **File → Open Folder** → select the `DormSafe` folder
-- **Terminal → Split Terminal** to show server and client side by side
-- Stop a server with **Ctrl+C** in its terminal
-- After changing any `.env` file, stop and restart that server
+| Prefix | Purpose |
+|--------|---------|
+| `/auth` | Register, login, verification uploads |
+| `/proximity` | Student search and property detail |
+| `/properties` | Owner listings, dashboard stats, edit |
+| `/tenants` | Owner tenant CRUD |
+| `/payments` | Owner payment log |
+| `/students` | Stays, reservations, favorites, reviews, maintenance |
+| `/owners` | Analytics, occupancy, payment reminders |
+| `/admin` | Verifications, listings, users, audit, bulk actions |
+| `/notifications` | In-app notification bell |
 
-#### Troubleshooting
+All protected routes expect `Authorization: Bearer <access_token>`.
+
+## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| `Cannot find path ...\server\server\.env.example` | You are already inside `server/`. Use `copy .env.example .env` or `cd ..` back to the project root first. |
-| `missing env vars: SUPABASE_URL` | `server/.env` is empty. Fill in keys — do not re-run `copy .env.example .env` if you already had values. |
-| `EADDRINUSE :::5000` | Port 5000 is already in use. Stop the old server (**Ctrl+C**) or close the other terminal running it. |
-| Vite uses port **5174** instead of **5173** | Another Vite process is still running. Open the URL Vite prints, or stop the old process. |
-| Login or maps do not work | Check `client/.env` has **anon** key (not service_role) and restart `npm run dev`. |
+| `relation "…" does not exist` | Run missing migrations (especially `006`–`008`) in Supabase SQL Editor |
+| Geocode error on edit listing (`REQUEST_DENIED`) | Use a **server** Maps key without browser referrer restrictions; enable Geocoding API. Unchanged addresses save without re-geocoding |
+| Walking times all identical | Check server logs; enable Distance Matrix on the **server** key |
+| `fetch failed` / SSL on seed | Set `SUPABASE_INSECURE_SSL=1` in `server/.env` |
+| Blank owner verification page | Fixed in current build — refresh; page must not depend on owner dashboard context |
+| Payment reminders say **0 sent** | Add due payments in **Payment Log**, or wait 24h if already notified; active tenants without paid rent this month also get a generic reminder |
+| Student cannot search | Admin must approve account under **Verify Accounts** |
+| My Stay empty | Owner must add tenant with the **same email** the student registered with |
 
-## Sprint 1 Features (implemented)
+## Proposal constraints
 
-- [x] Project scaffold (client + server)
-- [x] Supabase schema + RLS policies
-- [x] Auth (register/login, 3 roles)
-- [x] Proximity Algorithm (2 km radius, walking distance)
-- [x] Student search page with Google Maps
-- [x] Property detail page (rooms, rules, availability badges)
+- No online payment processing — manual owner payment log only
+- No legal property ownership verification beyond admin review
+- **2 km** search radius from Jacinto / Roxas campus gates
+- Listings and accounts require admin approval before going live
 
-## API Endpoints
+## Development notes
 
-| Method | Route | Role | Description |
-|--------|-------|------|-------------|
-| GET | `/api/auth/health` | Public | Health check |
-| GET | `/api/auth/me` | Auth | Current profile |
-| GET | `/api/proximity/search` | Student | Search within 2 km |
-| GET | `/api/proximity/properties/:id` | Student | Property detail |
-
-## Sprints (Agile-Scrum)
-
-| Sprint | Focus | Status |
-|--------|-------|--------|
-| Sprint 1 | GPS Mapping + Proximity + Auth | ✅ In progress |
-| Sprint 2 | Owner Dashboard + Digital Ledger + Admin | Planned |
-| Sprint 3 | UI/UX Optimization + Evaluation Prep | Planned |
-
-## Proposal Constraints
-
-- No online payment processing (manual logs only)
-- No legal property ownership verification
-- 2 km radius from Jacinto / Roxas campus gates
-- Manual admin verification before listings go live
+- Seed script: `server/scripts/seedPlaces.js` (reads `Places/` folders)
+- Image uploads: **50 KB – 5 MB** per file (listings and verification documents)
+- Client production build: `cd client && npm run build`
