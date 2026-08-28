@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { PageContainer } from '../../components/layout/PageContainer';
+import { AuthPageLayout } from '../../components/layout/AuthPageLayout';
 import { RegisterForm } from '../../components/auth/RegisterForm';
 
 export function RegisterPage() {
   return (
-    <PageContainer>
+    <AuthPageLayout>
       <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-bold text-gray-900">Create your account</h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -20,6 +20,6 @@ export function RegisterPage() {
           </Link>
         </p>
       </div>
-    </PageContainer>
+    </AuthPageLayout>
   );
 }

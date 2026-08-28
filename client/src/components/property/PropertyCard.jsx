@@ -4,13 +4,16 @@ import { WalkingTimeBadge } from '../map/WalkingTimeBadge';
 import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 
-export function PropertyCard({ property }) {
+export function PropertyCard({ property, gate }) {
   const minPrice = property.min_price;
   const imageUrl = property.primary_image || null;
+  const detailPath = gate
+    ? `/student/property/${property.id}?gate=${encodeURIComponent(gate)}`
+    : `/student/property/${property.id}`;
 
   return (
     <Link
-      to={`/student/property/${property.id}`}
+      to={detailPath}
       className="block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
     >
       <div className="relative h-40 bg-gray-200">

@@ -1,9 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../common/Button';
+import { NotificationBell } from '../common/NotificationBell';
+import { ROUTES } from '../../constants/routes';
+import { ROLES } from '../../constants/roles';
 
 export function Navbar() {
-  const { isAuthenticated, profile, logout } = useAuth();
+  const { isAuthenticated, profile, logout, role } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -21,6 +24,20 @@ export function Navbar() {
         <nav className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
+              {role === ROLES.STUDENT && profile?.verification_status === 'approved' && (
+                <>
+                  <Link to={ROUTES.STUDENT_SEARCH} className="text-sm text-gray-600 hover:text-ateneo-blue">
+                    Search
+                  </Link>
+                  <Link to={ROUTES.STUDENT_SAVED} className="text-sm text-gray-600 hover:text-ateneo-blue">
+                    Saved
+                  </Link>
+                  <Link to={ROUTES.STUDENT_MY_STAY} className="text-sm text-gray-600 hover:text-ateneo-blue">
+                    My Stay
+                  </Link>
+                </>
+              )}
+              <NotificationBell />
               <span className="hidden text-sm text-gray-600 sm:inline">
                 {profile?.full_name} · {profile?.role}
               </span>

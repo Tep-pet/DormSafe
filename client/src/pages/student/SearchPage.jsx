@@ -7,10 +7,6 @@ import { Loader } from '../../components/common/Loader';
 import { useMapSearch } from '../../hooks/useMapSearch';
 import { DEFAULT_GATE } from '../../constants/campusGates';
 
-/**
- * Sprint 1 — Student search with GPS map, filters, verified listings.
- * Proposal §1.3 Objective 1 & §3.4 student workflow.
- */
 export function SearchPage() {
   const [filters, setFilters] = useState({
     gate: DEFAULT_GATE,
@@ -19,7 +15,7 @@ export function SearchPage() {
     propertyType: '',
   });
 
-  const { properties, loading, error } = useMapSearch(filters);
+  const { properties, loading, error, refetch } = useMapSearch(filters);
 
   return (
     <PageContainer
@@ -29,14 +25,19 @@ export function SearchPage() {
       <PropertyFilters filters={filters} onChange={setFilters} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="h-[400px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <MapView gateId={filters.gate} properties={properties} />
         </div>
 
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">
-            Results {properties.length > 0 && `(${properties.length})`}
-          </h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Results {properties.length > 0 && `(${properties.length})`}
+            </h2>
+            <button type="button" onClick={refetch} className="text-xs text-ateneo-blue hover:underline">
+              Refresh
+            </button>
+          </div>
 
           {loading && <Loader message="Searching nearby properties…" />}
           {error && (
@@ -52,7 +53,7 @@ export function SearchPage() {
           {!loading && properties.length > 0 && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               {properties.map((p) => (
-                <PropertyCard key={p.id} property={p} />
+                <PropertyCard key={p.id} property={p} gate={filters.gate} />
               ))}
             </div>
           )}

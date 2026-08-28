@@ -15,7 +15,8 @@ export async function getDetail(req, res, next) {
   try {
     const { id } = req.params;
     const { gate = 'jacinto' } = req.query;
-    const property = await getPropertyById(id, gate);
+    const studentId = req.profile?.role === 'student' ? req.profile.id : null;
+    const property = await getPropertyById(id, gate, studentId);
     return success(res, property, 'Property retrieved');
   } catch (err) {
     next(err);

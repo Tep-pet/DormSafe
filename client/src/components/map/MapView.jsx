@@ -1,5 +1,6 @@
-import { GoogleMap, useJsApiLoader, Marker, Circle } from '@react-google-maps/api';
+import { GoogleMap, Marker, Circle } from '@react-google-maps/api';
 import { CAMPUS_GATES, SEARCH_RADIUS_KM } from '../../constants/campusGates';
+import { useGoogleMaps, GoogleMapsErrorHelp } from '../../context/GoogleMapsContext';
 import { Loader } from '../common/Loader';
 
 const mapContainerStyle = { width: '100%', height: '100%', minHeight: '400px' };
@@ -14,15 +15,11 @@ const mapOptions = {
 
 /**
  * Google Maps view with campus gate, 2 km radius, and property markers.
- * Target: map load < 3 seconds (proposal §1.3).
+ * Script is preloaded app-wide via GoogleMapsProvider (target: load < 3s).
  */
 export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) {
+  const { isLoaded, loadError, authFailed, apiKey } = useGoogleMaps();
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
-  });
 
   if (!apiKey) {
     return (
@@ -33,12 +30,8 @@ export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) 
     );
   }
 
-  if (loadError) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Failed to load Google Maps. Check your API key and billing settings.
-      </div>
-    );
+  if (loadError || authFailed) {
+    return <GoogleMapsErrorHelp />;
   }
 
   if (!isLoaded) return <Loader message="Loading map…" />;
@@ -53,7 +46,6 @@ export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) 
       zoom={15}
       options={mapOptions}
     >
-      {/* Campus gate marker */}
       <Marker
         position={center}
         title={gate.label}
@@ -67,7 +59,6 @@ export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) 
         }}
       />
 
-      {/* 2 km search radius */}
       <Circle
         center={center}
         radius={radiusMeters}
@@ -80,7 +71,6 @@ export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) 
         }}
       />
 
-      {/* Approved property markers */}
       {properties.map((p) => (
         <Marker
           key={p.id}

@@ -17,3 +17,15 @@ export function haversineKm(lat1, lng1, lat2, lng2) {
 export function isWithinRadiusKm(lat, lng, centerLat, centerLng, radiusKm) {
   return haversineKm(lat, lng, centerLat, centerLng) <= radiusKm;
 }
+
+/** Bounding box for SQL pre-filter before precise haversine check */
+export function getBoundingBox(lat, lng, radiusKm) {
+  const latDelta = radiusKm / 111.32;
+  const lngDelta = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180));
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta,
+  };
+}

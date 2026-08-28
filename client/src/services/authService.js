@@ -1,7 +1,20 @@
 import { supabase } from './supabaseClient';
+import { apiClient } from './apiClient';
 
 export const authService = {
-  /** Register with email/password and create profile with role */
+  /** Register via server API with ID / license upload */
+  async registerWithDocuments({ email, password, fullName, role, idFile, licenseFile }) {
+    const formData = new FormData();
+    formData.append('fullName', fullName);
+    formData.append('email', email.trim());
+    formData.append('password', password);
+    formData.append('role', role);
+    formData.append('idDocument', idFile);
+    if (licenseFile) formData.append('licenseDocument', licenseFile);
+    return apiClient.upload('/api/auth/register', formData);
+  },
+
+  /** @deprecated use registerWithDocuments */
   async register({ email, password, fullName, role }) {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -11,7 +24,6 @@ export const authService = {
       },
     });
     if (error) throw error;
-    // Profile row is created automatically via DB trigger (handle_new_user)
     return data;
   },
 

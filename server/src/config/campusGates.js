@@ -1,21 +1,22 @@
-/** Server-side campus gate coordinates (mirror client constants) */
-export const SEARCH_RADIUS_KM = 2;
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-export const CAMPUS_GATES = {
-  jacinto: {
-    id: 'jacinto',
-    label: 'Jacinto Campus Gate',
-    lat: 7.0729,
-    lng: 125.6118,
-  },
-  roxas: {
-    id: 'roxas',
-    label: 'Roxas Campus Gate',
-    lat: 7.0656,
-    lng: 125.6078,
-  },
-};
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const gateData = JSON.parse(
+  readFileSync(join(__dirname, '../../../shared/campusGates.json'), 'utf8')
+);
+
+/** Server-side campus gate coordinates (shared with client via shared/campusGates.json) */
+export const SEARCH_RADIUS_KM = gateData.searchRadiusKm;
+
+export const CAMPUS_GATES = Object.fromEntries(
+  Object.entries(gateData.gates).map(([id, gate]) => [
+    id,
+    { id: gate.id, label: gate.label, lat: gate.lat, lng: gate.lng },
+  ])
+);
 
 export function getGate(gateId) {
-  return CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
+  return CAMPUS_GATES[gateId] || CAMPUS_GATES[gateData.defaultGate];
 }
