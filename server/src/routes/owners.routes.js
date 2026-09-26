@@ -12,6 +12,8 @@ router.post('/verification', upload.single('permit'), ownerController.submitVeri
 router.get('/analytics', ownerController.analytics);
 router.get('/occupancy', ownerController.occupancyCalendar);
 router.post('/payment-reminders', ownerController.sendPaymentReminders);
+router.get('/inquiries', ownerController.listInquiries);
+router.post('/inquiries/:id/reply', ownerController.replyToInquiry);
 router.get('/maintenance', ownerController.listMaintenance);
 router.patch('/maintenance/:id', ownerController.updateMaintenance);
 

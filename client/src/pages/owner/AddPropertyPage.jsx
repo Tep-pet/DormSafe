@@ -96,6 +96,7 @@ export function AddPropertyPage() {
           </select>
         </div>
         <Input id="address" label="Address" value={form.address} onChange={update('address')} required />
+        <p className="text-xs text-gray-500">Include street and barangay so we can place it on the campus map.</p>
         <Input id="description" label="Description / Features" value={form.description} onChange={update('description')} />
         <Input id="contact_name" label="Contact Name (for student inquiries)" value={form.contact_name} onChange={update('contact_name')} />
         <Input id="contact_phone" label="Contact Phone" value={form.contact_phone} onChange={update('contact_phone')} placeholder="09XXXXXXXXX" />

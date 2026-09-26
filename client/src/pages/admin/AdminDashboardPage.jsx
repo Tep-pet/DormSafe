@@ -26,18 +26,34 @@ export function AdminDashboardPage() {
   const [health, setHealth] = useState(null);
   const [campus, setCampus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+
     Promise.all([
       adminService.getDashboardStats(accessToken),
       adminService.getSystemHealth(accessToken),
       adminService.getCampusStats(accessToken),
-    ]).then(([s, h, c]) => {
-      setStats(s.data);
-      setHealth(h.data);
-      setCampus(c.data);
-      setLoading(false);
-    });
+    ])
+      .then(([s, h, c]) => {
+        if (cancelled) return;
+        setStats(s.data);
+        setHealth(h.data);
+        setCampus(c.data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || 'Could not load the dashboard');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [accessToken]);
 
   return (
@@ -47,6 +63,8 @@ export function AdminDashboardPage() {
     >
       {loading ? (
         <Loader />
+      ) : error ? (
+        <p className="text-sm text-red-600">{error}</p>
       ) : (
         <div className="space-y-8">
           <section>

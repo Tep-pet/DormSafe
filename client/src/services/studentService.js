@@ -37,6 +37,18 @@ export const studentService = {
   toggleFavorite(propertyId, token) {
     return apiClient.post(`/api/students/favorites/${propertyId}`, {}, token);
   },
+  requestRoom(body, token) {
+    return apiClient.post('/api/students/inquiries', body, token);
+  },
+  getInquiries(token) {
+    return apiClient.get('/api/students/inquiries', token);
+  },
+  updateInquiry(id, body, token) {
+    return apiClient.patch(`/api/students/inquiries/${id}`, body, token);
+  },
+  cancelInquiry(id, token) {
+    return apiClient.post(`/api/students/inquiries/${id}/cancel`, {}, token);
+  },
   createReview(body, token) {
     return apiClient.post('/api/students/reviews', body, token);
   },

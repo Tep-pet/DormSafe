@@ -12,6 +12,7 @@ import { SearchPage } from './pages/student/SearchPage';
 import { MyStayPage } from './pages/student/MyStayPage';
 import { SavedListingsPage } from './pages/student/SavedListingsPage';
 import { PropertyDetailPage } from './pages/student/PropertyDetailPage';
+import { RoomRequestsPage } from './pages/student/RoomRequestsPage';
 import { DashboardPage } from './pages/owner/DashboardPage';
 import { ManageListingsPage } from './pages/owner/ManageListingsPage';
 import { AddPropertyPage } from './pages/owner/AddPropertyPage';
@@ -19,6 +20,7 @@ import { EditPropertyPage } from './pages/owner/EditPropertyPage';
 import { OwnerAnalyticsPage } from './pages/owner/OwnerAnalyticsPage';
 import { ManageTenantsPage } from './pages/owner/ManageTenantsPage';
 import { PaymentLogPage } from './pages/owner/PaymentLogPage';
+import { OwnerRoomRequestsPage } from './pages/owner/RoomRequestsPage';
 import { VerificationPage } from './pages/owner/VerificationPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { VerifyAccountsPage } from './pages/admin/VerifyAccountsPage';
@@ -59,6 +61,7 @@ export default function App() {
                 <Route path="/student/search" element={<SearchPage />} />
                 <Route path="/student/saved" element={<SavedListingsPage />} />
                 <Route path="/student/my-stay" element={<MyStayPage />} />
+                <Route path="/student/requests" element={<RoomRequestsPage />} />
                 <Route path="/student/property/:id" element={<PropertyDetailPage />} />
               </Route>
             </Route>
@@ -74,6 +77,7 @@ export default function App() {
                   <Route path="/owner/add-property" element={<AddPropertyPage />} />
                   <Route path="/owner/tenants" element={<ManageTenantsPage />} />
                   <Route path="/owner/payments" element={<PaymentLogPage />} />
+                  <Route path="/owner/requests" element={<OwnerRoomRequestsPage />} />
                 </Route>
               </Route>
             </Route>

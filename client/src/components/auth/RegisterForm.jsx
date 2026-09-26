@@ -6,7 +6,7 @@ import { ROUTES } from '../../constants/routes';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { emailValidationMessage } from '../../utils/validateEmail';
-import { validateImageFile } from '../../utils/validateImage';
+import { IMAGE_ACCEPT, validateImageFile } from '../../utils/validateImage';
 import { IMAGE_SIZE_HINT } from '../../constants/uploadLimits';
 
 export function RegisterForm() {
@@ -114,7 +114,7 @@ export function RegisterForm() {
         <label className="mb-1 block text-sm font-medium text-gray-700">Valid ID photo</label>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept={IMAGE_ACCEPT}
           onChange={(e) => setIdFile(e.target.files?.[0] || null)}
           required
           className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
@@ -131,7 +131,7 @@ export function RegisterForm() {
           </label>
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={IMAGE_ACCEPT}
             onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
             required
             className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"

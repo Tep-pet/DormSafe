@@ -4,7 +4,7 @@ import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { useAuth } from '../../hooks/useAuth';
 import { apiClient } from '../../services/apiClient';
-import { validateImageFile } from '../../utils/validateImage';
+import { IMAGE_ACCEPT, validateImageFile } from '../../utils/validateImage';
 import { IMAGE_SIZE_HINT } from '../../constants/uploadLimits';
 
 export function AccountVerificationPage({ title, subtitle, requireLicense = false, bare = false }) {
@@ -100,7 +100,7 @@ export function AccountVerificationPage({ title, subtitle, requireLicense = fals
                 <label className="mb-1 block text-sm font-medium">Valid ID photo</label>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={IMAGE_ACCEPT}
                   onChange={(e) => setIdFile(e.target.files?.[0] || null)}
                   className="block w-full text-sm"
                 />
@@ -111,7 +111,7 @@ export function AccountVerificationPage({ title, subtitle, requireLicense = fals
                   <label className="mb-1 block text-sm font-medium">Business license / permit</label>
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept={IMAGE_ACCEPT}
                     onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
                     className="block w-full text-sm"
                   />

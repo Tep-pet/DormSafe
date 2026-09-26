@@ -35,4 +35,10 @@ export const ownerService = {
   updateMaintenance(id, status, token) {
     return apiClient.patch(`/api/owners/maintenance/${id}`, { status }, token);
   },
+  getInquiries(token) {
+    return apiClient.get('/api/owners/inquiries', token);
+  },
+  replyToInquiry(id, body, token) {
+    return apiClient.post(`/api/owners/inquiries/${id}/reply`, body, token);
+  },
 };

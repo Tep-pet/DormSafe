@@ -6,6 +6,7 @@ export const ROUTES = {
   STUDENT_PROPERTY: '/student/property/:id',
   STUDENT_VERIFICATION: '/student/verification',
   STUDENT_MY_STAY: '/student/my-stay',
+  STUDENT_REQUESTS: '/student/requests',
   STUDENT_SAVED: '/student/saved',
   OWNER_DASHBOARD: '/owner/dashboard',
   OWNER_LISTINGS: '/owner/listings',

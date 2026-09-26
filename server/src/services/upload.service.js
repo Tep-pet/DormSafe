@@ -3,7 +3,7 @@ import { env } from '../config/env.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { assertRoomOwnedBy } from '../utils/ownership.js';
 
-const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif']);
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif']);
 
 export function getPublicImageUrl(storagePath) {
   if (!storagePath) return null;
@@ -49,13 +49,14 @@ export async function uploadRoomImages(files, roomId, ownerId) {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (!file.mimetype?.startsWith('image/')) {
-      const err = new Error('Only image files are allowed');
+    const rawExt = (file.originalname.split('.').pop() || '').toLowerCase();
+    const typeOk = file.mimetype?.startsWith('image/') || IMAGE_EXTENSIONS.has(rawExt);
+    if (!typeOk) {
+      const err = new Error('Only image files are allowed (JPG, JPEG, PNG, WebP, or HEIC)');
       err.status = 400;
       throw err;
     }
 
-    const rawExt = (file.originalname.split('.').pop() || 'jpg').toLowerCase();
     const ext = IMAGE_EXTENSIONS.has(rawExt) ? rawExt : 'jpg';
     const storagePath = `${ownerId}/${roomId}/${randomUUID()}.${ext}`;
 

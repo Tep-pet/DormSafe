@@ -63,6 +63,7 @@ export function OwnerSidebarLinks() {
     { to: '/owner/listings', label: 'My Listings' },
     { to: '/owner/add-property', label: 'Add Property' },
     { to: '/owner/tenants', label: 'Tenants' },
+    { to: '/owner/requests', label: 'Room requests' },
     { to: '/owner/payments', label: 'Payment Log' },
     { to: '/owner/analytics', label: 'Analytics' },
     { to: '/owner/verification', label: 'Verification' },

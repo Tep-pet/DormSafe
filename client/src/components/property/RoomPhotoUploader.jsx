@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { IMAGE_SIZE_HINT } from '../../constants/uploadLimits';
 
 const MAX_PHOTOS = 8;
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif';
+const ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic,image/heif';
 
 export function RoomPhotoUploader({ photos, onChange }) {
   const inputRef = useRef(null);
@@ -20,7 +20,11 @@ export function RoomPhotoUploader({ photos, onChange }) {
   }, []);
 
   function addFiles(fileList) {
-    const incoming = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+    const incoming = Array.from(fileList || []).filter((f) => {
+      if ((f.type || '').toLowerCase().startsWith('image/')) return true;
+      const ext = (f.name || '').split('.').pop()?.toLowerCase();
+      return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'].includes(ext);
+    });
     if (!incoming.length) return;
 
     const slotsLeft = MAX_PHOTOS - photos.length;

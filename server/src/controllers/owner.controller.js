@@ -2,6 +2,7 @@ import { uploadPermit } from '../services/upload.service.js';
 import * as analyticsService from '../services/analytics.service.js';
 import * as maintenanceService from '../services/maintenance.service.js';
 import * as paymentService from '../services/payment.service.js';
+import * as inquiryService from '../services/inquiry.service.js';
 import { success } from '../utils/apiResponse.js';
 
 export async function submitVerification(req, res, next) {
@@ -42,6 +43,24 @@ export async function sendPaymentReminders(req, res, next) {
   try {
     const result = await paymentService.sendPaymentReminders(req.profile.id);
     return success(res, result, `Sent ${result.sent} reminder(s)`);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listInquiries(req, res, next) {
+  try {
+    const list = await inquiryService.listOwnerInquiries(req.profile.id);
+    return success(res, list);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function replyToInquiry(req, res, next) {
+  try {
+    const result = await inquiryService.replyToInquiry(req.profile, req.params.id, req.body);
+    return success(res, result, 'Reply sent');
   } catch (err) {
     next(err);
   }

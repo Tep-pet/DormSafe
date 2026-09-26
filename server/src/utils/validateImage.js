@@ -7,14 +7,23 @@ export function isValidEmail(email) {
   return typeof email === 'string' && EMAIL_REGEX.test(email.trim());
 }
 
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']);
+
+function isAllowedImage(file) {
+  const type = (file.mimetype || '').toLowerCase();
+  if (type.startsWith('image/')) return true;
+  const ext = (file.originalname || '').split('.').pop()?.toLowerCase();
+  return IMAGE_EXTENSIONS.has(ext);
+}
+
 export function validateImageFile(file, label = 'Image') {
   if (!file) {
     const err = new Error(`${label} is required`);
     err.status = 400;
     throw err;
   }
-  if (!file.mimetype?.startsWith('image/')) {
-    const err = new Error(`${label} must be an image (JPEG, PNG, or WebP)`);
+  if (!isAllowedImage(file)) {
+    const err = new Error(`${label} must be an image (JPG, JPEG, PNG, WebP, or HEIC)`);
     err.status = 400;
     throw err;
   }

@@ -238,14 +238,20 @@ export async function updateProperty(ownerId, propertyId, payload) {
   if (payload.description != null) updates.description = payload.description;
   if (payload.contact_name != null) updates.contact_name = payload.contact_name;
   if (payload.contact_phone != null) updates.contact_phone = payload.contact_phone;
+  if (payload.latitude != null && payload.longitude != null) {
+    updates.latitude = payload.latitude;
+    updates.longitude = payload.longitude;
+  }
   if (payload.address != null && payload.address.trim() !== existing.address?.trim()) {
     updates.address = payload.address;
-    try {
-      const geo = await geocodeAddress(payload.address);
-      updates.latitude = geo.latitude;
-      updates.longitude = geo.longitude;
-    } catch {
-      // Keep existing coordinates if geocoding fails (e.g. wrong API key restrictions)
+    if (payload.latitude == null || payload.longitude == null) {
+      try {
+        const geo = await geocodeAddress(payload.address);
+        updates.latitude = geo.latitude;
+        updates.longitude = geo.longitude;
+      } catch {
+        // Keep existing coordinates if server geocoding is unavailable
+      }
     }
   } else if (payload.address != null) {
     updates.address = payload.address;

@@ -6,14 +6,25 @@ const BUCKET = 'verification-docs';
 
 function extFromFile(file) {
   const raw = (file.originalname?.split('.').pop() || 'jpg').toLowerCase();
-  return ['jpg', 'jpeg', 'png', 'webp'].includes(raw) ? raw : 'jpg';
+  return ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'].includes(raw) ? raw : 'jpg';
+}
+
+function contentTypeFor(file) {
+  const type = (file.mimetype || '').toLowerCase();
+  if (type.startsWith('image/')) return type === 'image/jpg' ? 'image/jpeg' : file.mimetype;
+  const ext = extFromFile(file);
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'heic') return 'image/heic';
+  if (ext === 'heif') return 'image/heif';
+  return 'image/jpeg';
 }
 
 async function uploadDoc(file, userId, label) {
   const path = `${userId}/${label}-${randomUUID()}.${extFromFile(file)}`;
   const { error } = await supabaseAdmin.storage
     .from(BUCKET)
-    .upload(path, file.buffer, { contentType: file.mimetype, upsert: false });
+    .upload(path, file.buffer, { contentType: contentTypeFor(file), upsert: false });
   if (error) throw error;
   return path;
 }

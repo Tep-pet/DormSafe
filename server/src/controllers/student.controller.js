@@ -4,6 +4,7 @@ import * as reviewService from '../services/review.service.js';
 import * as reportService from '../services/report.service.js';
 import * as maintenanceService from '../services/maintenance.service.js';
 import * as paymentService from '../services/payment.service.js';
+import * as inquiryService from '../services/inquiry.service.js';
 import { success } from '../utils/apiResponse.js';
 
 export async function myStays(req, res, next) {
@@ -145,6 +146,42 @@ export async function createMaintenance(req, res, next) {
   try {
     const request = await maintenanceService.createMaintenanceRequest(req.profile.id, req.body);
     return success(res, request, 'Maintenance request sent', 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function requestRoom(req, res, next) {
+  try {
+    const result = await inquiryService.requestRoom(req.profile, req.body);
+    return success(res, result, 'The owner has been notified', 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listInquiries(req, res, next) {
+  try {
+    const list = await inquiryService.listStudentInquiries(req.profile.id);
+    return success(res, list);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateInquiry(req, res, next) {
+  try {
+    const result = await inquiryService.updateInquiry(req.profile, req.params.id, req.body);
+    return success(res, result, 'Request updated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function cancelInquiry(req, res, next) {
+  try {
+    const result = await inquiryService.cancelInquiry(req.profile, req.params.id);
+    return success(res, result, 'Request cancelled');
   } catch (err) {
     next(err);
   }

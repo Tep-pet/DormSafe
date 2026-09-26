@@ -35,6 +35,9 @@ export function Navbar() {
                   <Link to={ROUTES.STUDENT_MY_STAY} className="text-sm text-gray-600 hover:text-ateneo-blue">
                     My Stay
                   </Link>
+                  <Link to={ROUTES.STUDENT_REQUESTS} className="text-sm text-gray-600 hover:text-ateneo-blue">
+                    Requests
+                  </Link>
                 </>
               )}
               <NotificationBell />

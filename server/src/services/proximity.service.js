@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { getGate, SEARCH_RADIUS_KM } from '../config/campusGates.js';
 import { getBoundingBox, isWithinRadiusKm } from '../utils/haversine.js';
-import { getPropertyPrimaryImageUrl, flattenRoomImages } from '../utils/propertyImages.js';
+import { getPropertyPrimaryImageUrl, flattenRoomImages, mapRoomImages } from '../utils/propertyImages.js';
 import { getWalkingDurationsBatch, getWalkingDurationMinutes } from './googleMaps.service.js';
 import { enrichRoomsWithStayInfo } from './stay.service.js';
 import { getApprovedReviews } from './review.service.js';
@@ -140,7 +140,10 @@ export async function getPropertyById(id, gate, studentId = null) {
     lng: data.longitude,
   });
 
-  const rooms = await enrichRoomsWithStayInfo(data.rooms || [], studentId);
+  const rooms = (await enrichRoomsWithStayInfo(data.rooms || [], studentId)).map((room) => {
+    const { room_images, ...rest } = room;
+    return { ...rest, images: mapRoomImages({ room_images }) };
+  });
   const reviews = await getApprovedReviews(id);
   let is_saved = false;
   if (studentId) {
