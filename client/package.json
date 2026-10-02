@@ -9,8 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroui/react": "^2.8.10",
+    "@heroui/theme": "^2.4.26",
     "@react-google-maps/api": "^2.20.6",
     "@supabase/supabase-js": "^2.49.1",
+    "framer-motion": "^13.5.0",
+    "lucide-react": "^1.49.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0"

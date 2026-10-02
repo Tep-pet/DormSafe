@@ -1,0 +1,20 @@
+{
+  "searchRadiusKm": 2,
+  "gates": {
+    "jacinto": {
+      "id": "jacinto",
+      "label": "Jacinto Campus Gate",
+      "lat": 7.072,
+      "lng": 125.6141,
+      "note": "E. Jacinto St entrance, east side of AdDU Jacinto campus (OSM bounds)"
+    },
+    "roxas": {
+      "id": "roxas",
+      "label": "Roxas Campus Gate",
+      "lat": 7.0718,
+      "lng": 125.6123,
+      "note": "Roxas Ave entrance, west side of AdDU Jacinto campus (OSM bounds)"
+    }
+  },
+  "defaultGate": "jacinto"
+}

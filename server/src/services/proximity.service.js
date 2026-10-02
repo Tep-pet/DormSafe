@@ -1,38 +1,44 @@
-import { env } from '../config/env.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { getGate, SEARCH_RADIUS_KM } from '../config/campusGates.js';
-import { isWithinRadiusKm } from '../utils/haversine.js';
+import { getBoundingBox, isWithinRadiusKm } from '../utils/haversine.js';
+import { getPropertyPrimaryImageUrl, flattenRoomImages, mapRoomImages } from '../utils/propertyImages.js';
 import { getWalkingDurationsBatch, getWalkingDurationMinutes } from './googleMaps.service.js';
+import { enrichRoomsWithStayInfo } from './stay.service.js';
+import { getApprovedReviews } from './review.service.js';
+import { getFavoriteIds } from './favorite.service.js';
 
-/** Build public URL for Supabase Storage object */
-function getPublicImageUrl(storagePath) {
-  if (!storagePath || !env.supabaseUrl) return null;
-  return `${env.supabaseUrl}/storage/v1/object/public/room-images/${storagePath}`;
-}
+const SEARCH_SELECT = `
+  id, name, type, address, latitude, longitude, is_verified, status,
+  contact_name, contact_phone,
+  rooms ( id, price, capacity, is_available, room_images ( id, storage_path, is_primary ) )
+`;
 
 /**
- * Fetch approved, verified properties with rooms, images, and rules.
+ * Fetch approved listings near a gate (bounding-box SQL pre-filter + haversine).
  */
-async function fetchApprovedProperties({ propertyType, minPrice, maxPrice }) {
+async function fetchApprovedPropertiesNearGate({ gate, propertyType, minPrice, maxPrice }) {
+  const campusGate = getGate(gate);
+  const box = getBoundingBox(campusGate.lat, campusGate.lng, SEARCH_RADIUS_KM);
+
   let query = supabaseAdmin
     .from('properties')
-    .select(`
-      id, name, type, address, latitude, longitude, is_verified, status,
-      rooms ( id, price, capacity, is_available ),
-      room_images ( id, storage_path, is_primary ),
-      house_rules ( id, rule )
-    `)
+    .select(SEARCH_SELECT)
     .eq('status', 'approved')
-    .eq('is_verified', true);
+    .eq('is_verified', true)
+    .gte('latitude', box.minLat)
+    .lte('latitude', box.maxLat)
+    .gte('longitude', box.minLng)
+    .lte('longitude', box.maxLng);
 
   if (propertyType) query = query.eq('type', propertyType);
 
   const { data, error } = await query;
   if (error) throw error;
 
-  let properties = data || [];
+  let properties = (data || []).filter((p) =>
+    isWithinRadiusKm(p.latitude, p.longitude, campusGate.lat, campusGate.lng, SEARCH_RADIUS_KM)
+  );
 
-  // Price filter — property must have at least one room in range
   if (minPrice != null || maxPrice != null) {
     const min = minPrice != null ? Number(minPrice) : 0;
     const max = maxPrice != null ? Number(maxPrice) : Infinity;
@@ -41,14 +47,13 @@ async function fetchApprovedProperties({ propertyType, minPrice, maxPrice }) {
     );
   }
 
-  return properties;
+  return { campusGate, properties };
 }
 
 function enrichProperty(property, walkingMinutes) {
   const rooms = property.rooms || [];
   const availableRooms = rooms.filter((r) => r.is_available).length;
   const prices = rooms.map((r) => r.price).filter((p) => p != null);
-  const primaryImage = (property.room_images || []).find((i) => i.is_primary);
 
   return {
     id: property.id,
@@ -58,27 +63,28 @@ function enrichProperty(property, walkingMinutes) {
     latitude: property.latitude,
     longitude: property.longitude,
     is_verified: property.is_verified,
+    contact_name: property.contact_name,
+    contact_phone: property.contact_phone,
     min_price: prices.length ? Math.min(...prices) : null,
     available_rooms: availableRooms,
     walking_minutes: walkingMinutes,
-    primary_image: getPublicImageUrl(primaryImage?.storage_path) || null,
+    primary_image: getPropertyPrimaryImageUrl(property),
   };
 }
 
 /**
  * Proximity Algorithm (proposal §3.3):
- * 1. Load approved listings from Supabase
- * 2. Pre-filter by 2 km haversine radius from selected gate
- * 3. Compute walking time via Google Maps Distance Matrix
- * 4. Sort by walking duration
+ * 1. Load approved listings near gate (SQL bbox + haversine)
+ * 2. Compute walking time via Google Maps Distance Matrix
+ * 3. Sort by walking duration
  */
 export async function searchNearbyProperties({ gate, minPrice, maxPrice, propertyType }) {
-  const campusGate = getGate(gate);
-  const allProperties = await fetchApprovedProperties({ propertyType, minPrice, maxPrice });
-
-  const inRadius = allProperties.filter((p) =>
-    isWithinRadiusKm(p.latitude, p.longitude, campusGate.lat, campusGate.lng, SEARCH_RADIUS_KM)
-  );
+  const { campusGate, properties: inRadius } = await fetchApprovedPropertiesNearGate({
+    gate,
+    propertyType,
+    minPrice,
+    maxPrice,
+  });
 
   const destinations = inRadius.map((p) => ({ lat: p.latitude, lng: p.longitude }));
   const walkingMinutes = await getWalkingDurationsBatch(campusGate, destinations);
@@ -99,15 +105,15 @@ export async function searchNearbyProperties({ gate, minPrice, maxPrice, propert
   };
 }
 
-export async function getPropertyById(id, gate) {
+export async function getPropertyById(id, gate, studentId = null) {
   const campusGate = getGate(gate);
 
   const { data, error } = await supabaseAdmin
     .from('properties')
     .select(`
-      id, name, type, address, latitude, longitude, is_verified, status,
-      rooms ( id, price, capacity, is_available ),
-      room_images ( id, storage_path, is_primary ),
+      id, name, type, address, latitude, longitude, description, is_verified, status,
+      contact_name, contact_phone,
+      rooms ( id, label, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
       house_rules ( id, rule )
     `)
     .eq('id', id)
@@ -134,12 +140,23 @@ export async function getPropertyById(id, gate) {
     lng: data.longitude,
   });
 
+  const rooms = (await enrichRoomsWithStayInfo(data.rooms || [], studentId)).map((room) => {
+    const { room_images, ...rest } = room;
+    return { ...rest, images: mapRoomImages({ room_images }) };
+  });
+  const reviews = await getApprovedReviews(id);
+  let is_saved = false;
+  if (studentId) {
+    const favIds = await getFavoriteIds(studentId);
+    is_saved = favIds.includes(id);
+  }
+
   return {
     ...data,
+    rooms,
     walking_minutes: walkingMinutes,
-    images: (data.room_images || []).map((img) => ({
-      id: img.id,
-      url: getPublicImageUrl(img.storage_path),
-    })),
+    images: flattenRoomImages(data),
+    reviews,
+    is_saved,
   };
 }

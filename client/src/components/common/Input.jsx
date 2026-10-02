@@ -1,19 +1,94 @@
-export function Input({ label, id, error, className = '', ...props }) {
+import { Input as HeroUIInput, Textarea as HeroUITextarea } from '@heroui/react';
+
+/**
+ * Text Input component built with HeroUI.
+ * Provides accessible labels, clear validation errors, and clean focus states.
+ */
+export function Input({
+  label,
+  id,
+  error,
+  type = 'text',
+  className = '',
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  isDisabled = false,
+  disabled = false,
+  ...props
+}) {
   return (
     <div className={className}>
-      {label && (
-        <label htmlFor={id} className="mb-1 block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-      <input
+      <HeroUIInput
         id={id}
-        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:border-ateneo-blue focus:ring-2 focus:ring-ateneo-blue/20 ${
-          error ? 'border-red-400' : 'border-gray-300'
-        }`}
+        label={label}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        isRequired={required}
+        isDisabled={disabled || isDisabled}
+        isInvalid={Boolean(error)}
+        errorMessage={error}
+        variant="bordered"
+        radius="lg"
+        labelPlacement="outside"
+        classNames={{
+          label: 'text-xs font-semibold text-gray-700 mb-1',
+          inputWrapper:
+            'border-gray-300 hover:border-gray-400 focus-within:!border-ateneo-blue bg-white shadow-xs',
+          input: 'text-sm text-gray-900',
+        }}
         {...props}
       />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Multi-line Textarea component built with HeroUI.
+ */
+export function Textarea({
+  label,
+  id,
+  error,
+  className = '',
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  minRows = 3,
+  maxRows = 6,
+  isDisabled = false,
+  disabled = false,
+  ...props
+}) {
+  return (
+    <div className={className}>
+      <HeroUITextarea
+        id={id}
+        label={label}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        isRequired={required}
+        isDisabled={disabled || isDisabled}
+        isInvalid={Boolean(error)}
+        errorMessage={error}
+        minRows={minRows}
+        maxRows={maxRows}
+        variant="bordered"
+        radius="lg"
+        labelPlacement="outside"
+        classNames={{
+          label: 'text-xs font-semibold text-gray-700 mb-1',
+          inputWrapper:
+            'border-gray-300 hover:border-gray-400 focus-within:!border-ateneo-blue bg-white shadow-xs',
+          input: 'text-sm text-gray-900',
+        }}
+        {...props}
+      />
     </div>
   );
 }

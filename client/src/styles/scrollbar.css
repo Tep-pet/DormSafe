@@ -1,0 +1,47 @@
+/**
+ * Auto-Hiding Scrollbar Styling
+ * Automatically hides scrollbar thumb when idle, smoothly reveals on scroll or hover.
+ */
+
+/* WebKit (Chrome, Edge, Safari) */
+.auto-hide-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.4s ease-out;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  transition: background-color 0.4s ease-out;
+}
+
+/* Revealed state when scrolling or hovering */
+.auto-hide-scrollbar.is-scrolling {
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+.auto-hide-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.6);
+}
+
+.auto-hide-scrollbar:hover {
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.auto-hide-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.4);
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.8) !important;
+}

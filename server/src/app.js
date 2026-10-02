@@ -6,7 +6,24 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 
 const app = express();
 
-app.use(cors({ origin: env.corsOrigin, credentials: true }));
+function isAllowedOrigin(origin) {
+  if (!origin || origin === env.corsOrigin) return true;
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  } catch {
+    return false;
+  }
+}
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      callback(null, isAllowedOrigin(origin));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use('/api', apiRoutes);

@@ -37,6 +37,7 @@ export function LoginForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         autoComplete="email"
+        placeholder="your-email@dormsafe.test"
       />
       <Input
         id="password"
@@ -46,10 +47,15 @@ export function LoginForm() {
         onChange={(e) => setPassword(e.target.value)}
         required
         autoComplete="current-password"
+        placeholder="••••••••"
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign In'}
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-medium">
+          {error}
+        </div>
+      )}
+      <Button type="submit" className="w-full" isLoading={loading}>
+        {loading ? 'Signing In…' : 'Sign In'}
       </Button>
     </form>
   );

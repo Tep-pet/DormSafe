@@ -30,26 +30,5 @@ export async function authMiddleware(req, res, next) {
 
   req.user = user;
   req.profile = profile;
-  req.accessToken = token;
-  next();
-}
-
-/** Optional auth — attaches user if token present */
-export async function optionalAuth(req, _res, next) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return next();
-
-  const token = header.slice(7);
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-  if (user) {
-    req.user = user;
-    req.accessToken = token;
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    req.profile = profile;
-  }
   next();
 }

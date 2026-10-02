@@ -1,18 +1,26 @@
-import { Navbar } from './Navbar';
+import { AppShell } from './AppShell';
 
-export function PageContainer({ children, title, subtitle }) {
+export function PageContainer({
+  children,
+  title,
+  subtitle,
+  headerAction,
+  showSidebar,
+  fullWidth = false,
+  showBreadcrumbs = true,
+  customBreadcrumbs,
+}) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {(title || subtitle) && (
-          <header className="mb-6">
-            {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
-            {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
-          </header>
-        )}
-        {children}
-      </main>
-    </div>
+    <AppShell
+      title={title}
+      subtitle={subtitle}
+      headerAction={headerAction}
+      showSidebar={showSidebar}
+      fullWidth={fullWidth}
+      showBreadcrumbs={showBreadcrumbs}
+      customBreadcrumbs={customBreadcrumbs}
+    >
+      {children}
+    </AppShell>
   );
 }

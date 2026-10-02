@@ -1,15 +1,19 @@
 import { Link } from 'react-router-dom';
-import { PageContainer } from '../../components/layout/PageContainer';
+import { AuthPageLayout } from '../../components/layout/AuthPageLayout';
 import { LoginForm } from '../../components/auth/LoginForm';
+import { BrandLogo } from '../../components/common/BrandLogo';
 
 export function LoginPage() {
   return (
-    <PageContainer>
-      <div className="mx-auto max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-900">Sign in to DormSafe</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Find verified housing near Ateneo de Davao.
-        </p>
+    <AuthPageLayout>
+      <div className="mx-auto max-w-md rounded-2xl border border-slate-200/90 bg-white p-8 shadow-sm">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <BrandLogo size="lg" subtitle="Ateneo de Davao University" />
+          <h1 className="mt-4 text-xl font-bold text-gray-900">Sign in to your account</h1>
+          <p className="mt-1 text-xs text-gray-500">
+            Access verified housing and campus services.
+          </p>
+        </div>
         <div className="mt-6">
           <LoginForm />
         </div>
@@ -20,6 +24,6 @@ export function LoginPage() {
           </Link>
         </p>
       </div>
-    </PageContainer>
+    </AuthPageLayout>
   );
 }
