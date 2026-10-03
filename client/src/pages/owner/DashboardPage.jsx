@@ -26,14 +26,6 @@ export function DashboardPage() {
       .finally(() => setLoading(false));
   }, [accessToken, filterPropertyId]);
 
-  if (loading) {
-    return (
-      <OwnerLayout title="Owner Dashboard" subtitle="Occupancy overview, live metrics, and revenue summary">
-        <PageSkeleton variant="dashboard" count={4} />
-      </OwnerLayout>
-    );
-  }
-
   const occupied = stats?.occupiedRooms ?? 0;
   const vacant = stats?.vacantRooms ?? 0;
   const totalRooms = occupied + vacant;
@@ -44,13 +36,17 @@ export function DashboardPage() {
       title="Owner Dashboard"
       subtitle="Occupancy overview, live metrics, and revenue summary"
     >
-      <div className="mb-6 flex justify-end">
-        <Link to="/owner/add-property">
-          <Button variant="primary" startContent={<Plus size={16} strokeWidth={2.5} />}>
-            Add New Property
-          </Button>
-        </Link>
-      </div>
+      {loading ? (
+        <PageSkeleton variant="dashboard" count={4} />
+      ) : (
+        <>
+          <div className="mb-6 flex justify-end">
+            <Link to="/owner/add-property">
+              <Button variant="primary" startContent={<Plus size={16} strokeWidth={2.5} />}>
+                Add New Property
+              </Button>
+            </Link>
+          </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatsCard
@@ -120,6 +116,8 @@ export function DashboardPage() {
           </div>
         </CardBody>
       </Card>
+        </>
+      )}
     </OwnerLayout>
   );
 }

@@ -80,17 +80,12 @@ export function EditPropertyPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <OwnerLayout title="Edit Listing" subtitle="Update price, contact, and rules without resubmitting">
-        <PageSkeleton variant="form" />
-      </OwnerLayout>
-    );
-  }
-
   return (
     <OwnerLayout title="Edit Listing" subtitle="Update price, contact, and rules without resubmitting">
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
+      {loading ? (
+        <PageSkeleton variant="form" />
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
         <Input label="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
@@ -148,6 +143,7 @@ export function EditPropertyPage() {
           </Button>
         </div>
       </form>
+      )}
     </OwnerLayout>
   );
 }

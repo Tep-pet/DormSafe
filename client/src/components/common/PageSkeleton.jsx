@@ -79,11 +79,6 @@ function KPISkeleton({ count = 4, className = '' }) {
 function DashboardSkeleton({ count = 4, className = '' }) {
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Top action button placeholder */}
-      <div className="flex justify-end">
-        <Shimmer className="h-9 w-36 rounded-xl" />
-      </div>
-
       {/* KPI Cards Row */}
       <KPISkeleton count={count} />
 

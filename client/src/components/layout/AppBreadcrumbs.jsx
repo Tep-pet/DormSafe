@@ -53,11 +53,30 @@ export function AppBreadcrumbs({ customCrumbs }) {
   if (routeInfo) {
     crumbs.push({ label: routeInfo.title });
   } else if (pathSegments.length > 1) {
-    // Dynamic subroutes like /student/property/:id or /owner/listings/:id/edit
-    const pageName = pathSegments[pathSegments.length - 1]
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-    crumbs.push({ label: pageName });
+    // Dynamic subroutes
+    const isUuid = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(str) || str.length > 20;
+
+    if (section === 'admin' && pathSegments[1] === 'listings') {
+      crumbs.push({ label: 'Approve Listings', to: ROUTES.ADMIN_APPROVE_LISTINGS });
+      crumbs.push({ label: 'Listing Review' });
+    } else if (section === 'admin' && pathSegments[1] === 'verify-owners') {
+      crumbs.push({ label: 'Verify Accounts', to: ROUTES.ADMIN_VERIFY_ACCOUNTS });
+      crumbs.push({ label: 'Owner Verification' });
+    } else if (section === 'student' && pathSegments[1] === 'property') {
+      crumbs.push({ label: 'Find Dorms', to: ROUTES.STUDENT_SEARCH });
+      crumbs.push({ label: 'Property Details' });
+    } else if (section === 'owner' && pathSegments[1] === 'listings' && pathSegments[3] === 'edit') {
+      crumbs.push({ label: 'Manage Listings', to: ROUTES.OWNER_LISTINGS });
+      crumbs.push({ label: 'Edit Property' });
+    } else {
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      const pageName = isUuid(lastSegment)
+        ? 'Details'
+        : lastSegment
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+      crumbs.push({ label: pageName });
+    }
   }
 
   if (crumbs.length <= 1) return null;

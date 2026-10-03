@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
@@ -16,7 +16,7 @@ export function AppShell({
   subtitle,
   headerAction,
   customBreadcrumbs,
-  showBreadcrumbs = true,
+  showBreadcrumbs = false,
   showSidebar: explicitShowSidebar,
   showFooter = true,
   fullWidth = false,
@@ -27,6 +27,13 @@ export function AppShell({
   const { isAuthenticated, role } = useAuth();
   const location = useLocation();
   const { handleScroll: handleAutoScrollbar, scrollbarClassName } = useAutoScrollbar(1000);
+
+  // Auto-reset scroll position to top whenever navigating between pages in the persistent shell
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   // Determine whether sidebar should be shown by default:
   // Show sidebar for Owner and Admin dashboards unless explicitly overridden
@@ -60,7 +67,7 @@ export function AppShell({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className={`flex flex-1 flex-col overflow-y-auto min-h-0 min-w-0 relative ${scrollbarClassName}`}
+        className={`flex flex-1 flex-col overflow-y-scroll [scrollbar-gutter:stable] min-h-0 min-w-0 relative ${scrollbarClassName}`}
       >
         {/* Topbar: Floating capsule sitting on the side of sidebar */}
         <div className="sticky top-0 z-30 pt-3 sm:pt-4 px-4 sm:px-6 lg:px-8 pointer-events-none">
@@ -72,44 +79,42 @@ export function AppShell({
           />
         </div>
 
-        {/* Universal Page Container (Standardized universal padding & margin across all pages) */}
-        <main
-          className={`flex-1 ${
-            fullWidth
-              ? 'w-full px-4 sm:px-6 lg:px-8 py-6'
-              : 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6'
-          } ${role === ROLES.STUDENT ? 'pb-20 lg:pb-8' : ''}`}
-        >
-          {/* Breadcrumb Navigation */}
-          {showBreadcrumbs && <AppBreadcrumbs customCrumbs={customBreadcrumbs} />}
+        {/* Universal Page Viewport with Smooth Graceful Transition */}
+        <div className="flex-1 flex flex-col min-h-full">
+          <PageTransition pageKey={location.pathname} className="flex-1 flex flex-col">
+            <main className="flex-1 flex flex-col">
+              {/* Direct fallback for standalone AppShell usage without PageContainer */}
+              {showBreadcrumbs && (
+                <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+                  <AppBreadcrumbs customCrumbs={customBreadcrumbs} />
+                </div>
+              )}
+              {(title || subtitle || headerAction) && (
+                <header className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    {title && (
+                      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                        {title}
+                      </h1>
+                    )}
+                    {subtitle && (
+                      <p className="mt-1 text-xs text-slate-500 font-normal leading-relaxed">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                  {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}
+                </header>
+              )}
 
-          {/* Page Header (Title + Subtitle + Action Slot) */}
-          {(title || subtitle || headerAction) && (
-            <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                {title && (
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                    {title}
-                  </h1>
-                )}
-                {subtitle && (
-                  <p className="mt-1 text-xs text-slate-500 font-normal leading-relaxed">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-              {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}
-            </header>
-          )}
-
-          {/* Render children or nested React Router Outlet with graceful transition */}
-          <PageTransition pageKey={location.pathname}>
-            {children ? children : <Outlet />}
+              {/* Render children or nested React Router Outlet */}
+              {children ? children : <Outlet />}
+            </main>
           </PageTransition>
-        </main>
 
-        {/* Footer at bottom of scrollable page */}
-        {showFooter && <AppFooter />}
+          {/* Footer at bottom of scrollable page, separated and never overlapping */}
+          {showFooter && <AppFooter />}
+        </div>
       </div>
 
       {/* 4. Mobile Bottom Bar (Quick navigation for students) */}

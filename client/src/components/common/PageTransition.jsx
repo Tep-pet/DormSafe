@@ -35,20 +35,18 @@ export function PageTransition({
   const motionVariants = {
     initial: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : 8,
-      scale: shouldReduceMotion ? 1 : 0.995,
+      y: shouldReduceMotion ? 0 : 6,
     },
     animate: {
       opacity: 1,
       y: 0,
-      scale: 1,
       transition: transitionConfig,
     },
     exit: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : -6,
+      y: shouldReduceMotion ? 0 : -4,
       transition: {
-        duration: 0.18,
+        duration: 0.16,
         ease: [0.7, 0, 0.84, 0],
       },
     },
@@ -61,7 +59,7 @@ export function PageTransition({
   };
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait">
       {isLoading && skeleton ? (
         <motion.div
           key="page-skeleton-state"

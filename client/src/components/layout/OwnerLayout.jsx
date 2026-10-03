@@ -1,19 +1,20 @@
 import React from 'react';
-import { AppShell } from './AppShell';
+import { PageContainer } from './PageContainer';
 import { PropertyFilter } from '../dashboard/PropertyFilter';
 
-export function OwnerLayout({ children, title, subtitle, headerAction }) {
+export function OwnerLayout({ children, title, subtitle, headerAction, customBreadcrumbs, fullWidth }) {
   return (
-    <AppShell
+    <PageContainer
       title={title}
       subtitle={subtitle}
       headerAction={headerAction}
-      showSidebar={true}
+      customBreadcrumbs={customBreadcrumbs}
+      fullWidth={fullWidth}
     >
       <div className="space-y-6">
         <PropertyFilter />
         <div>{children}</div>
       </div>
-    </AppShell>
+    </PageContainer>
   );
 }

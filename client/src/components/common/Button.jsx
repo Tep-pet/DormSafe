@@ -4,7 +4,7 @@ import { Button as HeroUIButton } from '@heroui/react';
  * Semantic Button component built with HeroUI.
  * Follows HeroUI v3 Design Principle 1: Semantic Intent Over Visual Style.
  *
- * @param {'primary' | 'secondary' | 'tertiary' | 'ghost' | 'danger'} variant - Semantic action hierarchy
+ * @param {'primary' | 'secondary' | 'outline' | 'bordered' | 'tertiary' | 'ghost' | 'light' | 'danger' | 'danger-outline' | 'success'} variant - Semantic action hierarchy
  * @param {'sm' | 'md' | 'lg'} size - Component sizing
  */
 export function Button({
@@ -38,8 +38,15 @@ export function Button({
           color: 'primary',
           variant: 'bordered',
         };
+      case 'outline':
+      case 'bordered':
+        return {
+          color: 'default',
+          variant: 'bordered',
+        };
       case 'tertiary':
       case 'ghost':
+      case 'light':
         return {
           color: 'default',
           variant: 'light',
@@ -48,6 +55,11 @@ export function Button({
         return {
           color: 'danger',
           variant: 'flat',
+        };
+      case 'danger-outline':
+        return {
+          color: 'danger',
+          variant: 'bordered',
         };
       case 'success':
         return {

@@ -66,14 +66,6 @@ export function OwnerAnalyticsPage() {
     load();
   }
 
-  if (loading) {
-    return (
-      <OwnerLayout title="Analytics & Calendar" subtitle="Vacancy rates, monthly revenue trends, occupancy events, and maintenance requests">
-        <PageSkeleton variant="dashboard" count={3} />
-      </OwnerLayout>
-    );
-  }
-
   const vacancyRate = analytics?.vacancy_rate ?? 0;
   const occupancyRate = 100 - vacancyRate;
 
@@ -82,8 +74,11 @@ export function OwnerAnalyticsPage() {
       title="Analytics & Calendar"
       subtitle="Vacancy rates, monthly revenue trends, occupancy events, and maintenance requests"
     >
-      <div className="space-y-6">
-        {/* Payment Reminders Callout */}
+      {loading ? (
+        <PageSkeleton variant="dashboard" count={3} />
+      ) : (
+        <div className="space-y-6">
+          {/* Payment Reminders Callout */}
         <Card shadow="sm" className="rounded-2xl border border-gray-200 bg-white p-1">
           <CardBody className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -303,6 +298,7 @@ export function OwnerAnalyticsPage() {
           </CardBody>
         </Card>
       </div>
+      )}
     </OwnerLayout>
   );
 }

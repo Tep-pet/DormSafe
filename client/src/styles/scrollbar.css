@@ -45,3 +45,12 @@
 .auto-hide-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(100, 116, 139, 0.8) !important;
 }
+
+/* Hide scrollbar for Chrome, Safari, Opera, Edge, Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

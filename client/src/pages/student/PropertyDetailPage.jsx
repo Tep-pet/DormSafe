@@ -102,25 +102,24 @@ export function PropertyDetailPage() {
     setActionMsg('Review submitted for admin moderation.');
   }
 
-  if (loading) return <PageContainer><PageSkeleton variant="detail" /></PageContainer>;
-  if (error) {
-    return (
-      <PageContainer>
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 font-medium">{error}</div>
-      </PageContainer>
-    );
-  }
-
-  const selectedRoom = property.rooms?.find((room) => room.id === selectedRoomId) || property.rooms?.[0] || null;
+  const selectedRoom = property?.rooms?.find((room) => room.id === selectedRoomId) || property?.rooms?.[0] || null;
 
   return (
     <PageContainer>
-      <Link to="/student/search" className="inline-flex items-center gap-1.5 text-xs font-semibold text-ateneo-blue hover:underline">
-        <ArrowLeft size={14} />
-        <span>Back to Search</span>
-      </Link>
+      {loading ? (
+        <PageSkeleton variant="detail" />
+      ) : error || !property ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 font-medium">
+          {error || 'Property not found'}
+        </div>
+      ) : (
+        <>
+          <Link to="/student/search" className="inline-flex items-center gap-1.5 text-xs font-semibold text-ateneo-blue hover:underline">
+            <ArrowLeft size={14} />
+            <span>Back to Search</span>
+          </Link>
 
-      <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-xs">
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-xs">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{property.name}</h1>
@@ -332,6 +331,8 @@ export function PropertyDetailPage() {
           </form>
         </section>
       </div>
+        </>
+      )}
     </PageContainer>
   );
 }

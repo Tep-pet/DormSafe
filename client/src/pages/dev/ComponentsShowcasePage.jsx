@@ -71,8 +71,10 @@ import { PropertyCard } from '../../components/property/PropertyCard';
 import { PaymentTable } from '../../components/dashboard/PaymentTable';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { PageTransition, StaggerContainer, StaggerItem } from '../../components/common/PageTransition';
+import { useToast } from '../../hooks/useToast';
 
 export function ComponentsShowcasePage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('kpis');
   const [btnLoading, setBtnLoading] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
@@ -819,6 +821,62 @@ export function ComponentsShowcasePage() {
                   </Button>
                 }
               />
+            </div>
+
+            {/* Bottom-Right Universal Toast Notifications Showcase */}
+            <div className="space-y-4 pt-6 border-t border-slate-200/80">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Universal Bottom-Right Toast Notifications (Framer Motion)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Floating stacked notifications fixed at the bottom-right corner with 4s auto-dismiss and hover pause.
+                </p>
+              </div>
+
+              <Card shadow="sm" className="rounded-3xl border border-slate-200/90 bg-white p-6 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    size="sm"
+                    radius="full"
+                    variant="primary"
+                    startContent={<CheckCircle2 size={14} />}
+                    onClick={() => toast.success('Listing approved and published to student search!')}
+                  >
+                    Trigger Success Toast
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    radius="full"
+                    variant="danger"
+                    startContent={<XCircle size={14} />}
+                    onClick={() => toast.error('Failed to connect to backend service. Please check network.')}
+                  >
+                    Trigger Error Toast
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    radius="full"
+                    variant="secondary"
+                    startContent={<AlertTriangle size={14} />}
+                    onClick={() => toast.warning('Account verification rejected due to blurry ID upload.')}
+                  >
+                    Trigger Warning Toast
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    radius="full"
+                    variant="ghost"
+                    startContent={<Info size={14} />}
+                    onClick={() => toast.info('Syncing real-time campus housing capacity data…')}
+                  >
+                    Trigger Info Toast
+                  </Button>
+                </div>
+              </Card>
             </div>
           </div>
         )}

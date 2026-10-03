@@ -80,7 +80,8 @@ All brand colors, semantic states, corner radii, and standard sizes are centrali
 - **Container**: `rounded-2xl border border-slate-200/90 bg-white/95 backdrop-blur-xs p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200`.
 - **Height**: Compact **~80px** total height (never excessively tall).
 - **Top Row**: Label (`text-[11px] font-bold uppercase tracking-wider text-slate-500`) + Icon badge (`h-7 w-7 rounded-lg`).
-- **Bottom Row**: Value (`text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-none`) aligned baseline with Subtext / Trend Chip.
+- **Bottom Row**: Value (`text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-none`) aligned baseline with muted Subtext (`text-[11px] font-medium text-slate-400`).
+- **Strictly Follow `AdminDashboardPage.jsx`**: **NEVER pass extraneous `trend` pill chips** (e.g. `trend="Active"`, `trend="Total"`, `trend="Landlords"`) on standard KPI cards. Only use `label`, `value`, `variant`, `icon`, and `subtext`. The golden KPI cards are clean and uncluttered.
 
 ### C. Page Titles & Body Text
 - **Page Title**: `text-2xl sm:text-3xl font-bold tracking-tight text-slate-900`.
@@ -145,3 +146,79 @@ Every button in the application must use `client/src/components/common/Button.js
 - **Default Container**: `mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6`.
 - **Full-Width Views**: `w-full px-4 sm:px-6 lg:px-8 py-6`.
 - All pages across DormSafe must strictly render within this universal wrapper for unified alignment.
+
+---
+
+## 9. Single-Row Compact Filter & Search Toolbar Standard
+
+All table, queue, and listing pages must present their status selectors and filter inputs in a **single, unified, responsive flex-wrap row**:
+
+- **No Visible Outer Containers for 2nd Row**: Do **NOT** enclose search inputs, property selects, and date pickers in bulky separate white card boxes or distinct 2nd-row panels with heavy borders.
+- **No Redundant Field Labels**: Omit vertical uppercase labels above inline filters (`SEARCH NAME`, `SUBMITTED FROM`, etc.). Rely on clean placeholders (`placeholder="Search dorm or address…"`) and native date tooltips.
+- **Preserve Standard Full Heights**: Always keep standard input/control height (`h-10` / 40px) across inputs, selectors, and status tab capsules. Never shrink control heights.
+- **Compact Widths**:
+  - Search Input: Compact `w-44 sm:w-52` with inline search icon.
+  - Dropdown / Select: Compact `w-36 sm:w-44`.
+  - Date Pickers: Compact `w-32 sm:w-36`.
+- **Right-Edge Status Selector Placement**:
+  - Left Group: Filter inputs (Search, Selects, Dates, Reset).
+  - Right Group: Status selector / toggle tabs positioned on the **right side edge**.
+  - Outer Wrapper: `flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-3.5`.
+- **Responsive Flex Flow**: On wide viewports, the filter inputs and right-aligned selector sit cleanly on a single row separated by a gap; on smaller viewports, controls gracefully wrap to the row below.
+
+---
+
+## 10. Detail & Inspection Page Standards (No KPIs & Unified Header Actions)
+
+When designing or modifying record inspection or detail review pages (e.g. `AdminListingDetailPage`, `AccountVerificationPage`, `PropertyDetailPage`):
+
+- **No KPIs on Detail Pages**: Detail pages must **NEVER** render top KPI summary cards or metric highlight strips. KPIs are reserved exclusively for executive dashboards and aggregate overview pages. Detail pages must immediately open into structured content inspection (Overview, Media, Permits, Credentials).
+- **Single Unified Header Action Bar**: All main actions and navigation must live exclusively in the top `headerAction` slot:
+  - **Back Button Placement**: Place `<Button variant="ghost" startContent={<ArrowLeft size={14} />}>Back to ...</Button>` on the far left of the header action button group.
+  - **Destructive Actions**: Placed in the middle (`variant="danger"` with icon).
+  - **Primary Action**: Placed at the far right (`variant="primary"` with icon).
+- **No Redundant Decision Cards**: Never render duplicate decision containers or bottom sidebar cards that only repeat the action buttons already present in the header.
+- **Embedded Metadata Placement**: Move record metadata (Property Type, Verification Status, Document Completeness, Photo Count) directly into the relevant card headers or page title badge chips rather than standalone stat blocks.
+
+---
+
+## 11. Universal Pagination & Card Density Standard (15 Items Maximum)
+
+All card lists, directories, queues, moderation feeds, and data tables across the platform must enforce a strict **15 items per page maximum** (`itemsPerPage = 15` or `limit = 15`):
+
+- **Strict Card Density Cap**: Never allow unbounded lists or lists larger than 15 items per view. Lists of 15 cards maintain optimal viewport rendering, low memory footprint, and consistent scrolling rhythm.
+- **Unified Pagination Controls**: All paginated views must present the Golden Pagination Bar beneath the card list:
+  - **Left**: Current page and total count indicator (`Showing page X of Y (N matching records)`).
+  - **Right**: Previous Button, numerical circular page buttons (`1, 2, 3...` with Ateneo Blue active pill), and Next Button.
+- **Filter Reset Synchronicity**: Any modification to search inputs, dropdown filters, or status tabs must immediately reset the active page back to `page = 1`.
+
+---
+
+## 12. Mobile Filter & Header Responsiveness Standard
+
+To guarantee zero UI collisions, overlapping text, or squished controls on mobile and narrow viewports:
+
+- **Section Headers & Sort Controls**: Never use rigid horizontal `flex items-center justify-between` on headers that contain multi-line subtitles and sort buttons. Always use:
+  ```jsx
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200 pb-2.5">
+    <div className="min-w-0 flex-1">
+      <h2 className="text-base font-semibold text-slate-900">Title</h2>
+      <p className="text-xs text-slate-500 mt-0.5">Description...</p>
+    </div>
+    <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0 self-start sm:self-auto pt-0.5 sm:pt-0">
+      <span>Sort:</span>
+      <button ...>...</button>
+    </div>
+  </div>
+  ```
+- **Horizontal Status / Category Tabs on Mobile**: Never lock tabs in rigid non-wrapping or non-scrollable bars. Always wrap in a touch-scrollable container with hidden scrollbars:
+  ```jsx
+  <div className="w-full lg:w-auto overflow-x-auto no-scrollbar py-0.5">
+    <div className="inline-flex min-w-full sm:min-w-0 items-center gap-1 p-1 h-10 rounded-2xl bg-slate-100/90 border border-slate-200/70 shrink-0">
+      {tabs.map((tab) => (
+        <button key={tab.id} className="... whitespace-nowrap shrink-0">...</button>
+      ))}
+    </div>
+  </div>
+  ```
+- **Filter Inputs Fluid Widths**: Inputs on mobile must flex smoothly (`w-full sm:w-52`, `w-full sm:w-44`, and date pickers grouped in `grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center`).

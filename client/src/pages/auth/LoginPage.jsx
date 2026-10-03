@@ -5,24 +5,33 @@ import { BrandLogo } from '../../components/common/BrandLogo';
 
 export function LoginPage() {
   return (
-    <AuthPageLayout>
-      <div className="mx-auto max-w-md rounded-2xl border border-slate-200/90 bg-white p-8 shadow-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <BrandLogo size="lg" subtitle="Ateneo de Davao University" />
-          <h1 className="mt-4 text-xl font-bold text-gray-900">Sign in to your account</h1>
-          <p className="mt-1 text-xs text-gray-500">
-            Access verified housing and campus services.
+    <AuthPageLayout cardMaxWidth="max-w-md">
+      <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-7 xl:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-md">
+        {/* Mobile-only logo display */}
+        <div className="lg:hidden mb-4 flex justify-center">
+          <BrandLogo size="md" subtitle="Ateneo de Davao University" />
+        </div>
+
+        <div className="mb-4 text-left">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Sign in to your account</h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Access verified student housing, stay records, and campus safety services.
           </p>
         </div>
-        <div className="mt-6">
-          <LoginForm />
+
+        <LoginForm />
+
+        <div className="mt-4 pt-3.5 border-t border-slate-100 text-center">
+          <p className="text-xs text-slate-600">
+            Don&apos;t have an account yet?{' '}
+            <Link
+              to="/register"
+              className="font-semibold text-ateneo-blue hover:text-blue-700 hover:underline transition-colors"
+            >
+              Register here
+            </Link>
+          </p>
         </div>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          No account?{' '}
-          <Link to="/register" className="text-ateneo-blue hover:underline">
-            Register
-          </Link>
-        </p>
       </div>
     </AuthPageLayout>
   );

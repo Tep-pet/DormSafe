@@ -33,6 +33,7 @@ import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Button } from '../../components/common/Button';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { formatPrice } from '../../utils/formatPrice';
 import { ROUTES } from '../../constants/routes';
@@ -40,6 +41,7 @@ import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 
 export function AdminDashboardPage() {
   const { accessToken } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
@@ -50,7 +52,6 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [actionMessage, setActionMessage] = useState(null);
 
   const fetchDashboardData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
@@ -88,12 +89,10 @@ export function AdminDashboardPage() {
   const handleQuickApproveListing = async (id, name) => {
     try {
       await adminService.approveListing(id, accessToken);
-      setActionMessage({ type: 'success', text: `Approved listing: ${name}` });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.success(`Approved listing: "${name}"`);
       fetchDashboardData(true);
     } catch (err) {
-      setActionMessage({ type: 'error', text: err.message || 'Failed to approve listing' });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.error(err.message || 'Failed to approve listing');
     }
   };
 
@@ -102,12 +101,10 @@ export function AdminDashboardPage() {
     const reason = window.prompt(`Provide reason for rejecting "${name}" (optional):`);
     try {
       await adminService.rejectListing(id, accessToken);
-      setActionMessage({ type: 'warning', text: `Rejected listing: ${name}` });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.warning(`Rejected listing: "${name}"`);
       fetchDashboardData(true);
     } catch (err) {
-      setActionMessage({ type: 'error', text: err.message || 'Failed to reject listing' });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.error(err.message || 'Failed to reject listing');
     }
   };
 
@@ -115,12 +112,10 @@ export function AdminDashboardPage() {
   const handleQuickApproveAccount = async (id, name) => {
     try {
       await adminService.reviewAccountVerification(id, { status: 'approved' }, accessToken);
-      setActionMessage({ type: 'success', text: `Verified account: ${name}` });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.success(`Verified account for: "${name}"`);
       fetchDashboardData(true);
     } catch (err) {
-      setActionMessage({ type: 'error', text: err.message || 'Failed to verify account' });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.error(err.message || 'Failed to verify account');
     }
   };
 
@@ -129,12 +124,10 @@ export function AdminDashboardPage() {
     const notes = window.prompt(`Rejection reason for "${name}" (optional):`);
     try {
       await adminService.reviewAccountVerification(id, { status: 'rejected', notes: notes || null }, accessToken);
-      setActionMessage({ type: 'warning', text: `Rejected account verification: ${name}` });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.warning(`Rejected account verification for: "${name}"`);
       fetchDashboardData(true);
     } catch (err) {
-      setActionMessage({ type: 'error', text: err.message || 'Failed to reject verification' });
-      setTimeout(() => setActionMessage(null), 4000);
+      toast.error(err.message || 'Failed to reject verification');
     }
   };
 
@@ -201,33 +194,6 @@ export function AdminDashboardPage() {
       subtitle="Overview, real-time system health, and campus housing operations"
       headerAction={headerAction}
     >
-      {/* Dynamic Action Notification Toast */}
-      {actionMessage && (
-        <div
-          className={`mb-6 flex items-center justify-between rounded-2xl border p-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            actionMessage.type === 'success'
-              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800'
-              : actionMessage.type === 'warning'
-              ? 'bg-amber-50/90 border-amber-200 text-amber-800'
-              : 'bg-rose-50/90 border-rose-200 text-rose-800'
-          }`}
-        >
-          <div className="flex items-center gap-2.5 text-xs font-semibold">
-            {actionMessage.type === 'success' && <CheckCircle2 size={16} className="text-emerald-600" />}
-            {actionMessage.type === 'warning' && <AlertTriangle size={16} className="text-amber-600" />}
-            {actionMessage.type === 'error' && <XCircle size={16} className="text-rose-600" />}
-            <span>{actionMessage.text}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setActionMessage(null)}
-            className="text-xs font-bold hover:opacity-80"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {loading ? (
         <PageSkeleton variant="dashboard" count={4} />
       ) : error ? (
@@ -643,8 +609,8 @@ export function AdminDashboardPage() {
 
             {/* Moderator Activity & Audit History */}
             <Card shadow="sm" className="rounded-2xl border border-slate-200/90 bg-white p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-semibold text-slate-900">
                     Your Moderator Session Activity
                   </h3>
@@ -654,7 +620,7 @@ export function AdminDashboardPage() {
                 </div>
                 <Link
                   to={ROUTES.ADMIN_AUDIT_LOG}
-                  className="text-xs font-semibold text-ateneo-blue hover:underline"
+                  className="text-xs font-semibold text-ateneo-blue hover:underline shrink-0 self-start sm:self-auto pt-0.5 sm:pt-0"
                 >
                   Full Audit Trail
                 </Link>
