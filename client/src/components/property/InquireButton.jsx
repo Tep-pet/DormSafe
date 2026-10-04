@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Modal,
@@ -8,6 +8,17 @@ import {
   ModalFooter,
   Chip,
 } from '@heroui/react';
+import {
+  Send,
+  CheckCircle2,
+  AlertTriangle,
+  Building2,
+  Phone,
+  User,
+  BedDouble,
+  Calendar,
+  MessageSquare,
+} from 'lucide-react';
 import { Button } from '../common/Button';
 import { Input, Textarea } from '../common/Input';
 import { resolvePropertyContact } from '../../utils/parseContact';
@@ -83,10 +94,13 @@ export function InquireButton({
     <>
       <Button
         variant="primary"
+        size="sm"
+        radius="full"
         onClick={() => setIsOpen(true)}
-        className="w-full sm:w-auto"
+        startContent={<Send size={13} strokeWidth={2} />}
+        className="w-full sm:w-auto font-semibold"
       >
-        Inquire & Avail Room
+        Inquire & Request Room
       </Button>
 
       <Modal
@@ -95,47 +109,56 @@ export function InquireButton({
         size="md"
         backdrop="blur"
         classNames={{
-          base: 'rounded-2xl border border-gray-100 shadow-2xl bg-white',
-          header: 'border-b border-gray-100 p-5',
-          body: 'p-5',
-          footer: 'border-t border-gray-100 p-4',
+          base: 'rounded-2xl border border-slate-200/90 shadow-2xl bg-white',
+          header: 'border-b border-slate-100 p-5',
+          body: 'p-5 space-y-4',
+          footer: 'border-t border-slate-100 p-4 bg-slate-50/50',
         }}
       >
         <ModalContent>
           {() => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                <h3 className="text-lg font-bold text-gray-900">Inquire & Request Room</h3>
-                <p className="text-xs font-medium text-gray-500">{propertyName}</p>
+              <ModalHeader className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 text-ateneo-blue">
+                  <Building2 size={18} />
+                  <h3 className="text-base font-bold text-slate-900">Inquire & Request Room</h3>
+                </div>
+                <p className="text-xs font-normal text-slate-500">{propertyName}</p>
               </ModalHeader>
 
-              <ModalBody className="space-y-4">
-                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                    Listing & Owner Info
-                  </h4>
-                  <div className="space-y-1.5 text-xs">
-                    {name && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500 font-medium">Owner:</span>
-                        <span className="font-semibold text-gray-900">{name}</span>
-                      </div>
-                    )}
-                    {phone && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500 font-medium">Contact:</span>
-                        <span className="font-semibold text-ateneo-blue">{phone}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center pt-1 border-t border-gray-200">
-                      <span className="text-gray-500 font-medium">Selected Unit:</span>
-                      <Chip size="sm" color="primary" variant="flat" className="font-bold">
-                        {room?.label || 'Choose a room on page'}
-                      </Chip>
+              <ModalBody>
+                {/* Landlord Info Ribbon */}
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 flex items-center gap-1">
+                      <User size={12} className="text-slate-400" />
+                      Landlord:
+                    </span>
+                    <span className="font-semibold text-slate-800">{name || 'Property Owner'}</span>
+                  </div>
+
+                  {phone && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1">
+                        <Phone size={12} className="text-slate-400" />
+                        Direct Line:
+                      </span>
+                      <span className="font-bold text-ateneo-blue">{phone}</span>
                     </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/70">
+                    <span className="text-slate-500 flex items-center gap-1">
+                      <BedDouble size={12} className="text-slate-400" />
+                      Selected Unit:
+                    </span>
+                    <span className="font-bold text-slate-800 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px]">
+                      {room?.label || 'Choose a room on detail view'}
+                    </span>
                   </div>
                 </div>
 
+                {/* Form Inputs */}
                 <div className="space-y-3">
                   <Input
                     label="Move-In Date"
@@ -154,47 +177,61 @@ export function InquireButton({
                   />
 
                   <Textarea
-                    label="Message to Owner (Optional)"
+                    label="Message to Landlord (Optional)"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="e.g. Inquiring for 2nd semester, move-in right after finals."
-                    minRows={3}
+                    minRows={2}
                   />
                 </div>
 
+                {/* Success Banner */}
                 {sent && (
-                  <div className="rounded-xl bg-green-50 border border-green-200 p-3.5 text-xs text-green-800">
-                    <p className="font-bold">Request Sent Successfully!</p>
-                    <p className="mt-1">
-                      The property owner has been notified. You can manage or track your inquiry from{' '}
-                      <Link
-                        to={ROUTES.STUDENT_REQUESTS}
-                        className="font-bold text-ateneo-blue underline"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Requests
-                      </Link>
-                      .
-                    </p>
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 text-xs text-emerald-800 flex items-start gap-2 shadow-2xs">
+                    <CheckCircle2 size={16} className="shrink-0 text-emerald-600 mt-0.5" />
+                    <div>
+                      <p className="font-bold">Request Sent to Owner!</p>
+                      <p className="mt-0.5 text-emerald-700">
+                        The property owner has received your move-in dates. Track your inquiry status under{' '}
+                        <Link
+                          to={ROUTES.STUDENT_REQUESTS}
+                          className="font-bold text-ateneo-blue underline hover:text-blue-800"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Room Requests
+                        </Link>
+                        .
+                      </p>
+                    </div>
                   </div>
                 )}
 
+                {/* Error Banner */}
                 {error && (
-                  <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-medium">
-                    {error}
+                  <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 font-medium flex items-start gap-2">
+                    <AlertTriangle size={15} className="shrink-0 text-rose-500 mt-0.5" />
+                    <span>{error}</span>
                   </div>
                 )}
               </ModalBody>
 
-              <ModalFooter className="flex gap-2">
-                <Button variant="ghost" onClick={() => setIsOpen(false)}>
+              <ModalFooter className="flex items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  radius="full"
+                  onClick={() => setIsOpen(false)}
+                >
                   Close
                 </Button>
                 <Button
                   variant="primary"
+                  size="sm"
+                  radius="full"
                   onClick={handleAvail}
                   isLoading={sending}
                   disabled={!room?.id || sent}
+                  startContent={!sent ? <Send size={13} /> : <CheckCircle2 size={13} />}
                 >
                   {sent ? 'Sent' : 'Submit Request'}
                 </Button>
@@ -206,3 +243,4 @@ export function InquireButton({
     </>
   );
 }
+

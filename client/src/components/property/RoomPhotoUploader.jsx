@@ -1,12 +1,17 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, Chip, Button as HeroUIButton } from '@heroui/react';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { IMAGE_SIZE_HINT } from '../../constants/uploadLimits';
 
 const MAX_PHOTOS = 8;
 const ACCEPT =
   '.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic,image/heif';
 
+/**
+ * RoomPhotoUploader Component
+ * Allows owners to upload and preview multiple property/room photos.
+ * Adheres to Golden DormSafe Design Standards.
+ */
 export function RoomPhotoUploader({ photos, onChange }) {
   const inputRef = useRef(null);
   const photosRef = useRef(photos);
@@ -45,13 +50,18 @@ export function RoomPhotoUploader({ photos, onChange }) {
 
   return (
     <div className="space-y-3">
-      <div>
-        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-          Room Photos ({photos.length}/{MAX_PHOTOS})
-        </label>
-        <p className="mt-0.5 text-xs text-gray-500">
-          Upload up to {MAX_PHOTOS} photos. The first photo acts as the listing thumbnail. {IMAGE_SIZE_HINT}.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <label className="block text-xs font-semibold text-slate-700">
+            Property & room photos
+          </label>
+          <p className="mt-0.5 text-xs text-slate-500 font-normal">
+            Upload up to {MAX_PHOTOS} photos. The first image acts as the primary listing cover. {IMAGE_SIZE_HINT}.
+          </p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 border border-slate-200/80">
+          {photos.length}/{MAX_PHOTOS} Photos
+        </span>
       </div>
 
       {photos.length > 0 && (
@@ -60,20 +70,28 @@ export function RoomPhotoUploader({ photos, onChange }) {
             <Card
               key={photo.previewUrl}
               shadow="sm"
-              className="relative overflow-hidden rounded-2xl border border-gray-200 group"
+              className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white"
             >
               <img
                 src={photo.previewUrl}
                 alt={`Room preview ${index + 1}`}
-                className="h-28 w-full object-cover group-hover:scale-105 transition duration-200"
+                className="h-28 w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              
               {index === 0 && (
                 <div className="absolute left-2 top-2 z-10">
-                  <Chip size="sm" color="primary" variant="solid" className="text-[10px] font-bold shadow-xs">
-                    Cover
+                  <Chip
+                    size="sm"
+                    color="primary"
+                    variant="solid"
+                    className="h-5 px-2 text-[10px] font-bold shadow-xs bg-ateneo-blue text-white"
+                  >
+                    Cover Photo
                   </Chip>
                 </div>
               )}
+
               <HeroUIButton
                 isIconOnly
                 size="sm"
@@ -81,7 +99,7 @@ export function RoomPhotoUploader({ photos, onChange }) {
                 variant="flat"
                 radius="full"
                 onClick={() => removePhoto(index)}
-                className="absolute right-2 top-2 z-10 h-6 w-6 min-w-6 bg-black/60 text-white backdrop-blur-xs hover:bg-red-600 transition p-0"
+                className="absolute right-2 top-2 z-10 h-6 w-6 min-w-6 bg-black/60 text-white backdrop-blur-xs hover:bg-rose-600 hover:scale-110 transition-all p-0"
                 aria-label="Remove photo"
               >
                 <X size={13} strokeWidth={2.5} />
@@ -107,17 +125,17 @@ export function RoomPhotoUploader({ photos, onChange }) {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/50 py-8 px-4 text-center transition hover:border-ateneo-blue hover:bg-blue-50/20 cursor-pointer"
+            className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300/90 bg-slate-50/50 py-7 px-4 text-center transition-all duration-200 hover:border-ateneo-blue hover:bg-blue-50/30 hover:shadow-xs cursor-pointer"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-ateneo-blue">
-              <Camera size={20} strokeWidth={1.75} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100/80 text-ateneo-blue group-hover:scale-110 transition-transform duration-200">
+              <UploadCloud size={20} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-800">
-                {photos.length === 0 ? 'Click to select room photos' : 'Add more photos'}
+              <p className="text-xs font-bold text-slate-800 group-hover:text-ateneo-blue transition-colors">
+                {photos.length === 0 ? 'Click or drag to upload room & property photos' : 'Add more photos'}
               </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                PNG, JPG, WEBP up to 5MB each
+              <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
+                PNG, JPG, WEBP, HEIC up to 5MB each
               </p>
             </div>
           </button>

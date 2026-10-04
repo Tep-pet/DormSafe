@@ -23,8 +23,8 @@ export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) 
 
   if (!apiKey) {
     return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-100 p-4 text-center text-sm text-gray-600">
-        Add <code className="mx-1 rounded bg-gray-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
+      <div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-600">
+        Add <code className="mx-1 rounded bg-slate-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
         client/.env to enable the map.
       </div>
     );

@@ -147,8 +147,8 @@ export function RegisterForm() {
           radius="lg"
           size="sm"
           classNames={{
-            label: 'text-xs font-semibold text-gray-700 mb-1',
-            trigger: 'border-gray-300 hover:border-gray-400 bg-white shadow-2xs',
+            label: 'text-xs font-semibold text-slate-700 mb-1',
+            trigger: 'border-slate-200/90 hover:border-slate-300 bg-white shadow-2xs',
           }}
         >
           {REGISTERABLE_ROLES.map((r) => (
@@ -160,16 +160,16 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-gray-700">Valid ID Photo</label>
+        <label className="block text-xs font-semibold text-slate-700">Valid ID Photo</label>
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
           <input
             type="file"
             accept={IMAGE_ACCEPT}
             onChange={(e) => setIdFile(e.target.files?.[0] || null)}
             required
-            className="block w-full text-xs text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:opacity-90 cursor-pointer"
+            className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:opacity-90 cursor-pointer"
           />
-          <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500">
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500">
             <span>Required for verification. {IMAGE_SIZE_HINT}.</span>
             {idFile && (
               <span className="inline-flex items-center gap-1 font-medium text-emerald-600">
@@ -183,7 +183,7 @@ export function RegisterForm() {
 
       {isOwner && (
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-gray-700">
+          <label className="block text-xs font-semibold text-slate-700">
             Business License / Permit
           </label>
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
@@ -192,9 +192,9 @@ export function RegisterForm() {
               accept={IMAGE_ACCEPT}
               onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
               required
-              className="block w-full text-xs text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:opacity-90 cursor-pointer"
+              className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ateneo-blue file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:opacity-90 cursor-pointer"
             />
-            <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500">
+            <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500">
               <span>Required for property owners. {IMAGE_SIZE_HINT}.</span>
               {licenseFile && (
                 <span className="inline-flex items-center gap-1 font-medium text-emerald-600">
@@ -222,7 +222,7 @@ export function RegisterForm() {
         {loading ? 'Creating account…' : 'Create Account'}
       </Button>
 
-      <p className="text-[11px] text-center text-gray-500">
+      <p className="text-[11px] text-center text-slate-500">
         After registration, an administrator will verify your credentials before access is granted.
       </p>
     </form>

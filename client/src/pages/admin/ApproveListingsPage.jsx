@@ -37,6 +37,8 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Pagination } from '../../components/common/Pagination';
+import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -44,6 +46,7 @@ import { adminService } from '../../services/adminService';
 import { formatPrice } from '../../utils/formatPrice';
 import { ROUTES } from '../../constants/routes';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
+import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
 export function ApproveListingsPage() {
   const { accessToken } = useAuth();
@@ -61,7 +64,7 @@ export function ApproveListingsPage() {
 
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 15,
+    limit: ITEMS_PER_PAGE,
     sort: 'desc',
     status: 'pending',
     propertyId: '',
@@ -363,10 +366,9 @@ export function ApproveListingsPage() {
 
             {/* 2. Property Selector Dropdown */}
             <div className="w-full sm:w-44">
-              <select
+              <Select
                 value={filters.propertyId}
                 onChange={(e) => setFilters((f) => ({ ...f, propertyId: e.target.value, page: 1 }))}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All properties</option>
                 {properties.map((p) => (
@@ -374,7 +376,7 @@ export function ApproveListingsPage() {
                     {p.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {/* 3 & 4. Date From & To */}
@@ -720,60 +722,13 @@ export function ApproveListingsPage() {
             </div>
           )}
 
-          {/* ==================================================================== */}
-          {/* SECTION 5: PAGINATION & RESULTS COUNTER */}
-          {/* ==================================================================== */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
-              <p className="text-xs text-slate-500 font-normal">
-                Showing page <span className="font-semibold text-slate-800">{filters.page}</span> of{' '}
-                <span className="font-semibold text-slate-800">{totalPages}</span> ({totalCount} total listings)
-              </p>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={filters.page <= 1}
-                  onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-                >
-                  Previous
-                </Button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - filters.page) <= 1)
-                  .map((p, idx, arr) => (
-                    <React.Fragment key={p}>
-                      {idx > 0 && arr[idx - 1] !== p - 1 && (
-                        <span className="px-1 text-xs text-slate-400">…</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setFilters((f) => ({ ...f, page: p }))}
-                        className={`h-7 w-7 rounded-full text-xs font-semibold transition-all ${
-                          filters.page === p
-                            ? 'bg-ateneo-blue text-white shadow-xs'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  ))}
-
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={filters.page >= totalPages}
-                  onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            page={filters.page}
+            totalPages={totalPages}
+            onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+            totalItems={totalCount}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
         </section>
       </div>
 
@@ -799,17 +754,10 @@ export function ApproveListingsPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Administrative Rejection Remarks (Optional)
-              </label>
-              <textarea
-                value={rejectionModal.reason}
-                onChange={(e) => setRejectionModal((m) => ({ ...m, reason: e.target.value }))}
-                placeholder="e.g. Incomplete business permit, insufficient egress fire safety, or invalid campus proximity."
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-ateneo-blue focus:bg-white focus:outline-hidden"
-              />
+            <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50 p-3.5 text-xs text-slate-600">
+              <p>
+                Rejecting this listing will decline its approval request and mark it as rejected in the housing directory. The property owner will be notified.
+              </p>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-2">

@@ -31,6 +31,7 @@ import {
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Button } from '../../components/common/Button';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -52,6 +53,13 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    type: null,
+    targetId: null,
+    targetName: '',
+    isLoading: false,
+  });
 
   const fetchDashboardData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
@@ -97,15 +105,14 @@ export function AdminDashboardPage() {
   };
 
   // Quick Action: Inline Reject Listing
-  const handleQuickRejectListing = async (id, name) => {
-    const reason = window.prompt(`Provide reason for rejecting "${name}" (optional):`);
-    try {
-      await adminService.rejectListing(id, accessToken);
-      toast.warning(`Rejected listing: "${name}"`);
-      fetchDashboardData(true);
-    } catch (err) {
-      toast.error(err.message || 'Failed to reject listing');
-    }
+  const handleQuickRejectListing = (id, name) => {
+    setConfirmDialog({
+      isOpen: true,
+      type: 'reject_listing',
+      targetId: id,
+      targetName: name,
+      isLoading: false,
+    });
   };
 
   // Quick Action: Inline Approve Account
@@ -120,14 +127,35 @@ export function AdminDashboardPage() {
   };
 
   // Quick Action: Inline Reject Account
-  const handleQuickRejectAccount = async (id, name) => {
-    const notes = window.prompt(`Rejection reason for "${name}" (optional):`);
+  const handleQuickRejectAccount = (id, name) => {
+    setConfirmDialog({
+      isOpen: true,
+      type: 'reject_account',
+      targetId: id,
+      targetName: name,
+      isLoading: false,
+    });
+  };
+
+  const handleConfirmDialogAction = async (reason) => {
+    setConfirmDialog((prev) => ({ ...prev, isLoading: true }));
     try {
-      await adminService.reviewAccountVerification(id, { status: 'rejected', notes: notes || null }, accessToken);
-      toast.warning(`Rejected account verification for: "${name}"`);
+      if (confirmDialog.type === 'reject_listing') {
+        await adminService.rejectListing(confirmDialog.targetId, accessToken);
+        toast.warning(`Rejected listing: "${confirmDialog.targetName}"`);
+      } else if (confirmDialog.type === 'reject_account') {
+        await adminService.reviewAccountVerification(
+          confirmDialog.targetId,
+          { status: 'rejected', notes: reason || null },
+          accessToken
+        );
+        toast.warning(`Rejected account verification for: "${confirmDialog.targetName}"`);
+      }
+      setConfirmDialog({ isOpen: false, type: null, targetId: null, targetName: '', isLoading: false });
       fetchDashboardData(true);
     } catch (err) {
-      toast.error(err.message || 'Failed to reject verification');
+      toast.error(err.message || 'Operation failed');
+      setConfirmDialog((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -669,6 +697,25 @@ export function AdminDashboardPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() =>
+          setConfirmDialog({ isOpen: false, type: null, targetId: null, targetName: '', isLoading: false })
+        }
+        onConfirm={handleConfirmDialogAction}
+        isLoading={confirmDialog.isLoading}
+        confirmVariant="danger"
+        confirmLabel={confirmDialog.type === 'reject_listing' ? 'Reject Listing' : 'Reject Account'}
+        title={confirmDialog.type === 'reject_listing' ? 'Reject Property Listing' : 'Reject Account Verification'}
+        message={
+          confirmDialog.type === 'reject_listing'
+            ? `Are you sure you want to reject the listing "${confirmDialog.targetName}"? The property owner will be notified.`
+            : `Are you sure you want to reject verification for "${confirmDialog.targetName}"?`
+        }
+        withReason={confirmDialog.type === 'reject_account'}
+        reasonLabel="Reason for rejection (communicated to applicant)"
+        reasonPlaceholder="Specify why documents were rejected (e.g., blurry ID, expired permit)…"
+      />
     </AdminLayout>
   );
 }

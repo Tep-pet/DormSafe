@@ -69,7 +69,7 @@ export function NotificationBell() {
               variant="light"
               radius="full"
               aria-label="Notifications"
-              className="text-gray-600 hover:text-ateneo-blue hover:bg-gray-100"
+              className="text-slate-600 hover:text-ateneo-blue hover:bg-slate-100"
             >
               <Bell size={18} strokeWidth={2} />
             </HeroUIButton>
@@ -77,11 +77,11 @@ export function NotificationBell() {
         </div>
       </PopoverTrigger>
 
-      <PopoverContent className="w-80 p-0 shadow-xl border border-gray-100 rounded-2xl overflow-hidden">
+      <PopoverContent className="w-80 p-0 shadow-xl border border-slate-200/90 rounded-2xl overflow-hidden">
         <div className="w-full bg-white">
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 bg-gray-50/50">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50">
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-gray-900">Notifications</h4>
+              <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
               {count > 0 && (
                 <Chip size="sm" color="primary" variant="flat" className="text-xs font-semibold">
                   {count} new
@@ -91,17 +91,17 @@ export function NotificationBell() {
             <button
               type="button"
               onClick={load}
-              className="text-gray-400 hover:text-gray-600 transition p-1 rounded-lg hover:bg-gray-100"
+              className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
               title="Refresh"
             >
               <RotateCw size={13} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
-          <ScrollShadow className="max-h-80 w-full overflow-y-auto divide-y divide-gray-100">
+          <ScrollShadow className="max-h-80 w-full overflow-y-auto divide-y divide-slate-100">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-gray-400">
-                <Inbox size={24} className="text-gray-300 mb-1" strokeWidth={1.5} />
+              <div className="flex flex-col items-center justify-center py-8 text-center text-slate-400">
+                <Inbox size={24} className="text-slate-300 mb-1" strokeWidth={1.5} />
                 <p className="text-xs">No notifications yet</p>
               </div>
             ) : (
@@ -112,8 +112,8 @@ export function NotificationBell() {
                     n.read_at ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50/70'
                   }`}
                 >
-                  <p className="text-xs font-semibold text-gray-900">{n.title}</p>
-                  {n.body && <p className="mt-0.5 text-xs text-gray-600 leading-relaxed">{n.body}</p>}
+                  <p className="text-xs font-semibold text-slate-900">{n.title}</p>
+                  {n.body && <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">{n.body}</p>}
                   {!n.read_at && (
                     <button
                       type="button"

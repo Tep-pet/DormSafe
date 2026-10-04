@@ -33,11 +33,14 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Pagination } from '../../components/common/Pagination';
+import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROUTES } from '../../constants/routes';
+import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
 export function ModerateReviewsPage() {
   const { accessToken } = useAuth();
@@ -57,7 +60,6 @@ export function ModerateReviewsPage() {
   const [activeQueueTab, setActiveQueueTab] = useState('all'); // 'all' | 'reviews' | 'reports'
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
-  const itemsPerPage = 15;
 
   // Sync search state with URL search param
   useEffect(() => {
@@ -179,16 +181,16 @@ export function ModerateReviewsPage() {
   }, [reports, search]);
 
   // Pagination Calculations
-  const totalReviewPages = Math.max(1, Math.ceil(filteredReviews.length / itemsPerPage));
+  const totalReviewPages = Math.max(1, Math.ceil(filteredReviews.length / ITEMS_PER_PAGE));
   const paginatedReviews = useMemo(() => {
-    const start = (reviewsPage - 1) * itemsPerPage;
-    return filteredReviews.slice(start, start + itemsPerPage);
+    const start = (reviewsPage - 1) * ITEMS_PER_PAGE;
+    return filteredReviews.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredReviews, reviewsPage]);
 
-  const totalReportPages = Math.max(1, Math.ceil(filteredReports.length / itemsPerPage));
+  const totalReportPages = Math.max(1, Math.ceil(filteredReports.length / ITEMS_PER_PAGE));
   const paginatedReports = useMemo(() => {
-    const start = (reportsPage - 1) * itemsPerPage;
-    return filteredReports.slice(start, start + itemsPerPage);
+    const start = (reportsPage - 1) * ITEMS_PER_PAGE;
+    return filteredReports.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredReports, reportsPage]);
 
   // Reset Filters
@@ -296,7 +298,7 @@ export function ModerateReviewsPage() {
 
           <StatsCard
             label="Average Queue Rating"
-            value={reviews.length > 0 ? `${avgRating} ★` : '—'}
+            value={reviews.length > 0 ? `${avgRating} / 5` : '—'}
             icon={<Star size={16} strokeWidth={2} />}
             variant="default"
             subtext="pending review benchmark"
@@ -326,16 +328,15 @@ export function ModerateReviewsPage() {
 
             {/* 2. Star Rating Dropdown (only relevant for reviews) */}
             <div className="w-full sm:w-44">
-              <select
+              <Select
                 value={ratingFilter}
                 onChange={(e) => setRatingFilter(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All star ratings</option>
                 <option value="5">5 Stars (Excellent)</option>
                 <option value="4">4 Stars (Good)</option>
                 <option value="low">1-3 Stars (Critical)</option>
-              </select>
+              </Select>
             </div>
 
             {/* Reset Filters CTA if active */}
@@ -550,60 +551,13 @@ export function ModerateReviewsPage() {
                       );
                     })}
 
-                    {/* Reviews Pagination Bar */}
-                    {totalReviewPages > 1 && (
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200">
-                        <p className="text-[11px] text-slate-500 font-normal">
-                          Page <span className="font-semibold text-slate-800">{reviewsPage}</span> of{' '}
-                          <span className="font-semibold text-slate-800">{totalReviewPages}</span> ({filteredReviews.length} reviews)
-                        </p>
-
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            size="sm"
-                            radius="full"
-                            variant="ghost"
-                            disabled={reviewsPage <= 1}
-                            onClick={() => setReviewsPage((p) => Math.max(1, p - 1))}
-                            className="h-7 px-2.5 text-xs"
-                          >
-                            Previous
-                          </Button>
-
-                          {Array.from({ length: totalReviewPages }, (_, i) => i + 1)
-                            .filter((p) => p === 1 || p === totalReviewPages || Math.abs(p - reviewsPage) <= 1)
-                            .map((p, idx, arr) => (
-                              <React.Fragment key={p}>
-                                {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                  <span className="px-1 text-xs text-slate-400">…</span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setReviewsPage(p)}
-                                  className={`h-6 w-6 rounded-full text-[11px] font-semibold transition-all ${
-                                    reviewsPage === p
-                                      ? 'bg-ateneo-blue text-white shadow-xs'
-                                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              </React.Fragment>
-                            ))}
-
-                          <Button
-                            size="sm"
-                            radius="full"
-                            variant="ghost"
-                            disabled={reviewsPage >= totalReviewPages}
-                            onClick={() => setReviewsPage((p) => Math.min(totalReviewPages, p + 1))}
-                            className="h-7 px-2.5 text-xs"
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <Pagination
+                      page={reviewsPage}
+                      totalPages={totalReviewPages}
+                      onPageChange={setReviewsPage}
+                      totalItems={filteredReviews.length}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                    />
                   </div>
                 )}
               </div>
@@ -725,60 +679,13 @@ export function ModerateReviewsPage() {
                       );
                     })}
 
-                    {/* Reports Pagination Bar */}
-                    {totalReportPages > 1 && (
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200">
-                        <p className="text-[11px] text-slate-500 font-normal">
-                          Page <span className="font-semibold text-slate-800">{reportsPage}</span> of{' '}
-                          <span className="font-semibold text-slate-800">{totalReportPages}</span> ({filteredReports.length} reports)
-                        </p>
-
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            size="sm"
-                            radius="full"
-                            variant="ghost"
-                            disabled={reportsPage <= 1}
-                            onClick={() => setReportsPage((p) => Math.max(1, p - 1))}
-                            className="h-7 px-2.5 text-xs"
-                          >
-                            Previous
-                          </Button>
-
-                          {Array.from({ length: totalReportPages }, (_, i) => i + 1)
-                            .filter((p) => p === 1 || p === totalReportPages || Math.abs(p - reportsPage) <= 1)
-                            .map((p, idx, arr) => (
-                              <React.Fragment key={p}>
-                                {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                  <span className="px-1 text-xs text-slate-400">…</span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setReportsPage(p)}
-                                  className={`h-6 w-6 rounded-full text-[11px] font-semibold transition-all ${
-                                    reportsPage === p
-                                      ? 'bg-ateneo-blue text-white shadow-xs'
-                                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              </React.Fragment>
-                            ))}
-
-                          <Button
-                            size="sm"
-                            radius="full"
-                            variant="ghost"
-                            disabled={reportsPage >= totalReportPages}
-                            onClick={() => setReportsPage((p) => Math.min(totalReportPages, p + 1))}
-                            className="h-7 px-2.5 text-xs"
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <Pagination
+                      page={reportsPage}
+                      totalPages={totalReportPages}
+                      onPageChange={setReportsPage}
+                      totalItems={filteredReports.length}
+                      itemsPerPage={ITEMS_PER_PAGE}
+                    />
                   </div>
                 )}
               </div>

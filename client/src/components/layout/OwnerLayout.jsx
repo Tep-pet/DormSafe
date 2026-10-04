@@ -2,7 +2,15 @@ import React from 'react';
 import { PageContainer } from './PageContainer';
 import { PropertyFilter } from '../dashboard/PropertyFilter';
 
-export function OwnerLayout({ children, title, subtitle, headerAction, customBreadcrumbs, fullWidth }) {
+export function OwnerLayout({
+  children,
+  title,
+  subtitle,
+  headerAction,
+  customBreadcrumbs,
+  fullWidth,
+  hidePropertyFilter = false,
+}) {
   return (
     <PageContainer
       title={title}
@@ -12,7 +20,7 @@ export function OwnerLayout({ children, title, subtitle, headerAction, customBre
       fullWidth={fullWidth}
     >
       <div className="space-y-6">
-        <PropertyFilter />
+        {!hidePropertyFilter && <PropertyFilter />}
         <div>{children}</div>
       </div>
     </PageContainer>

@@ -22,20 +22,20 @@ export function DocumentViewer({ title, idUrl, licenseUrl, onClose }) {
       backdrop="blur"
       scrollBehavior="inside"
       classNames={{
-        base: 'rounded-2xl border border-gray-100 shadow-2xl',
-        header: 'border-b border-gray-100 py-4 px-6',
+        base: 'rounded-2xl border border-slate-200/90 shadow-2xl bg-white',
+        header: 'border-b border-slate-100 py-4 px-6',
         body: 'py-6 px-6',
-        footer: 'border-t border-gray-100 py-3 px-6',
+        footer: 'border-t border-slate-100 py-3 px-6',
       }}
     >
       <ModalContent>
         {() => (
           <>
             <ModalHeader className="flex flex-col gap-1">
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-slate-900">
                 {title || 'Verification Documents'}
               </h3>
-              <p className="text-xs font-normal text-gray-500">
+              <p className="text-xs font-normal text-slate-500">
                 Click any image to view in full resolution
               </p>
             </ModalHeader>
@@ -44,10 +44,10 @@ export function DocumentViewer({ title, idUrl, licenseUrl, onClose }) {
               <div className="grid gap-6 sm:grid-cols-2">
                 {idUrl && (
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                       Valid Government ID
                     </span>
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-2 transition hover:border-ateneo-blue">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 transition hover:border-ateneo-blue">
                       <a href={idUrl} target="_blank" rel="noreferrer" className="block">
                         <Image
                           src={idUrl}
@@ -62,10 +62,10 @@ export function DocumentViewer({ title, idUrl, licenseUrl, onClose }) {
 
                 {licenseUrl && (
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                       Business License / Permit
                     </span>
-                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-2 transition hover:border-ateneo-blue">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 transition hover:border-ateneo-blue">
                       <a href={licenseUrl} target="_blank" rel="noreferrer" className="block">
                         <Image
                           src={licenseUrl}

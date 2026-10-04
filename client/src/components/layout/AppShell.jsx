@@ -70,13 +70,15 @@ export function AppShell({
         className={`flex flex-1 flex-col overflow-y-scroll [scrollbar-gutter:stable] min-h-0 min-w-0 relative ${scrollbarClassName}`}
       >
         {/* Topbar: Floating capsule sitting on the side of sidebar */}
-        <div className="sticky top-0 z-30 pt-3 sm:pt-4 px-4 sm:px-6 lg:px-8 pointer-events-none">
-          <AppHeader
-            isScrolled={isScrolled}
-            hasSidebar={hasSidebar}
-            fullWidth={fullWidth}
-            onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          />
+        <div className="sticky top-0 z-30 pt-3 sm:pt-4 pointer-events-none">
+          <div className={fullWidth ? 'w-full px-4 sm:px-6 lg:px-8' : 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'}>
+            <AppHeader
+              isScrolled={isScrolled}
+              hasSidebar={hasSidebar}
+              fullWidth={fullWidth}
+              onOpenMobileMenu={() => setMobileMenuOpen(true)}
+            />
+          </div>
         </div>
 
         {/* Universal Page Viewport with Smooth Graceful Transition */}

@@ -34,12 +34,15 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Pagination } from '../../components/common/Pagination';
+import { Select, Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROLE_LABELS, ROLES } from '../../constants/roles';
 import { ROUTES } from '../../constants/routes';
+import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
 export function ManageUsersPage() {
   const { accessToken } = useAuth();
@@ -59,7 +62,6 @@ export function ManageUsersPage() {
   const [verificationFilter, setVerificationFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
 
   // Modals State
   const [roleModal, setRoleModal] = useState({ isOpen: false, user: null, newRole: '' });
@@ -224,10 +226,10 @@ export function ManageUsersPage() {
   }, [users, roleFilter, verificationFilter, search, sortOrder]);
 
   // Pagination calculation
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredUsers.slice(start, start + itemsPerPage);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredUsers, currentPage]);
 
   // Reset Filters
@@ -366,36 +368,34 @@ export function ManageUsersPage() {
 
             {/* 2. Role Selector Dropdown */}
             <div className="w-full sm:w-44">
-              <select
+              <Select
                 value={roleFilter}
                 onChange={(e) => {
                   setRoleFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All account roles</option>
                 <option value="student">Student (@addu.edu.ph)</option>
                 <option value="owner">Property Owner</option>
                 <option value="admin">Administrator</option>
-              </select>
+              </Select>
             </div>
 
             {/* 3. Verification Status Dropdown */}
             <div className="w-full sm:w-40">
-              <select
+              <Select
                 value={verificationFilter}
                 onChange={(e) => {
                   setVerificationFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All verification</option>
                 <option value="approved">Verified</option>
                 <option value="pending">Pending Review</option>
                 <option value="rejected">Rejected</option>
-              </select>
+              </Select>
             </div>
 
             {/* Reset Filters CTA if active */}
@@ -655,60 +655,13 @@ export function ManageUsersPage() {
             </div>
           )}
 
-          {/* ==================================================================== */}
-          {/* SECTION 4: PAGINATION & DIRECTORY COUNTER */}
-          {/* ==================================================================== */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
-              <p className="text-xs text-slate-500 font-normal">
-                Showing page <span className="font-semibold text-slate-800">{currentPage}</span> of{' '}
-                <span className="font-semibold text-slate-800">{totalPages}</span> ({filteredUsers.length} matching users)
-              </p>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .map((p, idx, arr) => (
-                    <React.Fragment key={p}>
-                      {idx > 0 && arr[idx - 1] !== p - 1 && (
-                        <span className="px-1 text-xs text-slate-400">…</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-7 w-7 rounded-full text-xs font-semibold transition-all ${
-                          currentPage === p
-                            ? 'bg-ateneo-blue text-white shadow-xs'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  ))}
-
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredUsers.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
         </section>
       </div>
 
@@ -822,14 +775,13 @@ export function ManageUsersPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <label className="text-xs font-semibold text-slate-700">Administrative Rejection Reason</label>
-              <textarea
+            <div className="mt-4">
+              <Textarea
+                label="Administrative Rejection Reason"
                 value={rejectionModal.reason}
                 onChange={(e) => setRejectionModal((m) => ({ ...m, reason: e.target.value }))}
                 placeholder="e.g. Unclear student ID, expired ID document, or non-matching registered name."
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-ateneo-blue focus:bg-white focus:outline-hidden"
+                minRows={3}
               />
             </div>
 

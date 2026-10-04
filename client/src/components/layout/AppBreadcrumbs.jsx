@@ -9,19 +9,19 @@ export function AppBreadcrumbs({ customCrumbs }) {
 
   if (customCrumbs) {
     return (
-      <nav aria-label="Breadcrumb" className="mb-3 flex items-center text-xs text-gray-500">
+      <nav aria-label="Breadcrumb" className="mb-3 flex items-center text-xs text-slate-500">
         <ol className="flex flex-wrap items-center gap-1.5">
           {customCrumbs.map((crumb, idx) => {
             const isLast = idx === customCrumbs.length - 1;
             return (
               <li key={idx} className="flex items-center gap-1.5">
-                {idx > 0 && <Icon name="chevronRight" className="h-3 w-3 text-gray-400" />}
+                {idx > 0 && <Icon name="chevronRight" className="h-3 w-3 text-slate-400" />}
                 {crumb.to && !isLast ? (
                   <Link to={crumb.to} className="hover:text-ateneo-blue transition-colors">
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className={isLast ? 'font-medium text-gray-900' : ''}>{crumb.label}</span>
+                  <span className={isLast ? 'font-medium text-slate-800' : ''}>{crumb.label}</span>
                 )}
               </li>
             );
@@ -82,19 +82,19 @@ export function AppBreadcrumbs({ customCrumbs }) {
   if (crumbs.length <= 1) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-3 flex items-center text-xs text-gray-500">
+    <nav aria-label="Breadcrumb" className="mb-3 flex items-center text-xs text-slate-500">
       <ol className="flex flex-wrap items-center gap-1.5">
         {crumbs.map((crumb, idx) => {
           const isLast = idx === crumbs.length - 1;
           return (
             <li key={idx} className="flex items-center gap-1.5">
-              {idx > 0 && <Icon name="chevronRight" className="h-3 w-3 text-gray-400" />}
+              {idx > 0 && <Icon name="chevronRight" className="h-3 w-3 text-slate-400" />}
               {crumb.to && !isLast ? (
                 <Link to={crumb.to} className="hover:text-ateneo-blue transition-colors">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className={isLast ? 'font-medium text-gray-800' : ''}>{crumb.label}</span>
+                <span className={isLast ? 'font-medium text-slate-800' : ''}>{crumb.label}</span>
               )}
             </li>
           );

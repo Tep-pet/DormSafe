@@ -7,7 +7,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
  * - subtleSpring: Dynamic natural feel
  */
 const transitionConfig = {
-  duration: 0.28,
+  duration: 0.24,
   ease: [0.16, 1, 0.3, 1], // Custom smooth cubic-bezier curve
 };
 
@@ -35,20 +35,12 @@ export function PageTransition({
   const motionVariants = {
     initial: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : 6,
+      y: shouldReduceMotion ? 0 : 8,
     },
     animate: {
       opacity: 1,
       y: 0,
       transition: transitionConfig,
-    },
-    exit: {
-      opacity: 0,
-      y: shouldReduceMotion ? 0 : -4,
-      transition: {
-        duration: 0.16,
-        ease: [0.7, 0, 0.84, 0],
-      },
     },
   };
 
@@ -58,33 +50,49 @@ export function PageTransition({
     exit: { opacity: 0, transition: { duration: 0.18 } },
   };
 
+  // If a skeleton is provided, cross-fade smoothly between skeleton and hydrated content
+  if (skeleton) {
+    return (
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="page-skeleton-state"
+            variants={skeletonVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={`w-full ${className}`}
+          >
+            {skeleton}
+          </motion.div>
+        ) : (
+          <motion.div
+            key={pageKey || 'page-content-state'}
+            variants={motionVariants}
+            initial="initial"
+            animate="animate"
+            className={`w-full ${className}`}
+            {...props}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // Pure route entrance animation: mounts smoothly on key change without ghost exit lags
   return (
-    <AnimatePresence mode="wait">
-      {isLoading && skeleton ? (
-        <motion.div
-          key="page-skeleton-state"
-          variants={skeletonVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className={`w-full ${className}`}
-        >
-          {skeleton}
-        </motion.div>
-      ) : (
-        <motion.div
-          key={pageKey || 'page-content-state'}
-          variants={motionVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className={`w-full ${className}`}
-          {...props}
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <motion.div
+      key={pageKey || 'page-content-state'}
+      variants={motionVariants}
+      initial="initial"
+      animate="animate"
+      className={`w-full ${className}`}
+      {...props}
+    >
+      {children}
+    </motion.div>
   );
 }
 

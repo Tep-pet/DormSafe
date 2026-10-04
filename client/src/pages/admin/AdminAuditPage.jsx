@@ -36,11 +36,14 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Pagination } from '../../components/common/Pagination';
+import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROUTES } from '../../constants/routes';
+import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
 function formatAuditDetails(details) {
   if (!details || typeof details !== 'object') return null;
@@ -120,7 +123,6 @@ export function AdminAuditPage() {
   const [entityFilter, setEntityFilter] = useState('');
   const [actionCategoryFilter, setActionCategoryFilter] = useState('all'); // 'all' | 'listing' | 'account' | 'system'
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
 
   // Modal State for JSON Inspection
   const [inspectModal, setInspectModal] = useState({
@@ -257,10 +259,10 @@ export function AdminAuditPage() {
   }, [items, actionCategoryFilter, entityFilter, search]);
 
   // Pagination calculation
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
   const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredItems.slice(start, start + itemsPerPage);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
 
   // Reset Filters
@@ -380,13 +382,12 @@ export function AdminAuditPage() {
 
             {/* 2. Entity Type Selector Dropdown */}
             <div className="w-full sm:w-44">
-              <select
+              <Select
                 value={entityFilter}
                 onChange={(e) => {
                   setEntityFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All entity types</option>
                 <option value="property">Properties / Listings</option>
@@ -394,7 +395,7 @@ export function AdminAuditPage() {
                 <option value="tenant">Tenants & Stays</option>
                 <option value="review">Reviews & Reports</option>
                 <option value="system">System / Operations</option>
-              </select>
+              </Select>
             </div>
 
             {/* Reset Filters CTA if active */}
@@ -603,60 +604,13 @@ export function AdminAuditPage() {
             </div>
           )}
 
-          {/* ==================================================================== */}
-          {/* SECTION 4: PAGINATION BAR */}
-          {/* ==================================================================== */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
-              <p className="text-xs text-slate-500 font-normal">
-                Showing page <span className="font-semibold text-slate-800">{currentPage}</span> of{' '}
-                <span className="font-semibold text-slate-800">{totalPages}</span> ({filteredItems.length} matching events)
-              </p>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                >
-                  Previous
-                </Button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .map((p, idx, arr) => (
-                    <React.Fragment key={p}>
-                      {idx > 0 && arr[idx - 1] !== p - 1 && (
-                        <span className="px-1 text-xs text-slate-400">…</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-7 w-7 rounded-full text-xs font-semibold transition-all ${
-                          currentPage === p
-                            ? 'bg-ateneo-blue text-white shadow-xs'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  ))}
-
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredItems.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
         </section>
       </div>
 

@@ -12,6 +12,7 @@ export const ROUTES = {
   OWNER_LISTINGS: '/owner/listings',
   OWNER_ADD_PROPERTY: '/owner/add-property',
   OWNER_TENANTS: '/owner/tenants',
+  OWNER_REQUESTS: '/owner/requests',
   OWNER_PAYMENTS: '/owner/payments',
   OWNER_ANALYTICS: '/owner/analytics',
   OWNER_EDIT_LISTING: '/owner/listings/:id/edit',

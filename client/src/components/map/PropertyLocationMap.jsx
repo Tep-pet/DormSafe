@@ -81,8 +81,8 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
 
   if (!apiKey) {
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-600">
-        Map unavailable — add <code className="rounded bg-gray-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
+      <div className="flex h-[320px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-600">
+        Map unavailable — add <code className="rounded bg-slate-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
         client/.env
       </div>
     );
@@ -97,7 +97,7 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
           <span>From {gate.label}</span>
           <WalkingTimeBadge minutes={walkingMinutes} />
         </div>
@@ -108,9 +108,9 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
         </a>
       </div>
 
-      <p className="text-sm text-gray-600">{property.address}</p>
+      <p className="text-sm text-slate-600">{property.address}</p>
 
-      <div className="h-[320px] overflow-hidden rounded-lg border border-gray-200">
+      <div className="h-[320px] overflow-hidden rounded-xl border border-slate-200">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           center={center}

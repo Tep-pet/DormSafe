@@ -155,9 +155,10 @@ export function AccountVerificationPage({
     }
   }
 
-  // Active status: Either dev preview override or live status
+  // Active status: Either dev preview override (dev server only) or live status
+  const isDevPreview = import.meta.env.DEV;
   const liveStatus = status?.verification_status || profile?.verification_status || 'unverified';
-  const activeStatus = previewState !== null ? previewState : liveStatus;
+  const activeStatus = isDevPreview && previewState !== null ? previewState : liveStatus;
 
   const isApproved = activeStatus === 'approved';
   const isRejected = activeStatus === 'rejected';
@@ -263,9 +264,9 @@ export function AccountVerificationPage({
 
                 {/* Account Details Breakdown */}
                 <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                  <h2 className="text-xs font-semibold text-slate-600 mb-3 flex items-center gap-1.5">
                     <Info className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Submission Summary</span>
+                    <span>Submission summary</span>
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
@@ -319,8 +320,8 @@ export function AccountVerificationPage({
 
                 {/* 3-Step Verification Pipeline */}
                 <div className="mt-6 border-t border-slate-100 pt-6">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-                    Verification Pipeline
+                  <h2 className="text-xs font-semibold text-slate-600 mb-4">
+                    Verification pipeline
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -661,7 +662,8 @@ export function AccountVerificationPage({
             </div>
           )}
 
-          {/* Quick Scenario Tester Pill (Easily test all 4 scenarios in preview) */}
+          {/* Quick Scenario Tester Pill (dev server only - never shipped to production) */}
+          {isDevPreview && (
           <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5 p-2 rounded-2xl bg-slate-200/60 border border-slate-300/60 text-xs text-slate-600">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mr-1">
               <Sliders className="h-3 w-3" />
@@ -723,6 +725,7 @@ export function AccountVerificationPage({
               Initial Upload
             </button>
           </div>
+          )}
         </div>
       </main>
     </div>

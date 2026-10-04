@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleMapsProvider } from './context/GoogleMapsContext';
@@ -31,12 +32,15 @@ import { AdminManageTenantsPage } from './pages/admin/AdminManageTenantsPage';
 import { AdminListingDetailPage } from './pages/admin/AdminListingDetailPage';
 import { AdminAuditPage } from './pages/admin/AdminAuditPage';
 import { ModerateReviewsPage } from './pages/admin/ModerateReviewsPage';
-import { ComponentsShowcasePage } from './pages/dev/ComponentsShowcasePage';
 import { AdminRouteLayout } from './routes/AdminRouteLayout';
 import { OwnerRouteLayout } from './routes/OwnerRouteLayout';
 import { StudentRouteLayout } from './routes/StudentRouteLayout';
 import { GuestRoute } from './routes/GuestRoute';
 import { ROLES } from './constants/roles';
+
+const ComponentsShowcasePage = React.lazy(() =>
+  import('./pages/dev/ComponentsShowcasePage').then((m) => ({ default: m.ComponentsShowcasePage }))
+);
 
 export default function App() {
   return (
@@ -46,7 +50,16 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomeRedirect />} />
-              <Route path="/components" element={<ComponentsShowcasePage />} />
+              {import.meta.env.DEV && (
+                <Route
+                  path="/components"
+                  element={
+                    <React.Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Loading showcase…</div>}>
+                      <ComponentsShowcasePage />
+                    </React.Suspense>
+                  }
+                />
+              )}
               <Route element={<GuestRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />

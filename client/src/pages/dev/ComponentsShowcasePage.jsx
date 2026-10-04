@@ -1053,8 +1053,8 @@ export function ComponentsShowcasePage() {
 
             <PaymentTable
               payments={samplePayments}
-              onMarkPaid={(id) => alert(`Marked payment #${id} as paid!`)}
-              onUploadReceipt={(id, file) => alert(`Uploaded receipt for payment #${id}: ${file.name}`)}
+              onMarkPaid={(id) => toast.success(`Marked payment #${id} as paid!`)}
+              onUploadReceipt={(id, file) => toast.info(`Uploaded receipt for payment #${id}: ${file.name}`)}
             />
           </div>
         )}

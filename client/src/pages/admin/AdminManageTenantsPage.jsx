@@ -33,12 +33,15 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { Pagination } from '../../components/common/Pagination';
+import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROUTES } from '../../constants/routes';
 import { formatPropertyRoom } from '../../utils/formatPropertyRoom';
+import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
 export function AdminManageTenantsPage() {
   const { accessToken } = useAuth();
@@ -57,7 +60,6 @@ export function AdminManageTenantsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
 
   // Remove Modal State
   const [removeModal, setRemoveModal] = useState({
@@ -191,10 +193,10 @@ export function AdminManageTenantsPage() {
   }, [tenants, statusFilter, propertyFilter, search, sortOrder]);
 
   // Pagination calculation
-  const totalPages = Math.max(1, Math.ceil(filteredTenants.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredTenants.length / ITEMS_PER_PAGE));
   const paginatedTenants = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredTenants.slice(start, start + itemsPerPage);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTenants.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredTenants, currentPage]);
 
   // Reset Filters
@@ -316,13 +318,12 @@ export function AdminManageTenantsPage() {
 
             {/* 2. Property Selector Dropdown */}
             <div className="w-full sm:w-48">
-              <select
+              <Select
                 value={propertyFilter}
                 onChange={(e) => {
                   setPropertyFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All dorm properties</option>
                 {uniqueProperties.map((p) => (
@@ -330,24 +331,23 @@ export function AdminManageTenantsPage() {
                     {p.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {/* 3. Status Filter Dropdown */}
             <div className="w-full sm:w-40">
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-800 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
               >
                 <option value="">All stay statuses</option>
                 <option value="active">Active Stay</option>
                 <option value="expired">Expired Stay</option>
                 <option value="released">Released Room</option>
-              </select>
+              </Select>
             </div>
 
             {/* Reset Filters CTA if active */}
@@ -610,60 +610,13 @@ export function AdminManageTenantsPage() {
             </div>
           )}
 
-          {/* ==================================================================== */}
-          {/* SECTION 4: PAGINATION & DIRECTORY COUNTER */}
-          {/* ==================================================================== */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
-              <p className="text-xs text-slate-500 font-normal">
-                Showing page <span className="font-semibold text-slate-800">{currentPage}</span> of{' '}
-                <span className="font-semibold text-slate-800">{totalPages}</span> ({filteredTenants.length} matching records)
-              </p>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .map((p, idx, arr) => (
-                    <React.Fragment key={p}>
-                      {idx > 0 && arr[idx - 1] !== p - 1 && (
-                        <span className="px-1 text-xs text-slate-400">…</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-7 w-7 rounded-full text-xs font-semibold transition-all ${
-                          currentPage === p
-                            ? 'bg-ateneo-blue text-white shadow-xs'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  ))}
-
-                <Button
-                  size="sm"
-                  radius="full"
-                  variant="ghost"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredTenants.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
         </section>
       </div>
 

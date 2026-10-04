@@ -68,9 +68,9 @@ export function StatsCard({
         };
       default:
         return {
-          iconBg: 'bg-gray-100 text-gray-700',
+          iconBg: 'bg-slate-100 text-slate-700',
           chipColor: 'default',
-          borderHover: 'hover:border-gray-300',
+          borderHover: 'hover:border-slate-300',
           progressColor: 'primary',
           DefaultIcon: BarChart3,
         };

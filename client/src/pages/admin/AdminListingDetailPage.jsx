@@ -219,8 +219,8 @@ export function AdminListingDetailPage() {
 
                   {/* Description */}
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                      Property Description
+                    <h4 className="text-xs font-semibold text-slate-700 mb-1.5">
+                      Property description
                     </h4>
                     {property.description ? (
                       <div className="rounded-xl border border-slate-100 bg-white p-4 text-xs leading-relaxed text-slate-700 whitespace-pre-line">
@@ -234,8 +234,8 @@ export function AdminListingDetailPage() {
                   {/* Amenities / Rules tags if provided */}
                   {property.rules && property.rules.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                        House Rules & Amenities
+                      <h4 className="text-xs font-semibold text-slate-700 mb-2">
+                        House rules & amenities
                       </h4>
                       <div className="flex flex-wrap gap-1.5">
                         {property.rules.map((rule, idx) => (
@@ -489,15 +489,10 @@ export function AdminListingDetailPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <label className="text-xs font-semibold text-slate-700">Administrative Rejection Reason</label>
-              <textarea
-                value={rejectionModal.reason}
-                onChange={(e) => setRejectionModal((m) => ({ ...m, reason: e.target.value }))}
-                placeholder="e.g. Missing valid business permit, unclear floor plan, or invalid landlord contact details."
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-ateneo-blue focus:bg-white focus:outline-hidden"
-              />
+            <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50 p-3.5 text-xs text-slate-600">
+              <p>
+                Rejecting this listing will decline its approval request and mark it as rejected in the housing directory. The property owner will be notified to review their submission.
+              </p>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-2">
