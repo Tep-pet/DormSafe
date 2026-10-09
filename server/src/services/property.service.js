@@ -171,10 +171,7 @@ export async function getAdminListings(filters = {}) {
 
   let query = supabaseAdmin
     .from('properties')
-    .select(
-      `${PROPERTY_SELECT}, profiles!properties_owner_id_fkey(full_name, email)`,
-      { count: 'exact' }
-    );
+    .select(PROPERTY_SELECT, { count: 'exact' });
 
   if (status && status !== 'all') {
     query = query.eq('status', status);
