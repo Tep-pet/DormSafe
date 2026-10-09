@@ -345,7 +345,7 @@ export function AdminDashboardPage() {
                           </Chip>
                         </div>
                         <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                          by <span className="font-medium text-slate-700">{item.owner_name || item.owner?.full_name || 'Landlord'}</span> · {item.min_price ? formatPrice(item.min_price) : 'Rate TBD'}/mo
+                          by <span className="font-medium text-slate-700">{item.owner_name || item.owner?.full_name || item.profiles?.full_name || 'Landlord'}</span> · {item.min_price ? formatPrice(item.min_price) : 'Rate TBD'}/mo
                         </p>
                       </div>
 
@@ -420,19 +420,25 @@ export function AdminDashboardPage() {
               ) : (
                 <div className="divide-y divide-slate-100">
                   {pendingAccounts.map((account) => {
-                    const isAdDU = account.email?.endsWith('@addu.edu.ph');
+                    const profile = account.profiles || {};
+                    const fullName = profile.full_name || account.full_name || account.name || 'Applicant';
+                    const email = profile.email || account.email || '';
+                    const role = profile.role || account.role || 'student';
+                    const isAdDU = email?.toLowerCase().endsWith('@addu.edu.ph');
+                    const initial = fullName?.charAt(0)?.toUpperCase() || 'U';
+
                     return (
                       <div key={account.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <Avatar
                             size="sm"
-                            name={account.full_name?.charAt(0) || 'U'}
+                            name={initial}
                             className="bg-ateneo-blue text-white text-xs font-semibold flex-shrink-0"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <p className="text-xs font-bold text-slate-900 truncate">
-                                {account.full_name || 'Anonymous User'}
+                                {fullName}
                               </p>
                               {isAdDU && (
                                 <Chip size="sm" variant="flat" color="primary" className="text-[9px] font-bold h-4 px-1">
@@ -440,11 +446,11 @@ export function AdminDashboardPage() {
                                 </Chip>
                               )}
                               <Chip size="sm" variant="flat" color="default" className="text-[9px] capitalize h-4 px-1.5">
-                                {account.role || 'student'}
+                                {role}
                               </Chip>
                             </div>
                             <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                              {account.email || 'No email provided'}
+                              {email || 'No email provided'}
                             </p>
                           </div>
                         </div>
@@ -455,7 +461,7 @@ export function AdminDashboardPage() {
                             radius="full"
                             variant="success"
                             className="h-7 px-2.5 text-[11px]"
-                            onClick={() => handleQuickApproveAccount(account.id, account.full_name || 'User')}
+                            onClick={() => handleQuickApproveAccount(account.id, fullName)}
                           >
                             Approve ID
                           </Button>
@@ -464,7 +470,7 @@ export function AdminDashboardPage() {
                             radius="full"
                             variant="danger"
                             className="h-7 px-2.5 text-[11px]"
-                            onClick={() => handleQuickRejectAccount(account.id, account.full_name || 'User')}
+                            onClick={() => handleQuickRejectAccount(account.id, fullName)}
                           >
                             Reject
                           </Button>
