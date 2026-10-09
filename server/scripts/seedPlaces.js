@@ -61,8 +61,8 @@ const PROPERTIES = [
     name: 'BRC Dormitory',
     type: 'dormitory',
     address: 'Padre Gomez St & A Bonifacio St, Barangay 34-D, Davao City',
-    latitude: 7.0713,
-    longitude: 125.6104,
+    latitude: 7.0680548,
+    longitude: 125.6125343,
     description: 'Co-ed Dormitory (Any Gender). Near campus (5 min walk). Amenities: Aircon, Study table, shelf, TV, and fire alarm.',
     approved: true,
     rooms: [

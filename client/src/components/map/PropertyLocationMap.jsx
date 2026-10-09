@@ -34,6 +34,10 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
   const originAddress =
     'Ateneo de Davao University, 6/F Community Center of the First Companions, Ateneo de Davao University, M. Roxas Ave, Poblacion District, Davao City, 8000 Davao del Sur';
 
+  const isBrc =
+    property?.name?.toLowerCase().includes('brc') ||
+    property?.address?.toLowerCase().includes('padre gomez');
+
   const isCorrela =
     property?.name?.toLowerCase().includes('correla') ||
     property?.address?.toLowerCase().includes('108') ||
@@ -43,27 +47,32 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     property?.name?.toLowerCase().includes('juan luna') ||
     property?.address?.toLowerCase().includes('juan luna');
 
-  const destinationAddress = isCorrela
+  const destinationAddress = isBrc
+    ? 'BRC Dormitory, Brgy, Padre Gomez St, Barangay 34-D, Poblacion District, Davao City, 8000 Davao del Sur'
+    : isCorrela
     ? '108 M. Roxas Ave, Poblacion District, Davao City, Davao del Sur'
     : isJuanLuna
     ? 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur'
     : (property?.address || `${property?.latitude},${property?.longitude}`);
 
-  // Precise fallback coordinates (Ateneo CCFC & 108 M. Roxas Ave)
+  // Precise fallback coordinates (Ateneo CCFC, BRC, & 108 M. Roxas Ave)
   const defaultOriginPos = useMemo(
     () => ({ lat: 7.0712406, lng: 125.6134491 }),
     []
   );
 
   const defaultDestPos = useMemo(() => {
+    if (isBrc) {
+      return { lat: 7.0680548, lng: 125.6125343 };
+    }
     if (isCorrela) {
       return { lat: 7.06945, lng: 125.61468 };
     }
     return {
-      lat: Number(property?.latitude) || 7.06945,
-      lng: Number(property?.longitude) || 125.61468,
+      lat: Number(property?.latitude) || 7.0680548,
+      lng: Number(property?.longitude) || 125.6125343,
     };
-  }, [isCorrela, property?.latitude, property?.longitude]);
+  }, [isBrc, isCorrela, property?.latitude, property?.longitude]);
 
   const [originMarkerPos, setOriginMarkerPos] = useState(defaultOriginPos);
   const [propertyMarkerPos, setPropertyMarkerPos] = useState(defaultDestPos);
