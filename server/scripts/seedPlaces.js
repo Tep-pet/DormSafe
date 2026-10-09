@@ -80,8 +80,8 @@ const PROPERTIES = [
     name: 'Correla Dormitory',
     type: 'dormitory',
     address: '108 Roxas Avenue, Davao City, Philippines, 8000',
-    latitude: 7.070707,
-    longitude: 125.6134197,
+    latitude: 7.06945,
+    longitude: 125.61468,
     description: 'Ladies Only / All Girls Dormitory. Near campus (2 min walk). Amenities: Aircon (Air-conditioned rooms), Free WiFi access, Built-in closets, Single beds, Common study area, Water Dispenser, 24/7 CCTV Security.',
     approved: true,
     rooms: [

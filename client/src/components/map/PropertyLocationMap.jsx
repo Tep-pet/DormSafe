@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GoogleMap,
   Marker,
-  DirectionsService,
   DirectionsRenderer,
   Polyline,
 } from '@react-google-maps/api';
@@ -21,15 +20,8 @@ const mapOptions = {
   fullscreenControl: true,
 };
 
-function fitMapToMarkers(map, gatePos, propertyPos) {
-  const bounds = new google.maps.LatLngBounds();
-  bounds.extend(gatePos);
-  bounds.extend(propertyPos);
-  map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
-}
-
 /**
- * Property detail map — shows listing location, campus gate, and walking route.
+ * Property detail map — shows listing location, campus origin, and walking route.
  */
 export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
   const { isLoaded, loadError, authFailed, apiKey } = useGoogleMaps();
@@ -38,52 +30,155 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
   const [map, setMap] = useState(null);
 
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
-  const propertyPos = useMemo(
-    () => ({ lat: property.latitude, lng: property.longitude }),
-    [property.latitude, property.longitude]
-  );
-  const gatePos = useMemo(() => ({ lat: gate.lat, lng: gate.lng }), [gate.lat, gate.lng]);
 
+  const originAddress =
+    'Ateneo de Davao University, 6/F Community Center of the First Companions, Ateneo de Davao University, M. Roxas Ave, Poblacion District, Davao City, 8000 Davao del Sur';
+
+  const isCorrela =
+    property?.name?.toLowerCase().includes('correla') ||
+    property?.address?.toLowerCase().includes('108') ||
+    property?.address?.toLowerCase().includes('roxas');
+
+  const isJuanLuna =
+    property?.name?.toLowerCase().includes('juan luna') ||
+    property?.address?.toLowerCase().includes('juan luna');
+
+  const destinationAddress = isCorrela
+    ? '108 M. Roxas Ave, Poblacion District, Davao City, Davao del Sur'
+    : isJuanLuna
+    ? 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur'
+    : (property?.address || `${property?.latitude},${property?.longitude}`);
+
+  // Precise fallback coordinates (Ateneo CCFC & 108 M. Roxas Ave)
+  const defaultOriginPos = useMemo(
+    () => ({ lat: 7.0712406, lng: 125.6134491 }),
+    []
+  );
+
+  const defaultDestPos = useMemo(() => {
+    if (isCorrela) {
+      return { lat: 7.06945, lng: 125.61468 };
+    }
+    return {
+      lat: Number(property?.latitude) || 7.06945,
+      lng: Number(property?.longitude) || 125.61468,
+    };
+  }, [isCorrela, property?.latitude, property?.longitude]);
+
+  const [originMarkerPos, setOriginMarkerPos] = useState(defaultOriginPos);
+  const [propertyMarkerPos, setPropertyMarkerPos] = useState(defaultDestPos);
+
+  useEffect(() => {
+    setOriginMarkerPos(defaultOriginPos);
+    setPropertyMarkerPos(defaultDestPos);
+  }, [defaultOriginPos, defaultDestPos]);
+
+  // Center between origin and destination
   const center = useMemo(
     () => ({
-      lat: (propertyPos.lat + gatePos.lat) / 2,
-      lng: (propertyPos.lng + gatePos.lng) / 2,
+      lat: (originMarkerPos.lat + propertyMarkerPos.lat) / 2,
+      lng: (originMarkerPos.lng + propertyMarkerPos.lng) / 2,
     }),
-    [propertyPos, gatePos]
+    [originMarkerPos, propertyMarkerPos]
+  );
+
+  // Auto-center and zoom so both origin and destination markers are visible
+  const fitMapToRoute = useCallback(
+    (mapInstance) => {
+      if (!mapInstance || !window.google?.maps) return;
+      if (directions?.routes?.[0]?.bounds) {
+        mapInstance.fitBounds(directions.routes[0].bounds, {
+          top: 48,
+          right: 48,
+          bottom: 48,
+          left: 48,
+        });
+      } else {
+        const bounds = new window.google.maps.LatLngBounds();
+        bounds.extend(originMarkerPos);
+        bounds.extend(propertyMarkerPos);
+        mapInstance.fitBounds(bounds, {
+          top: 48,
+          right: 48,
+          bottom: 48,
+          left: 48,
+        });
+      }
+    },
+    [directions, originMarkerPos, propertyMarkerPos]
   );
 
   const onMapLoad = useCallback(
     (loadedMap) => {
       setMap(loadedMap);
-      fitMapToMarkers(loadedMap, gatePos, propertyPos);
+      fitMapToRoute(loadedMap);
     },
-    [gatePos, propertyPos]
+    [fitMapToRoute]
   );
 
   useEffect(() => {
-    if (map) fitMapToMarkers(map, gatePos, propertyPos);
-  }, [map, gatePos, propertyPos]);
-
-  const directionsCallback = useCallback((response, status) => {
-    if (status === 'OK' && response) {
-      setDirections(response);
-      setDirectionsFailed(false);
-    } else if (status !== 'OK') {
-      setDirectionsFailed(true);
+    if (map) {
+      fitMapToRoute(map);
     }
-  }, []);
+  }, [map, fitMapToRoute]);
 
-  const startingPointAddress =
-    'Ateneo de Davao University, 6/F Community Center of the First Companions, Ateneo de Davao University, M. Roxas Ave, Poblacion District, Davao City, 8000 Davao del Sur';
+  // Fetch walking route from origin to destination
+  useEffect(() => {
+    if (!isLoaded || !window.google?.maps) return;
 
-  const destinationAddress =
-    property.name === 'Juan Luna Boarding House' || property.name?.toLowerCase().includes('juan luna')
-      ? 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur'
-      : (property.address || `${property.latitude},${property.longitude}`);
+    let isMounted = true;
+    const directionsService = new window.google.maps.DirectionsService();
+
+    // Primary attempt: Request route with exact addresses
+    directionsService.route(
+      {
+        origin: originAddress,
+        destination: destinationAddress,
+        travelMode: window.google.maps.TravelMode.WALKING,
+      },
+      (result, status) => {
+        if (!isMounted) return;
+        if (status === window.google.maps.DirectionsStatus.OK && result) {
+          setDirections(result);
+          setDirectionsFailed(false);
+          const startLoc = result.routes[0]?.legs[0]?.start_location;
+          const endLoc = result.routes[0]?.legs[0]?.end_location;
+          if (startLoc) setOriginMarkerPos({ lat: startLoc.lat(), lng: startLoc.lng() });
+          if (endLoc) setPropertyMarkerPos({ lat: endLoc.lat(), lng: endLoc.lng() });
+        } else {
+          // Fallback: Request route with exact coordinates
+          directionsService.route(
+            {
+              origin: defaultOriginPos,
+              destination: defaultDestPos,
+              travelMode: window.google.maps.TravelMode.WALKING,
+            },
+            (fallbackResult, fallbackStatus) => {
+              if (!isMounted) return;
+              if (fallbackStatus === window.google.maps.DirectionsStatus.OK && fallbackResult) {
+                setDirections(fallbackResult);
+                setDirectionsFailed(false);
+                const startLoc = fallbackResult.routes[0]?.legs[0]?.start_location;
+                const endLoc = fallbackResult.routes[0]?.legs[0]?.end_location;
+                if (startLoc) setOriginMarkerPos({ lat: startLoc.lat(), lng: startLoc.lng() });
+                if (endLoc) setPropertyMarkerPos({ lat: endLoc.lat(), lng: endLoc.lng() });
+              } else {
+                setDirectionsFailed(true);
+              }
+            }
+          );
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoaded, originAddress, destinationAddress, defaultOriginPos, defaultDestPos]);
 
   const mapsDirectionsUrl =
     `https://www.google.com/maps/dir/?api=1` +
-    `&origin=${encodeURIComponent(startingPointAddress)}` +
+    `&origin=${encodeURIComponent(originAddress)}` +
     `&destination=${encodeURIComponent(destinationAddress)}` +
     `&travelmode=walking`;
 
@@ -106,7 +201,7 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-          <span>From Jacinto Campus</span>
+          <span>From Ateneo de Davao</span>
           <WalkingTimeBadge minutes={walkingMinutes} />
         </div>
         <a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer">
@@ -116,27 +211,16 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
         </a>
       </div>
 
-      <p className="text-sm text-slate-600">{destinationAddress}</p>
+      <p className="text-sm text-slate-600">{property?.address || destinationAddress}</p>
 
       <div className="h-[320px] overflow-hidden rounded-xl border border-slate-200">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           center={center}
-          zoom={15}
+          zoom={16}
           options={mapOptions}
           onLoad={onMapLoad}
         >
-          {!directions && !directionsFailed && (
-            <DirectionsService
-              options={{
-                origin: gatePos,
-                destination: propertyPos,
-                travelMode: google.maps.TravelMode.WALKING,
-              }}
-              callback={directionsCallback}
-            />
-          )}
-
           {directions && (
             <DirectionsRenderer
               directions={directions}
@@ -149,22 +233,22 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
 
           {directionsFailed && !directions && (
             <Polyline
-              path={[gatePos, propertyPos]}
+              path={[originMarkerPos, propertyMarkerPos]}
               options={{
                 strokeColor: '#003366',
-                strokeOpacity: 0.45,
-                strokeWeight: 3,
+                strokeOpacity: 0.55,
+                strokeWeight: 4,
                 geodesic: true,
               }}
             />
           )}
 
           <Marker
-            position={gatePos}
-            title={gate.label}
+            position={originMarkerPos}
+            title="Ateneo de Davao University"
             label={{ text: 'G', color: 'white', fontWeight: 'bold' }}
             icon={{
-              path: google.maps.SymbolPath.CIRCLE,
+              path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
               scale: 9,
               fillColor: '#003366',
               fillOpacity: 1,
@@ -174,8 +258,8 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
           />
 
           <Marker
-            position={propertyPos}
-            title={property.name}
+            position={propertyMarkerPos}
+            title={property?.name || 'Property'}
             label={{ text: 'P', color: 'white', fontWeight: 'bold' }}
           />
         </GoogleMap>
