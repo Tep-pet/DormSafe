@@ -129,7 +129,7 @@ export function SavedListingsPage() {
   return (
     <PageContainer
       title="Saved Bookmarks & Comparison"
-      subtitle={`Review your bookmarked student housing and compare walking times to ${activeGateLabel} Gate`}
+      subtitle={`Review your bookmarked student housing and compare walking times to ${activeGateLabel}`}
       headerAction={headerAction}
     >
       <div className="space-y-6">
@@ -180,7 +180,7 @@ export function SavedListingsPage() {
                     }`}
                   >
                     <MapPin size={13} strokeWidth={isActive ? 2.5 : 2} />
-                    <span>{g.label} Gate</span>
+                    <span>{g.label}</span>
                     <span
                       className={`ml-0.5 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                         isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'

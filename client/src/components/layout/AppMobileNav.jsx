@@ -169,14 +169,6 @@ export function AppMobileDrawer({ isOpen, onClose }) {
 
         {/* Footer actions */}
         <div className="border-t border-gray-100 p-4 space-y-2">
-          <Link
-            to="/components"
-            onClick={onClose}
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-4 py-2.5 text-xs font-semibold text-ateneo-blue hover:bg-blue-100 transition-colors"
-          >
-            <Icon name="sparkles" className="h-4 w-4 text-ateneo-blue" />
-            <span>UI Components Lab</span>
-          </Link>
 
           {isAuthenticated && (
             <button

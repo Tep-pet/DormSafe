@@ -126,7 +126,7 @@ export function ComponentsShowcasePage() {
     {
       id: 'pay-3',
       tenant_name: 'Carlos Yulo',
-      property_name: 'Happy Tri-House',
+      property_name: 'Juan Luna Boarding House',
       amount: 5800,
       due_date: '2026-09-30',
       status: 'overdue',
@@ -1023,7 +1023,7 @@ export function ComponentsShowcasePage() {
                 property={{
                   ...sampleProperty,
                   id: 'sample-prop-3',
-                  name: 'Happy Tri-House Boarding House',
+                  name: 'Juan Luna Boarding House',
                   type: 'dormitory',
                   min_price: 5800,
                   walking_minutes: 16,
@@ -1231,7 +1231,7 @@ export function ComponentsShowcasePage() {
                         property={{
                           ...sampleProperty,
                           id: 'sample-prop-3',
-                          name: 'Happy Tri-House Boarding House',
+                          name: 'Juan Luna Boarding House',
                           type: 'dormitory',
                           min_price: 5800,
                           walking_minutes: 16,

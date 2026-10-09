@@ -6,12 +6,13 @@ import { useAuth } from './useAuth';
  * Fetches properties within 2 km via Express Proximity Algorithm.
  */
 export function useMapSearch({ gate, minPrice, maxPrice, propertyType }) {
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const search = useCallback(async () => {
+    if (authLoading) return;
     setLoading(true);
     setError(null);
     try {
@@ -29,7 +30,7 @@ export function useMapSearch({ gate, minPrice, maxPrice, propertyType }) {
     } finally {
       setLoading(false);
     }
-  }, [gate, minPrice, maxPrice, propertyType, accessToken]);
+  }, [gate, minPrice, maxPrice, propertyType, accessToken, authLoading]);
 
   useEffect(() => {
     search();

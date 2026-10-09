@@ -15,9 +15,8 @@ export function PropertyCard({ property, gate, isSelected = false }) {
     : `/student/property/${property.id}`;
 
   return (
-    <Link to={detailPath} className="block group">
+    <Link to={detailPath} className="block group cursor-pointer">
       <Card
-        isPressable
         shadow="none"
         className={`w-full rounded-2xl border bg-white/95 overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
           isSelected
@@ -51,7 +50,7 @@ export function PropertyCard({ property, gate, isSelected = false }) {
           )}
 
           {/* Top Right: Property Type Chip */}
-          <div className="absolute right-3 top-3 z-10">
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
             <span className="rounded-full bg-slate-900/75 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-xs shadow-2xs">
               {PROPERTY_TYPE_LABELS[property.type] || property.type}
             </span>

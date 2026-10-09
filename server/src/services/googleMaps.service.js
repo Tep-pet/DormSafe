@@ -15,6 +15,9 @@ function logApiFailure(context, data) {
   console.warn(`Google Maps ${context}: ${data?.status || 'UNKNOWN'}${detail}`);
 }
 
+let apiPermanentlyDenied = false;
+const durationCache = new Map();
+
 async function fetchDistanceMatrix(origin, destinations) {
   const destStr = destinations.map((d) => `${d.lat},${d.lng}`).join('|');
   const params = new URLSearchParams({
@@ -24,10 +27,18 @@ async function fetchDistanceMatrix(origin, destinations) {
     key: env.googleMapsApiKey,
   });
 
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/distancematrix/json?${params}`
-  );
-  return response.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2500);
+
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?${params}`,
+      { signal: controller.signal }
+    );
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function parseMatrixElements(origin, destinations, elements) {
@@ -43,7 +54,13 @@ function parseMatrixElements(origin, destinations, elements) {
  * Falls back to haversine estimate if API fails (e.g. REQUEST_DENIED).
  */
 export async function getWalkingDurationMinutes(origin, destination) {
+  const cacheKey = `${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}->${destination.lat.toFixed(4)},${destination.lng.toFixed(4)}`;
+  if (durationCache.has(cacheKey)) {
+    return durationCache.get(cacheKey);
+  }
+
   const [minutes] = await getWalkingDurationsBatch(origin, [destination]);
+  durationCache.set(cacheKey, minutes);
   return minutes;
 }
 
@@ -51,7 +68,7 @@ export async function getWalkingDurationMinutes(origin, destination) {
 export async function getWalkingDurationsBatch(origin, destinations) {
   if (!destinations.length) return [];
 
-  if (!env.googleMapsApiKey) {
+  if (!env.googleMapsApiKey || apiPermanentlyDenied) {
     return destinations.map((d) => estimateWalkingMinutes(origin, d));
   }
 
@@ -64,6 +81,9 @@ export async function getWalkingDurationsBatch(origin, destinations) {
 
       if (data.status !== 'OK') {
         logApiFailure('Distance Matrix', data);
+        if (data.status === 'REQUEST_DENIED') {
+          apiPermanentlyDenied = true;
+        }
         results.push(...chunk.map((d) => estimateWalkingMinutes(origin, d)));
         continue;
       }
@@ -75,6 +95,7 @@ export async function getWalkingDurationsBatch(origin, destinations) {
     return results;
   } catch (err) {
     console.warn('Google Maps batch error — using distance estimates:', err.message);
+    apiPermanentlyDenied = true;
     return destinations.map((d) => estimateWalkingMinutes(origin, d));
   }
 }

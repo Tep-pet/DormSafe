@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Command } from 'lucide-react';
+import { Search, Command, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { NotificationBell } from '../common/NotificationBell';
 import { UserDropdown } from './UserDropdown';
@@ -20,6 +20,14 @@ export function AppHeader({
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Keep search input in sync with URL search query on student search page
+  useEffect(() => {
+    if (location.pathname === ROUTES.STUDENT_SEARCH) {
+      const q = new URLSearchParams(location.search).get('q');
+      setSearchQuery(q || '');
+    }
+  }, [location.pathname, location.search]);
+
   const isStudentVerified = role === ROLES.STUDENT && profile?.verification_status === 'approved';
 
   const studentTopLinks = [
@@ -36,14 +44,21 @@ export function AppHeader({
   };
 
   const handleSearchSubmit = (e) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      if (role === ROLES.STUDENT || !isAuthenticated) {
-        navigate(`${ROUTES.STUDENT_SEARCH}?q=${encodeURIComponent(searchQuery.trim())}`);
-      } else if (role === ROLES.ADMIN) {
-        navigate(`${ROUTES.ADMIN_MANAGE_USERS}?q=${encodeURIComponent(searchQuery.trim())}`);
-      } else if (role === ROLES.OWNER) {
-        navigate(`${ROUTES.OWNER_LISTINGS}?q=${encodeURIComponent(searchQuery.trim())}`);
-      }
+    if (e) e.preventDefault();
+    const q = searchQuery.trim();
+    if (role === ROLES.STUDENT || !isAuthenticated) {
+      navigate(`${ROUTES.STUDENT_SEARCH}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+    } else if (role === ROLES.ADMIN) {
+      navigate(`${ROUTES.ADMIN_MANAGE_USERS}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+    } else if (role === ROLES.OWNER) {
+      navigate(`${ROUTES.OWNER_LISTINGS}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+    }
+  };
+
+  const handleClear = () => {
+    setSearchQuery('');
+    if (location.pathname === ROUTES.STUDENT_SEARCH) {
+      navigate(ROUTES.STUDENT_SEARCH);
     }
   };
 
@@ -74,22 +89,41 @@ export function AppHeader({
           </div>
         )}
 
-        {/* Clean, artifact-free floating search input */}
-        <div className="relative flex items-center w-full h-9 px-3.5 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 focus-within:border-ateneo-blue focus-within:ring-2 focus-within:ring-ateneo-blue/10 transition-all">
-          <Search size={15} className="text-slate-400 flex-shrink-0 mr-2" />
+        {/* Clean, interactive search form */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative flex items-center w-full h-9 px-3 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 focus-within:border-ateneo-blue focus-within:ring-2 focus-within:ring-ateneo-blue/10 transition-all"
+        >
+          <button
+            type="submit"
+            className="text-slate-400 hover:text-ateneo-blue transition p-0.5 mr-1.5 focus:outline-none"
+            title="Search"
+          >
+            <Search size={15} />
+          </button>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchSubmit}
             placeholder={getSearchPlaceholder()}
             className="w-full bg-transparent border-0 outline-none ring-0 p-0 text-xs text-slate-800 placeholder:text-slate-400 font-normal focus:ring-0 focus:outline-none"
           />
-          <div className="hidden sm:flex items-center gap-0.5 rounded-md border border-slate-200/80 bg-slate-100/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-2xs select-none ml-2">
-            <Command size={10} />
-            <span>K</span>
-          </div>
-        </div>
+          {searchQuery ? (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-1 text-slate-400 hover:text-slate-600 transition"
+              title="Clear search"
+            >
+              <X size={13} />
+            </button>
+          ) : (
+            <div className="hidden sm:flex items-center gap-0.5 rounded-md border border-slate-200/80 bg-slate-100/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-2xs select-none ml-2">
+              <Command size={10} />
+              <span>K</span>
+            </div>
+          )}
+        </form>
       </div>
 
       {/* Center: Desktop Student Navigation (if student) */}

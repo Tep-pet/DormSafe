@@ -48,6 +48,8 @@ function toInquiry(row) {
     student_name: meta.student_name,
     student_email: meta.student_email,
     owner_id: meta.owner_id,
+    owner_name: meta.owner_name || null,
+    owner_email: meta.owner_email || null,
     move_in_date: meta.move_in_date,
     move_out_date: meta.move_out_date,
     note: meta.note || '',
@@ -140,6 +142,7 @@ export async function requestRoom(student, { property_id, room_id, move_in_date,
     throw httpError('You already have a pending request for this room. Update it from Requests.', 409);
   }
 
+  const owner = await ownerEmail(room.properties.owner_id);
   const studentName = student.full_name || student.email || 'A student';
   const metadata = {
     kind: KIND,
@@ -152,6 +155,8 @@ export async function requestRoom(student, { property_id, room_id, move_in_date,
     student_name: studentName,
     student_email: student.email || null,
     owner_id: room.properties.owner_id,
+    owner_name: owner.full_name || null,
+    owner_email: owner.email || null,
     move_in_date,
     move_out_date,
     note: clean,
@@ -159,20 +164,49 @@ export async function requestRoom(student, { property_id, room_id, move_in_date,
   };
 
   const body = requestText(metadata, `${studentName} wants to avail this room.`);
-  const record = await notify(student.id, {
-    title: 'Room request sent',
-    body,
-    metadata,
-  });
+  
+  // Store student request record for inquiries tracking without notifying the student
+  let record;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .insert({
+        user_id: student.id,
+        type: 'room_inquiry',
+        title: 'Room request sent',
+        body,
+        metadata,
+        read_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    record = data;
+  } catch (err) {
+    const { data, error: fbError } = await supabaseAdmin
+      .from('notifications')
+      .insert({
+        user_id: student.id,
+        type: 'room_reserved',
+        title: 'Room request sent',
+        body,
+        metadata,
+        read_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    if (fbError) throw fbError;
+    record = data;
+  }
 
+  // Send the notification directly to the landlord notifications
   const ownerBody = requestText(metadata, `${studentName} wants to avail a room.`);
   await notify(room.properties.owner_id, {
-    title: 'Student wants to avail a room',
+    title: `New room booking request from ${studentName}`,
     body: ownerBody,
     metadata: { ...metadata, kind: EVENT, inquiry_id: record.id },
   });
 
-  const owner = await ownerEmail(room.properties.owner_id);
   await sendAccountEmail(owner.email, 'DormSafe: student wants to avail a room', ownerBody);
 
   return toInquiry(record);
@@ -187,7 +221,25 @@ export async function listStudentInquiries(studentId) {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data || []).map(toInquiry);
+  const list = (data || []).map(toInquiry);
+
+  const missingOwnerIds = [...new Set(list.filter((x) => !x.owner_email && x.owner_id).map((x) => x.owner_id))];
+  if (missingOwnerIds.length > 0) {
+    const { data: owners } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, full_name')
+      .in('id', missingOwnerIds);
+    const ownerMap = new Map((owners || []).map((o) => [o.id, o]));
+    for (const item of list) {
+      if (!item.owner_email && ownerMap.has(item.owner_id)) {
+        const o = ownerMap.get(item.owner_id);
+        item.owner_email = o.email;
+        if (!item.owner_name) item.owner_name = o.full_name;
+      }
+    }
+  }
+
+  return list;
 }
 
 export async function updateInquiry(student, id, { move_in_date, move_out_date, note }) {

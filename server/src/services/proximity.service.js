@@ -9,8 +9,10 @@ import { getFavoriteIds } from './favorite.service.js';
 
 const SEARCH_SELECT = `
   id, name, type, address, latitude, longitude, is_verified, status,
-  contact_name, contact_phone,
-  rooms ( id, price, capacity, is_available, room_images ( id, storage_path, is_primary ) )
+  contact_name, contact_phone, description, owner_id,
+  profiles:owner_id ( id, email, full_name ),
+  rooms ( id, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
+  house_rules ( id, rule )
 `;
 
 /**
@@ -62,9 +64,12 @@ function enrichProperty(property, walkingMinutes) {
     address: property.address,
     latitude: property.latitude,
     longitude: property.longitude,
+    description: property.description,
+    house_rules: property.house_rules || [],
     is_verified: property.is_verified,
-    contact_name: property.contact_name,
+    contact_name: property.contact_name || property.profiles?.full_name || null,
     contact_phone: property.contact_phone,
+    contact_email: property.profiles?.email || null,
     min_price: prices.length ? Math.min(...prices) : null,
     available_rooms: availableRooms,
     walking_minutes: walkingMinutes,
@@ -112,7 +117,8 @@ export async function getPropertyById(id, gate, studentId = null) {
     .from('properties')
     .select(`
       id, name, type, address, latitude, longitude, description, is_verified, status,
-      contact_name, contact_phone,
+      contact_name, contact_phone, owner_id,
+      profiles:owner_id ( id, email, full_name ),
       rooms ( id, label, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
       house_rules ( id, rule )
     `)
@@ -153,6 +159,7 @@ export async function getPropertyById(id, gate, studentId = null) {
 
   return {
     ...data,
+    contact_email: data.profiles?.email || null,
     rooms,
     walking_minutes: walkingMinutes,
     images: flattenRoomImages(data),

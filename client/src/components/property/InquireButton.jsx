@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Building2,
   Phone,
+  Mail,
   User,
   BedDouble,
   Calendar,
@@ -29,6 +30,7 @@ import { ROUTES } from '../../constants/routes';
 export function InquireButton({
   contactName,
   contactPhone,
+  contactEmail,
   description,
   propertyName,
   propertyId,
@@ -46,10 +48,12 @@ export function InquireButton({
   const resolved = resolvePropertyContact({
     contact_name: contactName,
     contact_phone: contactPhone,
+    contact_email: contactEmail,
+    name: propertyName,
     description,
   });
 
-  const { contactName: name, contactPhone: phone } = resolved;
+  const { contactName: name, contactPhone: phone, contactEmail: email } = resolved;
 
   useEffect(() => {
     setSent(false);
@@ -144,6 +148,21 @@ export function InquireButton({
                         Direct Line:
                       </span>
                       <span className="font-bold text-ateneo-blue">{phone}</span>
+                    </div>
+                  )}
+
+                  {email && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1">
+                        <Mail size={12} className="text-slate-400" />
+                        Email:
+                      </span>
+                      <a
+                        href={`mailto:${email}`}
+                        className="font-bold text-ateneo-blue hover:underline break-all"
+                      >
+                        {email}
+                      </a>
                     </div>
                   )}
 

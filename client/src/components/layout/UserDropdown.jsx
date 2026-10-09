@@ -193,21 +193,6 @@ export function UserDropdown() {
               </>
             )}
 
-            <div className="my-1 border-t border-gray-100" />
-
-            <Link
-              to={ROUTES.COMPONENTS}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-ateneo-blue bg-blue-50/50 hover:bg-blue-50 transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <Icon name="sparkles" className="h-4 w-4 text-ateneo-blue" />
-                <span className="font-semibold">UI Components Lab</span>
-              </div>
-              <span className="rounded-full bg-ateneo-blue text-white px-1.5 py-0.2 text-[9px] font-bold">
-                Preview
-              </span>
-            </Link>
           </div>
 
           <div className="border-t border-gray-100 pt-1">

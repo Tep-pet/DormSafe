@@ -52,18 +52,24 @@ export async function getUserNotifications(userId, { unreadOnly = false } = {}) 
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  // Exclude outgoing student inquiry requests so the student does not get notified for requesting a room
+  return (data || []).filter(
+    (n) => n.metadata?.kind !== 'room_request' && n.title !== 'Room request sent'
+  );
 }
 
 export async function getUnreadCount(userId) {
-  const { count, error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('notifications')
-    .select('id', { count: 'exact', head: true })
+    .select('id, metadata, title')
     .eq('user_id', userId)
     .is('read_at', null);
 
   if (error) throw error;
-  return count || 0;
+  const count = (data || []).filter(
+    (n) => n.metadata?.kind !== 'room_request' && n.title !== 'Room request sent'
+  ).length;
+  return count;
 }
 
 export async function markNotificationRead(notificationId, userId) {

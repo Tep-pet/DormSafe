@@ -18,6 +18,7 @@ import {
   Trash2,
   AlertTriangle,
   User,
+  Mail,
 } from 'lucide-react';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Badge } from '../../components/common/Badge';
@@ -28,6 +29,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
+import { resolvePropertyContact } from '../../utils/parseContact';
 import { ROUTES } from '../../constants/routes';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
 
@@ -295,6 +297,40 @@ export function RoomRequestsPage() {
                   </CardHeader>
 
                   <CardBody className="p-4 sm:p-5 space-y-4">
+                    {/* Landlord Contact Info Strip */}
+                    {(() => {
+                      const ownerContact = resolvePropertyContact({
+                        propertyName: item.property_name,
+                        owner_email: item.owner_email,
+                        owner_name: item.owner_name,
+                      });
+                      return (
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-500 flex items-center gap-1 font-medium">
+                              <User size={12} className="text-slate-400" />
+                              Landlord:
+                            </span>
+                            <span className="font-semibold text-slate-800">
+                              {ownerContact.contactName || item.owner_name || 'Property Owner'}
+                            </span>
+                          </div>
+
+                          {ownerContact.contactEmail && (
+                            <div className="flex items-center gap-1.5">
+                              <Mail size={12} className="text-ateneo-blue" />
+                              <a
+                                href={`mailto:${ownerContact.contactEmail}`}
+                                className="font-semibold text-ateneo-blue hover:underline break-all"
+                              >
+                                {ownerContact.contactEmail}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {/* If Pending: Interactive Date & Note Editor */}
                     {isPending ? (
                       <div className="space-y-3">

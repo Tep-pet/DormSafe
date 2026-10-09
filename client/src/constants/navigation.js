@@ -162,18 +162,6 @@ export const NAVIGATION_CONFIG = {
         },
       ],
     },
-    {
-      group: 'Developer & Design',
-      items: [
-        {
-          to: ROUTES.COMPONENTS,
-          label: 'UI Components Lab',
-          icon: 'sparkles',
-          description: 'Interactive UI library & design system showcase',
-          badge: 'Lab',
-        },
-      ],
-    },
   ],
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Building, RotateCcw, PhilippinePeso } from 'lucide-react';
+import { MapPin, RotateCcw, Search, X } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Select } from '../common/Input';
 import { CAMPUS_GATES, DEFAULT_GATE } from '../../constants/campusGates';
@@ -21,7 +21,8 @@ export function PropertyFilters({ filters, onChange }) {
     filters.gate !== DEFAULT_GATE ||
     Boolean(filters.minPrice) ||
     Boolean(filters.maxPrice) ||
-    Boolean(filters.propertyType);
+    Boolean(filters.propertyType) ||
+    Boolean(filters.q);
 
   const handleReset = () => {
     onChange({
@@ -29,6 +30,7 @@ export function PropertyFilters({ filters, onChange }) {
       minPrice: '',
       maxPrice: '',
       propertyType: '',
+      q: '',
     });
   };
 
@@ -36,6 +38,28 @@ export function PropertyFilters({ filters, onChange }) {
     <div className="flex flex-wrap items-center justify-between gap-3.5 border-b border-slate-200/80 pb-3.5">
       {/* Left Group: Inline Filter Inputs */}
       <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+        {/* Search Query Input */}
+        <div className="relative w-full sm:w-56">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={filters.q || ''}
+            onChange={(e) => update('q', e.target.value)}
+            placeholder="Search by description (e.g. wifi, girls, aircon, kitchen)..."
+            className="h-10 w-full rounded-xl border border-slate-200/90 bg-white pl-8 pr-7 text-xs text-slate-800 placeholder:text-slate-400 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
+          />
+          {filters.q ? (
+            <button
+              type="button"
+              onClick={() => update('q', '')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition"
+              title="Clear search"
+            >
+              <X size={13} />
+            </button>
+          ) : null}
+        </div>
+
         {/* 1. Property Type Selector */}
         <div className="w-full sm:w-44">
           <Select
@@ -116,7 +140,7 @@ export function PropertyFilters({ filters, onChange }) {
                 }`}
               >
                 <MapPin size={13} strokeWidth={isActive ? 2.5 : 2} />
-                <span>{g.label} Gate</span>
+                <span>{g.label}</span>
                 <span
                   className={`ml-0.5 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     isActive
@@ -134,4 +158,3 @@ export function PropertyFilters({ filters, onChange }) {
     </div>
   );
 }
-

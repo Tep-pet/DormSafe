@@ -371,22 +371,6 @@ export function AccountVerificationPage({
                   </Button>
                 </div>
               </div>
-
-              {/* Support & Contact Footer Callout */}
-              <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles className="h-4 w-4 text-ateneo-blue flex-shrink-0" />
-                  <span>
-                    Need immediate assistance or have questions regarding clearance?
-                  </span>
-                </div>
-                <a
-                  href="mailto:housing@addu.edu.ph"
-                  className="font-semibold text-ateneo-blue hover:underline whitespace-nowrap"
-                >
-                  housing@addu.edu.ph
-                </a>
-              </div>
             </div>
           )}
 

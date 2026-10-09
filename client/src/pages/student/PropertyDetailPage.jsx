@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   Modal,
@@ -22,6 +22,7 @@ import {
   Users,
   Calendar,
   Phone,
+  Mail,
   User,
   Info,
   FileText,
@@ -43,6 +44,7 @@ import { InquireButton } from '../../components/property/InquireButton';
 import { PropertyLocationMap } from '../../components/map/PropertyLocationMap';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { proximityService } from '../../services/proximityService';
+import { resolvePropertyContact } from '../../utils/parseContact';
 import { studentService } from '../../services/studentService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -67,7 +69,7 @@ export function PropertyDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const gate = searchParams.get('gate') || DEFAULT_GATE;
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -93,21 +95,29 @@ export function PropertyDetailPage() {
 
   const [activePhotoPreview, setActivePhotoPreview] = useState(null);
 
+  const cleanedDescription = useMemo(() => {
+    if (!property?.description) return '';
+    return property.description
+      .replace(/\s*Contact(?:\/Owner)?:\s*[^\n.]+/gi, '')
+      .trim();
+  }, [property?.description]);
+
   useEffect(() => {
+    if (authLoading) return;
     setLoading(true);
     proximityService
       .getPropertyDetail(id, gate, accessToken)
       .then((res) => {
-        const rooms = sortRooms(res.data.rooms);
+        const rooms = sortRooms(res.data?.rooms || []);
         setProperty({ ...res.data, rooms });
-        setSaved(Boolean(res.data.is_saved));
+        setSaved(Boolean(res.data?.is_saved));
         setSelectedRoomId((current) =>
           rooms.some((room) => room.id === current) ? current : rooms[0]?.id || ''
         );
       })
       .catch((err) => setError(err.message || 'Failed to load property details'))
       .finally(() => setLoading(false));
-  }, [id, gate, accessToken]);
+  }, [id, gate, accessToken, authLoading]);
 
   const activeGateLabel = CAMPUS_GATES[gate]?.label || 'Ateneo';
 
@@ -189,6 +199,8 @@ export function PropertyDetailPage() {
   const selectedRoom =
     property?.rooms?.find((room) => room.id === selectedRoomId) || property?.rooms?.[0] || null;
 
+  const resolvedContact = useMemo(() => resolvePropertyContact(property), [property]);
+
   // Golden Detail Standard: Header Action Bar
   const headerAction = (
     <div className="flex flex-wrap items-center gap-2">
@@ -230,8 +242,9 @@ export function PropertyDetailPage() {
 
       {property && (
         <InquireButton
-          contactName={property.contact_name}
-          contactPhone={property.contact_phone}
+          contactName={resolvedContact.contactName || property.contact_name}
+          contactPhone={resolvedContact.contactPhone || property.contact_phone}
+          contactEmail={resolvedContact.contactEmail || property.contact_email}
           description={property.description}
           propertyName={property.name}
           propertyId={property.id}
@@ -248,7 +261,7 @@ export function PropertyDetailPage() {
       subtitle={property ? property.address : 'Loading verified housing details...'}
       headerAction={headerAction}
     >
-      {loading ? (
+      {(loading || authLoading) ? (
         <PageSkeleton variant="detail" />
       ) : error || !property ? (
         <div className="rounded-2xl border border-rose-200/90 bg-rose-50/80 p-6 text-center shadow-2xs">
@@ -286,7 +299,7 @@ export function PropertyDetailPage() {
 
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <MapPin size={13} className="text-ateneo-blue shrink-0" />
-              <span>{activeGateLabel} Gate Proximity</span>
+              <span>{activeGateLabel} Proximity</span>
             </div>
           </div>
 
@@ -463,7 +476,7 @@ export function PropertyDetailPage() {
               </Card>
 
               {/* Card 2: About Property */}
-              {property.description && (
+              {cleanedDescription && (
                 <Card shadow="none" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs">
                   <CardHeader className="border-b border-slate-100 p-4 sm:p-5 flex items-center gap-2">
                     <Info size={16} className="text-ateneo-blue" />
@@ -471,7 +484,7 @@ export function PropertyDetailPage() {
                   </CardHeader>
                   <CardBody className="p-4 sm:p-5">
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                      {property.description}
+                      {cleanedDescription}
                     </p>
                   </CardBody>
                 </Card>
@@ -626,7 +639,7 @@ export function PropertyDetailPage() {
 
                 <CardBody className="p-4 sm:p-5 space-y-3">
                   <p className="text-xs text-slate-600">
-                    Walking navigation path from <span className="font-semibold text-slate-800">{activeGateLabel} Gate</span>.
+                    Walking navigation path from <span className="font-semibold text-slate-800">{activeGateLabel}</span>.
                   </p>
                   <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100 shadow-2xs">
                     <PropertyLocationMap
@@ -649,28 +662,41 @@ export function PropertyDetailPage() {
                   <div className="flex items-center gap-3">
                     <Avatar
                       size="md"
-                      name={property.contact_name || 'Landlord'}
+                      name={resolvedContact.contactName || property.contact_name || 'Landlord'}
                       className="h-10 w-10 bg-ateneo-blue text-white text-xs font-bold"
                     />
                     <div className="min-w-0">
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                        {property.contact_name || 'Property Manager'}
+                        {resolvedContact.contactName || property.contact_name || 'Property Manager'}
                       </h4>
                       <p className="text-[11px] text-slate-500">Authorized Housing Representative</p>
                     </div>
                   </div>
 
-                  {property.contact_phone && (
+                  {(resolvedContact.contactPhone || property.contact_phone) && (
                     <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-700 border border-slate-200/60">
                       <Phone size={14} className="text-ateneo-blue shrink-0" />
-                      <span className="font-semibold">{property.contact_phone}</span>
+                      <span className="font-semibold">{resolvedContact.contactPhone || property.contact_phone}</span>
+                    </div>
+                  )}
+
+                  {(resolvedContact.contactEmail || property.contact_email) && (
+                    <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-700 border border-slate-200/60">
+                      <Mail size={14} className="text-ateneo-blue shrink-0" />
+                      <a
+                        href={`mailto:${resolvedContact.contactEmail || property.contact_email}`}
+                        className="font-semibold text-slate-700 hover:text-ateneo-blue hover:underline break-all"
+                      >
+                        {resolvedContact.contactEmail || property.contact_email}
+                      </a>
                     </div>
                   )}
 
                   <div className="pt-2">
                     <InquireButton
-                      contactName={property.contact_name}
-                      contactPhone={property.contact_phone}
+                      contactName={resolvedContact.contactName || property.contact_name}
+                      contactPhone={resolvedContact.contactPhone || property.contact_phone}
+                      contactEmail={resolvedContact.contactEmail || property.contact_email}
                       description={property.description}
                       propertyName={property.name}
                       propertyId={property.id}

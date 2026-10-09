@@ -2,7 +2,6 @@
 export const PROPERTY_TYPES = {
   DORMITORY: 'dormitory',
   BOARDING_HOUSE: 'boarding_house',
-  APARTMENT: 'apartment',
   CONDOMINIUM: 'condominium',
 };
 
