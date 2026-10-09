@@ -34,6 +34,11 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
   const originAddress =
     'Ateneo de Davao University, 6/F Community Center of the First Companions, Ateneo de Davao University, M. Roxas Ave, Poblacion District, Davao City, 8000 Davao del Sur';
 
+  const isIvory =
+    property?.name?.toLowerCase().includes('ivory') ||
+    property?.address?.toLowerCase().includes('3jp5+wvm') ||
+    property?.address?.toLowerCase().includes('laurel');
+
   const isBrc =
     property?.name?.toLowerCase().includes('brc') ||
     property?.address?.toLowerCase().includes('padre gomez');
@@ -47,7 +52,9 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     property?.name?.toLowerCase().includes('juan') ||
     property?.address?.toLowerCase().includes('juan luna');
 
-  const destinationAddress = isJuanLuna
+  const destinationAddress = isIvory
+    ? 'Ivory Residences, 3JP5+WVM, J.P. Laurel Ave, Poblacion District, Davao City, Davao del Sur'
+    : isJuanLuna
     ? '7.0725891,125.6160124'
     : isBrc
     ? 'BRC Dormitory, Brgy, Padre Gomez St, Barangay 34-D, Poblacion District, Davao City, 8000 Davao del Sur'
@@ -55,13 +62,16 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     ? '108 M. Roxas Ave, Poblacion District, Davao City, Davao del Sur'
     : (property?.address || `${property?.latitude},${property?.longitude}`);
 
-  // Precise fallback coordinates (Ateneo CCFC, Juan Luna, BRC, & 108 M. Roxas Ave)
+  // Precise fallback coordinates (Ateneo CCFC, Ivory, Juan Luna, BRC, & 108 M. Roxas Ave)
   const defaultOriginPos = useMemo(
     () => ({ lat: 7.0712406, lng: 125.6134491 }),
     []
   );
 
   const defaultDestPos = useMemo(() => {
+    if (isIvory) {
+      return { lat: 7.0871921, lng: 125.6091495 };
+    }
     if (isJuanLuna) {
       return { lat: 7.0725891, lng: 125.6160124 };
     }
@@ -72,10 +82,10 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
       return { lat: 7.06945, lng: 125.61468 };
     }
     return {
-      lat: Number(property?.latitude) || 7.0725891,
-      lng: Number(property?.longitude) || 125.6160124,
+      lat: Number(property?.latitude) || 7.0871921,
+      lng: Number(property?.longitude) || 125.6091495,
     };
-  }, [isJuanLuna, isBrc, isCorrela, property?.latitude, property?.longitude]);
+  }, [isIvory, isJuanLuna, isBrc, isCorrela, property?.latitude, property?.longitude]);
 
   const [originMarkerPos, setOriginMarkerPos] = useState(defaultOriginPos);
   const [propertyMarkerPos, setPropertyMarkerPos] = useState(defaultDestPos);
