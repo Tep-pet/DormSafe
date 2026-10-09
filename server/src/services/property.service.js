@@ -9,9 +9,17 @@ const PROPERTY_SELECT = `
   id, name, type, address, latitude, longitude, description,
   contact_name, contact_phone,
   status, is_verified, owner_id, created_at, updated_at,
+  profiles:owner_id ( id, email, full_name ),
   rooms ( id, label, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
   house_rules ( id, rule, sort_order )
 `;
+
+const OWNER_PUBLIC_EMAILS = {
+  'owner.ivory1104@dormsafe.test': 'blancotwinkle@gmail.com',
+  'owner.ivory2004@dormsafe.test': 'rheapalima09@gmail.com',
+  'owner.brc@dormsafe.test': 'buildingblocks_davao@yahoo.com.ph',
+  'owner.juan@dormsafe.test': 'jerlyugapay@gmail.com',
+};
 
 export async function createProperty(ownerId, payload) {
   let latitude = payload.latitude;
@@ -23,6 +31,16 @@ export async function createProperty(ownerId, payload) {
     longitude = geo.longitude;
   }
 
+  let description = payload.description || null;
+  if (payload.contact_email) {
+    const emailStr = `Email: ${payload.contact_email.trim()}`;
+    if (!description) {
+      description = emailStr;
+    } else if (!/Email:\s*[^\s,]+/i.test(description)) {
+      description = `${description.trim()}\n${emailStr}`;
+    }
+  }
+
   const { data: property, error } = await supabaseAdmin
     .from('properties')
     .insert({
@@ -32,7 +50,7 @@ export async function createProperty(ownerId, payload) {
       address: payload.address,
       latitude,
       longitude,
-      description: payload.description || null,
+      description,
       contact_name: payload.contact_name || null,
       contact_phone: payload.contact_phone || null,
       status: 'pending',
@@ -244,6 +262,22 @@ export async function updateProperty(ownerId, propertyId, payload) {
   if (payload.description != null) updates.description = payload.description;
   if (payload.contact_name != null) updates.contact_name = payload.contact_name;
   if (payload.contact_phone != null) updates.contact_phone = payload.contact_phone;
+  if (payload.contact_email != null) {
+    let desc = updates.description !== undefined ? updates.description : (existing.description || '');
+    if (payload.contact_email.trim()) {
+      const emailStr = `Email: ${payload.contact_email.trim()}`;
+      if (/Email:\s*[^\s,]+/i.test(desc)) {
+        desc = desc.replace(/Email:\s*[^\s,]+/i, emailStr);
+      } else if (desc.trim()) {
+        desc = `${desc.trim()}\n${emailStr}`;
+      } else {
+        desc = emailStr;
+      }
+    } else {
+      desc = desc.replace(/\s*Email:\s*[^\s,]+/gi, '').trim();
+    }
+    updates.description = desc || null;
+  }
   if (payload.latitude != null && payload.longitude != null) {
     updates.latitude = payload.latitude;
     updates.longitude = payload.longitude;
@@ -365,7 +399,16 @@ function enrichProperty(p) {
   const images = primary
     ? [{ ...primary, url: getPublicImageUrl(primary.storage_path) }]
     : [];
-  return { ...p, room_images: images };
+
+  const parsedEmail = p.description?.match(/Email:\s*([^\s,]+)/i)?.[1]?.trim() || null;
+  const ownerEmail = p.profiles?.email || null;
+  const contactEmail =
+    parsedEmail ||
+    OWNER_PUBLIC_EMAILS[ownerEmail] ||
+    ownerEmail ||
+    null;
+
+  return { ...p, contact_email: contactEmail, room_images: images };
 }
 
 function enrichProperties(list) {

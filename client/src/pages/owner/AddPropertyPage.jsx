@@ -26,7 +26,7 @@ import { propertyService } from '../../services/propertyService';
 import { ROUTES } from '../../constants/routes';
 
 export function AddPropertyPage() {
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -38,8 +38,9 @@ export function AddPropertyPage() {
     type: PROPERTY_TYPES.BOARDING_HOUSE,
     address: '',
     description: '',
-    contact_name: '',
+    contact_name: user?.full_name || '',
     contact_phone: '',
+    contact_email: user?.email || '',
     roomLabel: '',
     roomPrice: '',
     capacity: '1',
@@ -74,6 +75,7 @@ export function AddPropertyPage() {
           description: form.description.trim(),
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
+          contact_email: form.contact_email.trim() || null,
           rooms: [
             {
               label: form.roomLabel.trim() || 'Room 1',
@@ -232,12 +234,12 @@ export function AddPropertyPage() {
               <User size={15} strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900">2. Landlord / Inquiries Contact</h2>
+              <h2 className="text-base font-semibold text-slate-900">2. Landlord & Inquiry Contact</h2>
               <p className="text-xs text-slate-500 mt-0.5">Direct contact details shown to authenticated Ateneo students</p>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Input
               id="contact_name"
               label="Contact Person Name"
@@ -252,6 +254,15 @@ export function AddPropertyPage() {
               placeholder="09XXXXXXXXX"
               value={form.contact_phone}
               onChange={update('contact_phone')}
+            />
+
+            <Input
+              id="contact_email"
+              type="email"
+              label="Contact Email Address"
+              placeholder="e.g. landlord@example.com"
+              value={form.contact_email}
+              onChange={update('contact_email')}
             />
           </div>
         </div>

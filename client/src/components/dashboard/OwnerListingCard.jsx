@@ -15,8 +15,8 @@ import {
   BedDouble,
   UserCheck,
   ToggleLeft,
-  ToggleRight,
   ExternalLink,
+  Mail,
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -55,9 +55,17 @@ export function OwnerListingCard({ property, onToggleAvailability }) {
                 {property.status === 'approved' ? 'Approved & Active' : 'Pending Verification'}
               </Badge>
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
-              <MapPin size={13} className="shrink-0 text-slate-400" />
-              <span className="truncate">{property.address}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin size={13} className="shrink-0 text-slate-400" />
+                <span className="truncate">{property.address}</span>
+              </div>
+              {property.contact_email && (
+                <div className="flex items-center gap-1.5 text-slate-600 min-w-0">
+                  <Mail size={13} className="shrink-0 text-ateneo-blue" />
+                  <span className="truncate font-medium">{property.contact_email}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

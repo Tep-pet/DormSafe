@@ -99,6 +99,7 @@ export function PropertyDetailPage() {
     if (!property?.description) return '';
     return property.description
       .replace(/\s*Contact(?:\/Owner)?:\s*[^\n.]+/gi, '')
+      .replace(/\s*Email:\s*[^\s,]+/gi, '')
       .trim();
   }, [property?.description]);
 
@@ -654,7 +655,7 @@ export function PropertyDetailPage() {
               {/* Card B: Landlord Contact Card */}
               <Card shadow="none" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs">
                 <CardHeader className="border-b border-slate-100 p-4 sm:p-5">
-                  <h3 className="text-base font-semibold text-slate-900">Property Contact</h3>
+                  <h3 className="text-base font-semibold text-slate-900">Landlord & Inquiry Contact</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Verified landlord communication channel</p>
                 </CardHeader>
 

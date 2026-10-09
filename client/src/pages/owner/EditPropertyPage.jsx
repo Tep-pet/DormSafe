@@ -16,6 +16,7 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
+  Mail,
 } from 'lucide-react';
 import { OwnerLayout } from '../../components/layout/OwnerLayout';
 import { Input } from '../../components/common/Input';
@@ -24,6 +25,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { propertyService } from '../../services/propertyService';
+import { resolvePropertyContact } from '../../utils/parseContact';
 import { ROUTES } from '../../constants/routes';
 
 export function EditPropertyPage() {
@@ -41,6 +43,7 @@ export function EditPropertyPage() {
     address: '',
     contact_name: '',
     contact_phone: '',
+    contact_email: '',
     house_rules: [''],
     rooms: [],
   });
@@ -51,12 +54,14 @@ export function EditPropertyPage() {
       .getProperty(id, accessToken)
       .then((res) => {
         const p = res.data;
+        const resolved = resolvePropertyContact(p);
         setForm({
           name: p.name || '',
           description: p.description || '',
           address: p.address || '',
-          contact_name: p.contact_name || '',
-          contact_phone: p.contact_phone || '',
+          contact_name: p.contact_name || resolved.contactName || '',
+          contact_phone: p.contact_phone || resolved.contactPhone || '',
+          contact_email: p.contact_email || resolved.contactEmail || '',
           house_rules:
             p.house_rules?.length > 0
               ? p.house_rules.map((r) => (typeof r === 'string' ? r : r.rule || ''))
@@ -120,6 +125,7 @@ export function EditPropertyPage() {
           address: form.address.trim(),
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
+          contact_email: form.contact_email.trim() || null,
           house_rules: form.house_rules.map((r) => r.trim()).filter(Boolean),
           rooms: form.rooms.map((r) => ({
             ...r,
@@ -267,7 +273,7 @@ export function EditPropertyPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Input
                 id="contact_name"
                 label="Contact Person Name"
@@ -282,6 +288,15 @@ export function EditPropertyPage() {
                 placeholder="09XXXXXXXXX"
                 value={form.contact_phone}
                 onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+              />
+
+              <Input
+                id="contact_email"
+                type="email"
+                label="Contact Email Address"
+                placeholder="e.g. landlord@example.com"
+                value={form.contact_email}
+                onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
               />
             </div>
           </div>
