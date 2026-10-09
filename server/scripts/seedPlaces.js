@@ -40,8 +40,8 @@ const PROPERTIES = [
     name: 'Juan Luna Boarding House',
     type: 'boarding_house',
     address: 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur',
-    latitude: 7.0719,
-    longitude: 125.6106,
+    latitude: 7.0725891,
+    longitude: 125.6160124,
     description: 'All Girls Boarding House (Female Only). Near campus (5 min walk). Amenities: Free WiFi, Family can stay, Kitchen (Can cook), Aircon available, Gated 24/7 security.',
     approved: true,
     rooms: [

@@ -44,24 +44,27 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     property?.address?.toLowerCase().includes('roxas');
 
   const isJuanLuna =
-    property?.name?.toLowerCase().includes('juan luna') ||
+    property?.name?.toLowerCase().includes('juan') ||
     property?.address?.toLowerCase().includes('juan luna');
 
-  const destinationAddress = isBrc
+  const destinationAddress = isJuanLuna
+    ? '7.0725891,125.6160124'
+    : isBrc
     ? 'BRC Dormitory, Brgy, Padre Gomez St, Barangay 34-D, Poblacion District, Davao City, 8000 Davao del Sur'
     : isCorrela
     ? '108 M. Roxas Ave, Poblacion District, Davao City, Davao del Sur'
-    : isJuanLuna
-    ? 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur'
     : (property?.address || `${property?.latitude},${property?.longitude}`);
 
-  // Precise fallback coordinates (Ateneo CCFC, BRC, & 108 M. Roxas Ave)
+  // Precise fallback coordinates (Ateneo CCFC, Juan Luna, BRC, & 108 M. Roxas Ave)
   const defaultOriginPos = useMemo(
     () => ({ lat: 7.0712406, lng: 125.6134491 }),
     []
   );
 
   const defaultDestPos = useMemo(() => {
+    if (isJuanLuna) {
+      return { lat: 7.0725891, lng: 125.6160124 };
+    }
     if (isBrc) {
       return { lat: 7.0680548, lng: 125.6125343 };
     }
@@ -69,10 +72,10 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
       return { lat: 7.06945, lng: 125.61468 };
     }
     return {
-      lat: Number(property?.latitude) || 7.0680548,
-      lng: Number(property?.longitude) || 125.6125343,
+      lat: Number(property?.latitude) || 7.0725891,
+      lng: Number(property?.longitude) || 125.6160124,
     };
-  }, [isBrc, isCorrela, property?.latitude, property?.longitude]);
+  }, [isJuanLuna, isBrc, isCorrela, property?.latitude, property?.longitude]);
 
   const [originMarkerPos, setOriginMarkerPos] = useState(defaultOriginPos);
   const [propertyMarkerPos, setPropertyMarkerPos] = useState(defaultDestPos);
@@ -138,11 +141,11 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     let isMounted = true;
     const directionsService = new window.google.maps.DirectionsService();
 
-    // Primary attempt: Request route with exact addresses
+    // Primary attempt: Request route with exact addresses / coordinates
     directionsService.route(
       {
         origin: originAddress,
-        destination: destinationAddress,
+        destination: isJuanLuna ? defaultDestPos : destinationAddress,
         travelMode: window.google.maps.TravelMode.WALKING,
       },
       (result, status) => {
@@ -183,12 +186,12 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     return () => {
       isMounted = false;
     };
-  }, [isLoaded, originAddress, destinationAddress, defaultOriginPos, defaultDestPos]);
+  }, [isLoaded, originAddress, destinationAddress, defaultOriginPos, defaultDestPos, isJuanLuna]);
 
   const mapsDirectionsUrl =
     `https://www.google.com/maps/dir/?api=1` +
     `&origin=${encodeURIComponent(originAddress)}` +
-    `&destination=${encodeURIComponent(destinationAddress)}` +
+    `&destination=${isJuanLuna ? '7.0725891,125.6160124' : encodeURIComponent(destinationAddress)}` +
     `&travelmode=walking`;
 
   if (!apiKey) {
