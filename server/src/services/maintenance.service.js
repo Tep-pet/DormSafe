@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { createNotification } from './notification.service.js';
+import { resolveOwnerIds } from '../utils/ownership.js';
 
 export async function createMaintenanceRequest(studentId, { tenant_id, description }) {
   const { data: tenant, error } = await supabaseAdmin
@@ -52,6 +53,7 @@ export async function getStudentMaintenanceRequests(studentId) {
 }
 
 export async function getOwnerMaintenanceRequests(ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
   const { data, error } = await supabaseAdmin
     .from('maintenance_requests')
     .select(`
@@ -59,7 +61,7 @@ export async function getOwnerMaintenanceRequests(ownerId) {
       properties!inner(name, owner_id),
       profiles!maintenance_requests_student_id_fkey(full_name, email)
     `)
-    .eq('properties.owner_id', ownerId)
+    .in('properties.owner_id', ownerIds)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -73,7 +75,8 @@ export async function updateMaintenanceStatus(requestId, ownerId, status) {
     .eq('id', requestId)
     .single();
 
-  if (error || !req || req.properties.owner_id !== ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
+  if (error || !req || !ownerIds.includes(req.properties.owner_id)) {
     const err = new Error('Request not found');
     err.status = 404;
     throw err;

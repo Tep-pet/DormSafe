@@ -3,6 +3,7 @@ import { geocodeAddress } from './geocoding.service.js';
 import { getPublicImageUrl } from './upload.service.js';
 import { getPrimaryImage } from '../utils/propertyImages.js';
 import { notifyAdmins, createNotification } from './notification.service.js';
+import { resolveOwnerIds } from '../utils/ownership.js';
 
 const PROPERTY_SELECT = `
   id, name, type, address, latitude, longitude, description,
@@ -75,10 +76,11 @@ export async function createProperty(ownerId, payload) {
 }
 
 export async function getOwnerProperties(ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
   const { data, error } = await supabaseAdmin
     .from('properties')
     .select(PROPERTY_SELECT)
-    .eq('owner_id', ownerId)
+    .in('owner_id', ownerIds)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -98,10 +100,13 @@ export async function getPropertyById(id, userId, role) {
     throw err;
   }
 
-  if (role === 'owner' && data.owner_id !== userId) {
-    const err = new Error('Not authorized');
-    err.status = 403;
-    throw err;
+  if (role === 'owner') {
+    const ownerIds = resolveOwnerIds(userId);
+    if (!ownerIds.includes(data.owner_id)) {
+      const err = new Error('Not authorized');
+      err.status = 403;
+      throw err;
+    }
   }
 
   return enrichProperty(data);
@@ -114,7 +119,8 @@ export async function updateRoomAvailability(roomId, ownerId, isAvailable) {
     .eq('id', roomId)
     .single();
 
-  if (roomError || !room || room.properties.owner_id !== ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
+  if (roomError || !room || !ownerIds.includes(room.properties.owner_id)) {
     const err = new Error('Room not found or not authorized');
     err.status = 404;
     throw err;
@@ -257,11 +263,12 @@ export async function updateProperty(ownerId, propertyId, payload) {
     updates.address = payload.address;
   }
 
+  const ownerIds = resolveOwnerIds(ownerId);
   const { error } = await supabaseAdmin
     .from('properties')
     .update(updates)
     .eq('id', propertyId)
-    .eq('owner_id', ownerId);
+    .in('owner_id', ownerIds);
 
   if (error) throw error;
 
@@ -298,10 +305,11 @@ export async function updateProperty(ownerId, propertyId, payload) {
 }
 
 export async function getOwnerDashboardStats(ownerId, propertyId = null) {
+  const ownerIds = resolveOwnerIds(ownerId);
   let query = supabaseAdmin
     .from('properties')
     .select('id, rooms(id, is_available, price)')
-    .eq('owner_id', ownerId);
+    .in('owner_id', ownerIds);
 
   if (propertyId) {
     query = query.eq('id', propertyId);

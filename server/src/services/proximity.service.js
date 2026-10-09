@@ -7,6 +7,13 @@ import { enrichRoomsWithStayInfo } from './stay.service.js';
 import { getApprovedReviews } from './review.service.js';
 import { getFavoriteIds } from './favorite.service.js';
 
+const OWNER_PUBLIC_EMAILS = {
+  'owner.ivory1104@dormsafe.test': 'blancotwinkle@gmail.com',
+  'owner.ivory2004@dormsafe.test': 'rheapalima09@gmail.com',
+  'owner.brc@dormsafe.test': 'buildingblocks_davao@yahoo.com.ph',
+  'owner.juan@dormsafe.test': 'jerlyugapay@gmail.com',
+};
+
 const SEARCH_SELECT = `
   id, name, type, address, latitude, longitude, is_verified, status,
   contact_name, contact_phone, description, owner_id,
@@ -69,7 +76,7 @@ function enrichProperty(property, walkingMinutes) {
     is_verified: property.is_verified,
     contact_name: property.contact_name || property.profiles?.full_name || null,
     contact_phone: property.contact_phone,
-    contact_email: property.profiles?.email || null,
+    contact_email: OWNER_PUBLIC_EMAILS[property.profiles?.email] || property.profiles?.email || null,
     min_price: prices.length ? Math.min(...prices) : null,
     available_rooms: availableRooms,
     walking_minutes: walkingMinutes,
@@ -159,7 +166,8 @@ export async function getPropertyById(id, gate, studentId = null) {
 
   return {
     ...data,
-    contact_email: data.profiles?.email || null,
+    contact_name: data.contact_name || data.profiles?.full_name || null,
+    contact_email: OWNER_PUBLIC_EMAILS[data.profiles?.email] || data.profiles?.email || null,
     rooms,
     walking_minutes: walkingMinutes,
     images: flattenRoomImages(data),

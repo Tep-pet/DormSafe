@@ -1,16 +1,17 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { getSignedReceiptUrl } from './receipt.service.js';
-import { assertPaymentOwnedBy } from '../utils/ownership.js';
+import { assertPaymentOwnedBy, resolveOwnerIds } from '../utils/ownership.js';
 import { createNotification } from './notification.service.js';
 
 export async function getPaymentsByOwner(ownerId, propertyId = null) {
+  const ownerIds = resolveOwnerIds(ownerId);
   let query = supabaseAdmin
     .from('payments')
     .select(`
       id, amount, due_date, paid_date, status, notes, receipt_storage_path, created_at,
       tenants!inner(id, tenant_name, property_id, properties!inner(name, owner_id))
     `)
-    .eq('tenants.properties.owner_id', ownerId)
+    .in('tenants.properties.owner_id', ownerIds)
     .order('due_date', { ascending: false });
 
   if (propertyId) {
@@ -48,7 +49,8 @@ export async function createPayment(ownerId, payload) {
     .eq('id', payload.tenant_id)
     .single();
 
-  if (tenantError || !tenant || tenant.properties.owner_id !== ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
+  if (tenantError || !tenant || !ownerIds.includes(tenant.properties.owner_id)) {
     const err = new Error('Tenant not found');
     err.status = 404;
     throw err;
@@ -117,13 +119,14 @@ export async function sendPaymentReminders(ownerId) {
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = `${today.slice(0, 7)}-01`;
 
+  const ownerIds = resolveOwnerIds(ownerId);
   const { data: payments, error } = await supabaseAdmin
     .from('payments')
     .select(`
       id, amount, due_date, status, tenant_id,
       tenants!inner(id, student_id, tenant_name, properties!inner(owner_id, name))
     `)
-    .eq('tenants.properties.owner_id', ownerId)
+    .in('tenants.properties.owner_id', ownerIds)
     .in('status', ['pending', 'overdue'])
     .lte('due_date', today);
 
@@ -171,7 +174,7 @@ export async function sendPaymentReminders(ownerId) {
       rooms(price),
       properties!inner(owner_id, name)
     `)
-    .eq('properties.owner_id', ownerId)
+    .in('properties.owner_id', ownerIds)
     .not('student_id', 'is', null)
     .not('room_id', 'is', null);
 

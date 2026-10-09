@@ -1,13 +1,15 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { processExpiredTenants } from '../utils/tenantExpiry.js';
+import { resolveOwnerIds } from '../utils/ownership.js';
 
 export async function getOwnerAnalytics(ownerId, propertyId = null) {
   await processExpiredTenants();
 
+  const ownerIds = resolveOwnerIds(ownerId);
   let propQuery = supabaseAdmin
     .from('properties')
     .select('id, name, rooms(id, is_available, price)')
-    .eq('owner_id', ownerId);
+    .in('owner_id', ownerIds);
 
   if (propertyId) propQuery = propQuery.eq('id', propertyId);
 
@@ -71,6 +73,7 @@ export async function getOwnerAnalytics(ownerId, propertyId = null) {
 export async function getOccupancyCalendar(ownerId, propertyId = null) {
   await processExpiredTenants();
 
+  const ownerIds = resolveOwnerIds(ownerId);
   let tenantQuery = supabaseAdmin
     .from('tenants')
     .select(`
@@ -78,7 +81,7 @@ export async function getOccupancyCalendar(ownerId, propertyId = null) {
       properties!inner(id, name, owner_id),
       rooms(label)
     `)
-    .eq('properties.owner_id', ownerId);
+    .in('properties.owner_id', ownerIds);
 
   if (propertyId) tenantQuery = tenantQuery.eq('property_id', propertyId);
 
@@ -92,7 +95,7 @@ export async function getOccupancyCalendar(ownerId, propertyId = null) {
       rooms(label),
       profiles!room_reservations_student_id_fkey(full_name)
     `)
-    .eq('properties.owner_id', ownerId)
+    .in('properties.owner_id', ownerIds)
     .eq('status', 'pending');
 
   if (propertyId) resQuery = resQuery.eq('property_id', propertyId);

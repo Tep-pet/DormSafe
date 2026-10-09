@@ -83,7 +83,9 @@ export function resolvePropertyContact(property) {
   const rawName = (property.name || property.propertyName || property.title || '').trim().toLowerCase();
   for (const [key, val] of Object.entries(KNOWN_DORM_CONTACTS)) {
     if (rawName.includes(key)) {
-      if (!email && val.email) email = val.email;
+      if ((!email || email.includes('@dormsafe.test')) && val.email) {
+        email = val.email;
+      }
       if (!name || name === 'BRC Dormitory' || name === 'Gigi' || name === 'Property Manager' || name === 'Property Owner') {
         name = val.name;
       }

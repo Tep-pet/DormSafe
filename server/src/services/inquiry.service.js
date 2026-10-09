@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { createNotification } from './notification.service.js';
 import { sendAccountEmail } from './mail.service.js';
+import { resolveOwnerIds } from '../utils/ownership.js';
 
 const KIND = 'room_request';
 const EVENT = 'room_request_event';
@@ -292,10 +293,12 @@ export async function cancelInquiry(student, id) {
 }
 
 export async function listOwnerInquiries(ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
   const { data, error } = await supabaseAdmin
     .from('notifications')
     .select('*')
-    .contains('metadata', { kind: KIND, owner_id: ownerId })
+    .eq('metadata->>kind', KIND)
+    .in('metadata->>owner_id', ownerIds)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -317,8 +320,9 @@ export async function replyToInquiry(owner, id, { status, message }) {
     .eq('id', id)
     .maybeSingle();
 
+  const ownerIds = resolveOwnerIds(owner.id);
   if (error) throw error;
-  if (!row || row.metadata?.kind !== KIND || row.metadata.owner_id !== owner.id) {
+  if (!row || row.metadata?.kind !== KIND || !ownerIds.includes(row.metadata.owner_id)) {
     throw httpError('Request not found', 404);
   }
   if (row.metadata.status !== 'pending') {

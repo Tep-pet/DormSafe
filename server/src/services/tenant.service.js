@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { cancelConflictingReservations } from './stay.service.js';
 import { processExpiredTenants, isTenantExpired, isTenantActive } from '../utils/tenantExpiry.js';
 import { createNotification } from './notification.service.js';
+import { resolveOwnerIds } from '../utils/ownership.js';
 
 export async function getAllTenants() {
   await processExpiredTenants();
@@ -27,6 +28,7 @@ export async function getAllTenants() {
 export async function getTenantsByOwner(ownerId, propertyId = null) {
   await processExpiredTenants();
 
+  const ownerIds = resolveOwnerIds(ownerId);
   let query = supabaseAdmin
     .from('tenants')
     .select(`
@@ -35,7 +37,7 @@ export async function getTenantsByOwner(ownerId, propertyId = null) {
       rooms(id, label, price),
       profiles:student_id(id, email, full_name)
     `)
-    .eq('properties.owner_id', ownerId)
+    .in('properties.owner_id', ownerIds)
     .order('created_at', { ascending: false });
 
   if (propertyId) {
@@ -65,11 +67,12 @@ async function resolveStudentId(studentEmail) {
 }
 
 export async function createTenant(ownerId, payload) {
+  const ownerIds = resolveOwnerIds(ownerId);
   const { data: property, error } = await supabaseAdmin
     .from('properties')
     .select('id')
     .eq('id', payload.property_id)
-    .eq('owner_id', ownerId)
+    .in('owner_id', ownerIds)
     .single();
 
   if (error || !property) {
@@ -130,7 +133,8 @@ export async function deleteTenant(tenantId, ownerId) {
     .eq('id', tenantId)
     .single();
 
-  if (error || !tenant || tenant.properties.owner_id !== ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
+  if (error || !tenant || !ownerIds.includes(tenant.properties.owner_id)) {
     const err = new Error('Tenant not found');
     err.status = 404;
     throw err;
@@ -168,7 +172,8 @@ export async function updateTenantMoveOut(tenantId, ownerId, newMoveOutDate) {
     .eq('id', tenantId)
     .single();
 
-  if (error || !tenant || tenant.properties.owner_id !== ownerId) {
+  const ownerIds = resolveOwnerIds(ownerId);
+  if (error || !tenant || !ownerIds.includes(tenant.properties.owner_id)) {
     const err = new Error('Tenant not found');
     err.status = 404;
     throw err;
