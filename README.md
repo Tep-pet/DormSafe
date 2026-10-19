@@ -70,23 +70,6 @@ $env:SUPABASE_INSECURE_SSL="1"   # Windows — only if seed fails with SSL error
 npm run seed
 ```
 
-**Default Accounts**:
-
-| Role | Name | Email | Password | Assigned Property |
-| :--- | :--- | :--- | :--- | :--- |
-| **Admin** | DormSafe Admin | `admin@dormsafe.test` | `Admin123!` | System Dashboard |
-| **Owner** | Twinkle Blanco | `blancotwinkle@gmail.com` | `Owner123!` | Ivory Residences |
-| **Owner** | Rhea Palima | `rheapalima09@gmail.com` | `Owner123!` | Ivory Residences (Room 2004) |
-| **Owner** | Jerly Ugapay | `jerlyugapay@gmail.com` | `Owner123!` | Juan Luna Boarding House |
-| **Owner** | May Andaya | `andayamay111@gmail.com` | `Owner123!` | Residencia de Maria Goretti |
-| **Owner** | Williamor Corpuz | `w.macguilles@gmail.com` | `Owner123!` | Correla Dormitory |
-| **Owner** | Trisha Paula Gwatwo | `buildingblocks.davao@gmail.com` | `Owner123!` | BRC Dormitory |
-| **Student** | Stephanie Palima | `stephanie.palima@addu.edu.ph` | `Student123!` | Tenant at Juan Luna |
-| **Student** | Samantha Aguirre | `samantha.aguirre@addu.edu.ph` | `Student123!` | Tenant at Correla |
-| **Student** | Franshiska Pacatang | `franshiska.pacatang@addu.edu.ph` | `Student123!` | Tenant at Goretti |
-| **Student** | Zhea Zafra | `zhea.zafra@addu.edu.ph` | `Student123!` | Tenant at BRC |
-| **Student** | Rachel Tan | `rachel.tan@addu.edu.ph` | `Student123!` | Reservation at Juan Luna |
-
 
 ### 2. Environment variables
 
