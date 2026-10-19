@@ -294,9 +294,9 @@ export function ApproveListingsPage() {
           fetchAuxiliaryData();
         }}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync listing requests"
+        title="Refresh listing requests"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );

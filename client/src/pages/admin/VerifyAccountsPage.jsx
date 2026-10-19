@@ -315,9 +315,9 @@ export function VerifyAccountsPage() {
           fetchAuxiliaryStats();
         }}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync account requests"
+        title="Refresh account requests"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );

@@ -242,9 +242,9 @@ export function AdminManageTenantsPage() {
         isLoading={refreshing}
         onClick={() => loadTenants(true)}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync tenant records"
+        title="Refresh tenant records"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );

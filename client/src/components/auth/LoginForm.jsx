@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Sparkles, UserCheck, Shield, Building } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { ROLE_HOME } from '../../constants/routes';
 import { useToast } from '../../hooks/useToast';
@@ -15,13 +15,6 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Quick fill helper for review & testing
-  const handleQuickFill = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -51,39 +44,6 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {/* Demo Credentials Quick-Fill Selector */}
-      <div className="rounded-2xl border border-blue-100/80 bg-blue-50/50 p-2.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold text-ateneo-blue mb-1.5">
-          <Sparkles className="h-3 w-3" />
-          <span>Quick Demo Fill:</span>
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          <button
-            type="button"
-            onClick={() => handleQuickFill('chaeaddu@gmail.com', 'chae123')}
-            className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-medium text-slate-700 shadow-2xs transition-all hover:border-ateneo-blue hover:text-ateneo-blue active:scale-95"
-          >
-            <UserCheck className="h-2.5 w-2.5 text-blue-600" />
-            <span>Student</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('owner.ivory1104@dormsafe.test', 'Owner123!')}
-            className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-medium text-slate-700 shadow-2xs transition-all hover:border-ateneo-blue hover:text-ateneo-blue active:scale-95"
-          >
-            <Building className="h-2.5 w-2.5 text-indigo-600" />
-            <span>Landlord</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('admin@dormsafe.test', 'Admin123!')}
-            className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-medium text-slate-700 shadow-2xs transition-all hover:border-ateneo-blue hover:text-ateneo-blue active:scale-95"
-          >
-            <Shield className="h-2.5 w-2.5 text-amber-600" />
-            <span>Admin</span>
-          </button>
-        </div>
-      </div>
 
       <div className="space-y-2.5">
         <Input

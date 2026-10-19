@@ -334,7 +334,7 @@ export function ManageTenantsPage() {
 
               <Input
                 id="student_email"
-                label="Student Account Email (for stay sync)"
+                label="Student Account Email (for stay refresh)"
                 placeholder="student@addu.edu.ph"
                 value={form.student_email}
                 onChange={(e) => setForm({ ...form, student_email: e.target.value })}
@@ -342,7 +342,7 @@ export function ManageTenantsPage() {
 
               <div className="sm:col-span-2">
                 <p className="text-[11px] text-slate-400">
-                  If the student registers with this email on DormSafe, their stay, extensions, and payment receipts will automatically sync to their student dashboard.
+                  If the student registers with this email on DormSafe, their stay, extensions, and payment receipts will automatically refresh to their student dashboard.
                 </p>
               </div>
 

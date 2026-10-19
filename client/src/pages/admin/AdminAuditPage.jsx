@@ -307,9 +307,9 @@ export function AdminAuditPage() {
         isLoading={refreshing}
         onClick={() => loadLogs(true)}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync audit records"
+        title="Refresh audit records"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );

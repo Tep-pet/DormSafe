@@ -209,9 +209,9 @@ export function AdminDashboardPage() {
         isLoading={refreshing}
         onClick={() => fetchDashboardData(true)}
         startContent={!refreshing && <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync live campus data"
+        title="Refresh live campus data"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );
@@ -248,7 +248,7 @@ export function AdminDashboardPage() {
               </div>
               <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Sync
+                Live Refresh
               </span>
             </div>
 

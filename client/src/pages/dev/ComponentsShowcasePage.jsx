@@ -871,7 +871,7 @@ export function ComponentsShowcasePage() {
                     radius="full"
                     variant="ghost"
                     startContent={<Info size={14} />}
-                    onClick={() => toast.info('Syncing real-time campus housing capacity data…')}
+                    onClick={() => toast.info('Refreshing real-time campus housing capacity data…')}
                   >
                     Trigger Info Toast
                   </Button>

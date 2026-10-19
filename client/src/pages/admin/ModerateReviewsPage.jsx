@@ -254,9 +254,9 @@ export function ModerateReviewsPage() {
         isLoading={refreshing}
         onClick={() => loadData(true)}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
-        title="Sync review and report queues"
+        title="Refresh review and report queues"
       >
-        {refreshing ? 'Syncing…' : 'Sync'}
+        {refreshing ? 'Refreshing…' : 'Refresh'}
       </Button>
     </div>
   );
