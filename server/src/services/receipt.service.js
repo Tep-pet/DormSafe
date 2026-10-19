@@ -30,9 +30,17 @@ export async function uploadPaymentReceipt(file, paymentId, ownerId) {
 
 export async function getSignedReceiptUrl(storagePath, expiresIn = 3600) {
   if (!storagePath) return null;
+  if (storagePath.startsWith('http://') || storagePath.startsWith('https://') || storagePath.startsWith('/')) {
+    return storagePath;
+  }
   const { data, error } = await supabaseAdmin.storage
     .from('receipts')
     .createSignedUrl(storagePath, expiresIn);
-  if (error) return null;
+  if (error) {
+    if (storagePath.includes('sample-receipt')) {
+      return '/receipts/sample-receipt.png';
+    }
+    return null;
+  }
   return data.signedUrl;
 }

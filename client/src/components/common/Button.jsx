@@ -23,7 +23,7 @@ export function Button({
   endContent,
   ...props
 }) {
-  const isButtonDisabled = disabled || isDisabled;
+  const isButtonDisabled = disabled || isDisabled || isLoading;
 
   // Map semantic variants to HeroUI color & variant
   const getVariantProps = () => {

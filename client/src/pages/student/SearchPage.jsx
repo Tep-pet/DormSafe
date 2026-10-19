@@ -33,6 +33,7 @@ export function SearchPage() {
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobileView, setMobileView] = useState('list'); // 'list' | 'map'
 
   // Sync state when URL query param ?q= changes
   useEffect(() => {
@@ -63,6 +64,9 @@ export function SearchPage() {
 
   const handleMarkerClick = (property) => {
     setSelectedPropertyId(property.id);
+    if (mobileView === 'map') {
+      setMobileView('list');
+    }
     const element = document.getElementById(`property-card-${property.id}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -138,10 +142,38 @@ export function SearchPage() {
         {/* Single-Row Compact Filter Toolbar */}
         <PropertyFilters filters={filters} onChange={handleFilterChange} />
 
+        {/* Mobile / Tablet View Switcher Toggle (lg:hidden) */}
+        <div className="flex lg:hidden items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => setMobileView('list')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              mobileView === 'list'
+                ? 'bg-white text-ateneo-blue shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Building2 size={14} />
+            <span>Listings ({totalCount})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileView('map')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-xl transition-all ${
+              mobileView === 'map'
+                ? 'bg-white text-ateneo-blue shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <MapPin size={14} />
+            <span>Campus Map ({filteredProperties.length})</span>
+          </button>
+        </div>
+
         {/* Main 2-Column Responsive Layout: Map + Listing Grid */}
         <div className="grid gap-6 lg:grid-cols-12 items-start">
           {/* Left / Desktop Sticky Map Column (5 cols) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-24">
+          <div className={`lg:col-span-5 lg:sticky lg:top-24 ${mobileView === 'list' ? 'hidden lg:block' : 'block'}`}>
             <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-xs">
               <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
@@ -163,7 +195,7 @@ export function SearchPage() {
           </div>
 
           {/* Right / Listing Column (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className={`lg:col-span-7 space-y-4 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
             {/* Section Header with count */}
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
               <div>

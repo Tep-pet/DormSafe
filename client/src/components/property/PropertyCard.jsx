@@ -39,15 +39,41 @@ export function PropertyCard({ property, gate, isSelected = false }) {
             </div>
           )}
 
-          {/* Top Left: Verified Badge */}
-          {property.is_verified && (
-            <div className="absolute left-3 top-3 z-10">
+          {/* Top Left: Verified & Availability Badges */}
+          <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-1.5">
+            {property.is_verified && (
               <Badge variant="verified" size="sm" className="shadow-xs backdrop-blur-xs font-semibold">
                 <ShieldCheck size={12} className="mr-1 inline-block shrink-0" />
                 Verified
               </Badge>
-            </div>
-          )}
+            )}
+            {property.available_rooms != null && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold shadow-xs backdrop-blur-xs flex items-center gap-1 ${
+                  property.available_rooms === 0
+                    ? 'bg-red-600/90 text-white'
+                    : property.available_rooms <= 2
+                    ? 'bg-amber-600/90 text-white'
+                    : 'bg-emerald-600/90 text-white'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    property.available_rooms === 0
+                      ? 'bg-red-200'
+                      : property.available_rooms <= 2
+                      ? 'bg-amber-200 animate-pulse'
+                      : 'bg-emerald-200 animate-pulse'
+                  }`}
+                />
+                {property.available_rooms === 0
+                  ? 'Not available'
+                  : property.available_rooms <= 2
+                  ? `${property.available_rooms} ${property.available_rooms === 1 ? 'room' : 'rooms'} left`
+                  : 'Available'}
+              </span>
+            )}
+          </div>
 
           {/* Top Right: Property Type Chip */}
           <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
@@ -81,7 +107,9 @@ export function PropertyCard({ property, gate, isSelected = false }) {
             {property.available_rooms != null && (
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                 <BedDouble size={12} className="text-slate-400" />
-                {property.available_rooms} {property.available_rooms === 1 ? 'room' : 'rooms'} left
+                {property.available_rooms > 0
+                  ? `${property.available_rooms} ${property.available_rooms === 1 ? 'room' : 'rooms'} left`
+                  : 'Fully Occupied'}
               </span>
             )}
           </div>

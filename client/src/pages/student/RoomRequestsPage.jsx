@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, CardBody, CardHeader, CardFooter, Chip } from '@heroui/react';
+import { Card, CardBody, CardHeader, CardFooter, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import {
   Send,
   Building2,
@@ -55,6 +55,7 @@ export function RoomRequestsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [confirmCancelItem, setConfirmCancelItem] = useState(null);
 
   const load = useCallback(
     async (isManual = false) => {
@@ -334,10 +335,20 @@ export function RoomRequestsPage() {
                     {/* If Pending: Interactive Date & Note Editor */}
                     {isPending ? (
                       <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 pb-1.5 border-b border-slate-100">
+                          <span className="flex items-center gap-1.5 text-ateneo-blue font-bold">
+                            <Calendar size={14} />
+                            Edit Move-In & Move-Out Dates
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-normal">
+                            Update dates below, then click &ldquo;Save Changes&rdquo;
+                          </span>
+                        </div>
+
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Requested Move-In
+                              Requested Move-In Date
                             </label>
                             <input
                               type="date"
@@ -389,7 +400,7 @@ export function RoomRequestsPage() {
                               variant="danger"
                               radius="full"
                               isLoading={processingId === item.id}
-                              onClick={() => cancel(item.id)}
+                              onClick={() => setConfirmCancelItem(item)}
                               startContent={<Trash2 size={13} />}
                               className="text-xs"
                             >
@@ -448,6 +459,69 @@ export function RoomRequestsPage() {
             />
           </div>
         )}
+
+        {/* Cancellation Confirmation Modal */}
+        <Modal
+          isOpen={Boolean(confirmCancelItem)}
+          onClose={() => setConfirmCancelItem(null)}
+          size="md"
+          backdrop="blur"
+          classNames={{
+            base: 'rounded-2xl border border-slate-200/90 shadow-2xl bg-white overflow-hidden',
+            header: 'border-b border-slate-100 p-5 bg-rose-50/50',
+            body: 'p-5 space-y-3',
+            footer: 'border-t border-slate-100 p-4 bg-slate-50/50',
+          }}
+        >
+          <ModalContent>
+            {() => (
+              <>
+                <ModalHeader className="flex items-center gap-2 text-rose-700">
+                  <AlertTriangle size={18} className="text-rose-600 shrink-0" />
+                  <h3 className="text-base font-bold text-slate-900">Cancel Room Request?</h3>
+                </ModalHeader>
+                <ModalBody className="text-xs text-slate-600 leading-relaxed">
+                  <p>
+                    Are you sure you want to cancel your room request for{' '}
+                    <strong className="text-slate-900">{confirmCancelItem?.room_label}</strong> at{' '}
+                    <strong className="text-slate-900">{confirmCancelItem?.property_name}</strong>?
+                  </p>
+                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-3 text-amber-800 text-[11px] leading-relaxed">
+                    <strong>What happens next:</strong>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5 text-amber-700">
+                      <li>The property owner will be immediately notified that you withdrew this request.</li>
+                      <li>Your request status will be marked as &ldquo;Cancelled&rdquo;.</li>
+                      <li>Your selected dates and unit reservation hold will be released.</li>
+                    </ul>
+                  </div>
+                </ModalBody>
+                <ModalFooter className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    radius="full"
+                    onClick={() => setConfirmCancelItem(null)}
+                  >
+                    Keep Request
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    radius="full"
+                    isLoading={processingId === confirmCancelItem?.id}
+                    onClick={async () => {
+                      const id = confirmCancelItem?.id;
+                      setConfirmCancelItem(null);
+                      if (id) await cancel(id);
+                    }}
+                  >
+                    Yes, Cancel Request
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
       </div>
     </PageContainer>
   );

@@ -121,6 +121,7 @@ export function OwnerRoomRequestsPage() {
       pending: requests.filter((r) => r.status === 'pending').length,
       accepted: requests.filter((r) => r.status === 'accepted').length,
       declined: requests.filter((r) => r.status === 'declined').length,
+      cancelled: requests.filter((r) => r.status === 'cancelled').length,
     };
   }, [requests]);
 
@@ -234,6 +235,20 @@ export function OwnerRoomRequestsPage() {
                   <span>Declined ({statusCounts.declined})</span>
                 </button>
               )}
+              {statusCounts.cancelled > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('cancelled')}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${
+                    statusFilter === 'cancelled'
+                      ? 'bg-white text-rose-700 shadow-xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <XCircle size={13} className="text-rose-400" />
+                  <span>Cancelled ({statusCounts.cancelled})</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -321,6 +336,8 @@ export function OwnerRoomRequestsPage() {
                             ? 'verified'
                             : item.status === 'pending'
                             ? 'pending'
+                            : item.status === 'cancelled'
+                            ? 'default'
                             : 'occupied'
                         }
                       >
@@ -402,6 +419,7 @@ export function OwnerRoomRequestsPage() {
                           size="sm"
                           radius="full"
                           isLoading={actionInProgress === item.id}
+                          disabled={actionInProgress === item.id}
                           onClick={() => reply(item.id, 'accepted')}
                           startContent={!actionInProgress && <CheckCircle2 size={14} strokeWidth={2.5} />}
                         >

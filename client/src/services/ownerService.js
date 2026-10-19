@@ -5,16 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 export async function submitVerification(file, token) {
   const formData = new FormData();
   formData.append('permit', file);
-
-  const response = await fetch(`${API_URL}/api/owners/verification`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Upload failed');
-  return data;
+  return apiClient.upload('/api/owners/verification', formData, token);
 }
 
 export const ownerService = {

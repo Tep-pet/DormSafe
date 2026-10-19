@@ -219,12 +219,16 @@ export async function confirmMoveOut(studentId, tenantId) {
   if (updateError) throw updateError;
 
   if (tenant.properties?.owner_id) {
-    await createNotification(tenant.properties.owner_id, {
-      type: 'stay_confirm_request',
-      title: 'Move-out confirmed',
-      body: `Tenant confirmed move-out on ${tenant.move_out_date} at ${tenant.properties.name}.`,
-      metadata: { tenant_id: tenantId },
-    });
+    try {
+      await createNotification(tenant.properties.owner_id, {
+        type: 'stay_confirm_request',
+        title: 'Move-out confirmed',
+        body: `Tenant confirmed move-out on ${tenant.move_out_date} at ${tenant.properties.name}.`,
+        metadata: { tenant_id: tenantId },
+      });
+    } catch (notifErr) {
+      console.warn('Failed to notify owner about move-out confirmation:', notifErr.message);
+    }
   }
 
   return data;

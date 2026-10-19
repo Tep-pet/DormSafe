@@ -29,10 +29,10 @@ function cleanNote(value, label) {
 
 async function notify(userId, payload) {
   try {
-    return await createNotification(userId, { ...payload, type: 'room_inquiry' });
+    return await createNotification(userId, { ...payload, type: 'room_reserved' });
   } catch (err) {
-    if (!/invalid input value for enum notification_type/i.test(err.message || '')) throw err;
-    return createNotification(userId, { ...payload, type: 'room_reserved' });
+    console.warn('DormSafe notify warning:', err.message);
+    return null;
   }
 }
 
@@ -173,7 +173,7 @@ export async function requestRoom(student, { property_id, room_id, move_in_date,
       .from('notifications')
       .insert({
         user_id: student.id,
-        type: 'room_inquiry',
+        type: 'room_reserved',
         title: 'Room request sent',
         body,
         metadata,
@@ -202,13 +202,21 @@ export async function requestRoom(student, { property_id, room_id, move_in_date,
 
   // Send the notification directly to the landlord notifications
   const ownerBody = requestText(metadata, `${studentName} wants to avail a room.`);
-  await notify(room.properties.owner_id, {
-    title: `New room booking request from ${studentName}`,
-    body: ownerBody,
-    metadata: { ...metadata, kind: EVENT, inquiry_id: record.id },
-  });
+  try {
+    await notify(room.properties.owner_id, {
+      title: `New room booking request from ${studentName}`,
+      body: ownerBody,
+      metadata: { ...metadata, kind: EVENT, inquiry_id: record.id },
+    });
+  } catch (notifyErr) {
+    console.warn('Failed to notify owner:', notifyErr.message);
+  }
 
-  await sendAccountEmail(owner.email, 'DormSafe: student wants to avail a room', ownerBody);
+  try {
+    await sendAccountEmail(owner.email, 'DormSafe: student wants to avail a room', ownerBody);
+  } catch (emailErr) {
+    console.warn('Failed to send email to owner:', emailErr.message);
+  }
 
   return toInquiry(record);
 }
@@ -260,13 +268,22 @@ export async function updateInquiry(student, id, { move_in_date, move_out_date, 
   const body = requestText(metadata, `${metadata.student_name} updated their room request.`);
   const saved = await saveRecord(id, metadata, 'Room request updated', body);
 
-  await notify(metadata.owner_id, {
-    title: 'Room request updated',
-    body,
-    metadata: { ...metadata, kind: EVENT, inquiry_id: id },
-  });
-  const owner = await ownerEmail(metadata.owner_id);
-  await sendAccountEmail(owner.email, 'DormSafe: room request updated', body);
+  try {
+    await notify(metadata.owner_id, {
+      title: 'Room request updated',
+      body,
+      metadata: { ...metadata, kind: EVENT, inquiry_id: id },
+    });
+  } catch (err) {
+    console.warn('Failed to notify owner:', err.message);
+  }
+
+  try {
+    const owner = await ownerEmail(metadata.owner_id);
+    await sendAccountEmail(owner.email, 'DormSafe: room request updated', body);
+  } catch (err) {
+    console.warn('Failed to send email to owner:', err.message);
+  }
 
   return toInquiry(saved);
 }
@@ -274,6 +291,7 @@ export async function updateInquiry(student, id, { move_in_date, move_out_date, 
 export async function cancelInquiry(student, id) {
   const row = await loadOwned(id, student.id);
   if (row.metadata.status !== 'pending') {
+    if (row.metadata.status === 'cancelled') return toInquiry(row);
     throw httpError('Only a pending request can be cancelled', 400);
   }
 
@@ -281,13 +299,22 @@ export async function cancelInquiry(student, id) {
   const body = requestText(metadata, `${metadata.student_name} cancelled their room request.`);
   const saved = await saveRecord(id, metadata, 'Room request cancelled', body);
 
-  await notify(metadata.owner_id, {
-    title: 'Room request cancelled',
-    body,
-    metadata: { ...metadata, kind: EVENT, inquiry_id: id },
-  });
-  const owner = await ownerEmail(metadata.owner_id);
-  await sendAccountEmail(owner.email, 'DormSafe: room request cancelled', body);
+  try {
+    await notify(metadata.owner_id, {
+      title: 'Room request cancelled',
+      body,
+      metadata: { ...metadata, kind: EVENT, inquiry_id: id },
+    });
+  } catch (err) {
+    console.warn('Failed to notify owner:', err.message);
+  }
+
+  try {
+    const owner = await ownerEmail(metadata.owner_id);
+    await sendAccountEmail(owner.email, 'DormSafe: room request cancelled', body);
+  } catch (err) {
+    console.warn('Failed to send email to owner:', err.message);
+  }
 
   return toInquiry(saved);
 }
@@ -326,6 +353,9 @@ export async function replyToInquiry(owner, id, { status, message }) {
     throw httpError('Request not found', 404);
   }
   if (row.metadata.status !== 'pending') {
+    if (row.metadata.status === status) {
+      return toInquiry(row);
+    }
     throw httpError('This request is no longer pending', 400);
   }
 
@@ -339,12 +369,29 @@ export async function replyToInquiry(owner, id, { status, message }) {
   ].filter(Boolean).join('\n');
 
   const saved = await saveRecord(id, metadata, `Room request ${verb}`, body);
-  await notify(metadata.student_id, {
-    title: `Room request ${verb}`,
-    body,
-    metadata: { ...metadata, kind: EVENT, inquiry_id: id },
-  });
-  await sendAccountEmail(metadata.student_email, `DormSafe: room request ${verb}`, body);
+
+  if (status === 'accepted') {
+    await supabaseAdmin
+      .from('rooms')
+      .update({ is_available: false })
+      .eq('id', metadata.room_id);
+  }
+
+  try {
+    await notify(metadata.student_id, {
+      title: `Room request ${verb}`,
+      body,
+      metadata: { ...metadata, kind: EVENT, inquiry_id: id },
+    });
+  } catch (err) {
+    console.warn('Failed to notify student:', err.message);
+  }
+
+  try {
+    await sendAccountEmail(metadata.student_email, `DormSafe: room request ${verb}`, body);
+  } catch (err) {
+    console.warn('Failed to email student:', err.message);
+  }
 
   return toInquiry(saved);
 }

@@ -44,9 +44,10 @@ async function fetchApprovedPropertiesNearGate({ gate, propertyType, minPrice, m
   const { data, error } = await query;
   if (error) throw error;
 
-  let properties = (data || []).filter((p) =>
-    isWithinRadiusKm(p.latitude, p.longitude, campusGate.lat, campusGate.lng, SEARCH_RADIUS_KM)
-  );
+  // Filter listings within campus gate radius (2 km)
+  let properties = (data || []).filter((p) => {
+    return isWithinRadiusKm(p.latitude, p.longitude, campusGate.lat, campusGate.lng, SEARCH_RADIUS_KM);
+  });
 
   if (minPrice != null || maxPrice != null) {
     const min = minPrice != null ? Number(minPrice) : 0;
@@ -61,8 +62,10 @@ async function fetchApprovedPropertiesNearGate({ gate, propertyType, minPrice, m
 
 function enrichProperty(property, walkingMinutes) {
   const rooms = property.rooms || [];
-  const availableRooms = rooms.filter((r) => r.is_available).length;
-  const prices = rooms.map((r) => r.price).filter((p) => p != null);
+  const availableRoomsList = rooms.filter((r) => r.is_available === true);
+  const availableRooms = availableRoomsList.length;
+  const availablePrices = availableRoomsList.map((r) => r.price).filter((p) => p != null);
+  const allPrices = rooms.map((r) => r.price).filter((p) => p != null);
 
   return {
     id: property.id,
@@ -77,8 +80,9 @@ function enrichProperty(property, walkingMinutes) {
     contact_name: property.contact_name || property.profiles?.full_name || null,
     contact_phone: property.contact_phone,
     contact_email: OWNER_PUBLIC_EMAILS[property.profiles?.email] || property.profiles?.email || null,
-    min_price: prices.length ? Math.min(...prices) : null,
+    min_price: availablePrices.length ? Math.min(...availablePrices) : (allPrices.length ? Math.min(...allPrices) : null),
     available_rooms: availableRooms,
+    status_label: availableRooms > 0 ? 'available' : 'occupied',
     walking_minutes: walkingMinutes,
     primary_image: getPropertyPrimaryImageUrl(property),
   };

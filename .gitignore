@@ -28,3 +28,8 @@ Thumbs.db
 
 # Supabase local
 .supabase/
+
+# Local backups & scratch scripts
+*_backup.json
+inspect_*.mjs
+

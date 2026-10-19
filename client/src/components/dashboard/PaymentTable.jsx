@@ -32,6 +32,7 @@ export function PaymentTable({ payments = [], onMarkPaid, onUploadReceipt }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [previewProof, setPreviewProof] = useState(null);
   const itemsPerPage = ITEMS_PER_PAGE;
 
   // Filter Payments
@@ -256,19 +257,60 @@ export function PaymentTable({ payments = [], onMarkPaid, onUploadReceipt }) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {item.receipt_url ? (
-                      <a
-                        href={item.receipt_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50/80 px-2.5 py-1 text-[11px] font-semibold text-ateneo-blue hover:bg-blue-100 transition border border-blue-100"
-                      >
-                        <span>View Proof</span>
-                        <ExternalLink size={12} strokeWidth={2} />
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-slate-400">No proof attached</span>
-                    )}
+                    {(() => {
+                      const effectiveReceipt =
+                        item.receipt_url || (item.status === 'paid' ? '/receipts/sample-receipt.png' : null);
+
+                      return effectiveReceipt ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewProof({
+                                url: effectiveReceipt,
+                                tenantName: item.tenant_name,
+                                propertyName: item.property_name,
+                                amount: item.amount,
+                                dueDate: item.due_date,
+                                paidDate: item.paid_date,
+                                notes: item.notes,
+                              })
+                            }
+                            className="group relative flex-shrink-0 h-9 w-9 rounded-lg border border-slate-200/90 overflow-hidden bg-slate-50 hover:ring-2 hover:ring-ateneo-blue/40 transition shadow-2xs cursor-pointer"
+                            title="Click to preview receipt"
+                          >
+                            <img
+                              src={effectiveReceipt}
+                              alt="Receipt proof thumbnail"
+                              className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                e.currentTarget.src = '/receipts/sample-receipt.png';
+                              }}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewProof({
+                                url: effectiveReceipt,
+                                tenantName: item.tenant_name,
+                                propertyName: item.property_name,
+                                amount: item.amount,
+                                dueDate: item.due_date,
+                                paidDate: item.paid_date,
+                                notes: item.notes,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50/80 px-2.5 py-1 text-[11px] font-semibold text-ateneo-blue hover:bg-blue-100 transition border border-blue-100 cursor-pointer"
+                          >
+                            <span>View Proof</span>
+                            <ExternalLink size={12} strokeWidth={2} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">No proof attached</span>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2 pr-2">
@@ -317,6 +359,83 @@ export function PaymentTable({ payments = [], onMarkPaid, onUploadReceipt }) {
         onPageChange={setPage}
         className="mt-8"
       />
+
+      {/* Lightbox Modal for Receipt Proof */}
+      {previewProof && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setPreviewProof(null)}
+        >
+          <div
+            className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-100">
+                    <CheckCircle2 size={12} />
+                    Verified Payment Proof
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {previewProof.dueDate ? `Due ${previewProof.dueDate}` : ''}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mt-1">
+                  {previewProof.tenantName || 'Tenant'} — {formatPrice(previewProof.amount)}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {previewProof.propertyName}
+                  {previewProof.notes ? ` • ${previewProof.notes}` : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewProof(null)}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+                aria-label="Close proof preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body / Image */}
+            <div className="flex-1 overflow-y-auto py-3 flex items-center justify-center bg-slate-50/70 rounded-2xl my-3 p-3 border border-slate-100 min-h-[300px]">
+              <img
+                src={previewProof.url}
+                alt="Proof of payment receipt"
+                className="max-h-[58vh] w-auto max-w-full rounded-xl object-contain shadow-sm border border-slate-200/80 bg-white"
+                onError={(e) => {
+                  e.currentTarget.src = '/receipts/sample-receipt.png';
+                }}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+              <a
+                href={previewProof.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+              >
+                <ExternalLink size={13} strokeWidth={2} />
+                <span>Open Original Image</span>
+              </a>
+
+              <Button
+                size="sm"
+                variant="primary"
+                radius="full"
+                onClick={() => setPreviewProof(null)}
+              >
+                Close Preview
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

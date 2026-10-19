@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Command, X } from 'lucide-react';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { NotificationBell } from '../common/NotificationBell';
 import { UserDropdown } from './UserDropdown';
@@ -15,52 +14,14 @@ export function AppHeader({
   hasSidebar = false,
   fullWidth = false,
 }) {
-  const { isAuthenticated, profile, role } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Keep search input in sync with URL search query on student search page
-  useEffect(() => {
-    if (location.pathname === ROUTES.STUDENT_SEARCH) {
-      const q = new URLSearchParams(location.search).get('q');
-      setSearchQuery(q || '');
-    }
-  }, [location.pathname, location.search]);
-
-  const isStudentVerified = role === ROLES.STUDENT && profile?.verification_status === 'approved';
 
   const studentTopLinks = [
-    { to: ROUTES.STUDENT_SEARCH, label: 'Find Housing', icon: 'search' },
     { to: ROUTES.STUDENT_SAVED, label: 'Saved', icon: 'bookmark' },
     { to: ROUTES.STUDENT_MY_STAY, label: 'My Stay', icon: 'home' },
     { to: ROUTES.STUDENT_REQUESTS, label: 'Requests', icon: 'inbox' },
   ];
-
-  const getSearchPlaceholder = () => {
-    if (role === ROLES.ADMIN) return 'Search users, dorms, reports...';
-    if (role === ROLES.OWNER) return 'Search listings, tenants, payments...';
-    return 'Search dorms near Ateneo...';
-  };
-
-  const handleSearchSubmit = (e) => {
-    if (e) e.preventDefault();
-    const q = searchQuery.trim();
-    if (role === ROLES.STUDENT || !isAuthenticated) {
-      navigate(`${ROUTES.STUDENT_SEARCH}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
-    } else if (role === ROLES.ADMIN) {
-      navigate(`${ROUTES.ADMIN_MANAGE_USERS}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
-    } else if (role === ROLES.OWNER) {
-      navigate(`${ROUTES.OWNER_LISTINGS}${q ? `?q=${encodeURIComponent(q)}` : ''}`);
-    }
-  };
-
-  const handleClear = () => {
-    setSearchQuery('');
-    if (location.pathname === ROUTES.STUDENT_SEARCH) {
-      navigate(ROUTES.STUDENT_SEARCH);
-    }
-  };
 
   return (
     <header
@@ -70,8 +31,8 @@ export function AppHeader({
           : 'bg-transparent border border-transparent shadow-none'
       }`}
     >
-      {/* Left Side: Mobile Menu Button + Search Bar */}
-      <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-initial sm:w-80 md:w-96">
+      {/* Left Side: Mobile Menu Button + Brand Logo */}
+      <div className="flex items-center gap-3 flex-shrink-0">
         {/* Mobile hamburger menu toggle */}
         <button
           type="button"
@@ -83,77 +44,38 @@ export function AppHeader({
         </button>
 
         {/* Logo only appears on mobile or when desktop has NO sidebar */}
-        {(!hasSidebar || 'lg:hidden') && (
-          <div className={hasSidebar ? 'flex lg:hidden flex-shrink-0' : 'flex flex-shrink-0'}>
-            <BrandLogo size="sm" subtitle="Ateneo" />
-          </div>
-        )}
-
-        {/* Clean, interactive search form */}
-        <form
-          onSubmit={handleSearchSubmit}
-          className="relative flex items-center w-full h-9 px-3 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 focus-within:border-ateneo-blue focus-within:ring-2 focus-within:ring-ateneo-blue/10 transition-all"
-        >
-          <button
-            type="submit"
-            className="text-slate-400 hover:text-ateneo-blue transition p-0.5 mr-1.5 focus:outline-none"
-            title="Search"
-          >
-            <Search size={15} />
-          </button>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={getSearchPlaceholder()}
-            className="w-full bg-transparent border-0 outline-none ring-0 p-0 text-xs text-slate-800 placeholder:text-slate-400 font-normal focus:ring-0 focus:outline-none"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="p-1 text-slate-400 hover:text-slate-600 transition"
-              title="Clear search"
-            >
-              <X size={13} />
-            </button>
-          ) : (
-            <div className="hidden sm:flex items-center gap-0.5 rounded-md border border-slate-200/80 bg-slate-100/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-2xs select-none ml-2">
-              <Command size={10} />
-              <span>K</span>
-            </div>
-          )}
-        </form>
+        <div className={hasSidebar ? 'flex lg:hidden flex-shrink-0' : 'flex flex-shrink-0'}>
+          <BrandLogo size="sm" subtitle="Ateneo" />
+        </div>
       </div>
 
-      {/* Center: Desktop Student Navigation (if student) */}
-      {isAuthenticated && isStudentVerified && (
-        <nav className="hidden items-center gap-1 xl:flex">
-          {studentTopLinks.map((item) => {
-            const isActive = location.pathname === item.to;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-blue-50 text-ateneo-blue font-semibold shadow-xs'
-                    : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
-                }`}
-              >
-                <Icon
-                  name={item.icon}
-                  className={`h-4 w-4 ${isActive ? 'text-ateneo-blue' : 'text-slate-400'}`}
-                />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      )}
-
-      {/* Right: Actions (Notification Bell & User Dropdown or Login/Register) */}
+      {/* Right Side: (Saved, My Stay, Requests) beside Bell Icon + User Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {isAuthenticated && role === ROLES.STUDENT && (
+          <nav className="hidden sm:flex items-center gap-1 mr-1">
+            {studentTopLinks.map((item) => {
+              const isActive = location.pathname === item.to;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-blue-50 text-ateneo-blue font-semibold shadow-xs'
+                      : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon
+                    name={item.icon}
+                    className={`h-4 w-4 ${isActive ? 'text-ateneo-blue' : 'text-slate-400'}`}
+                  />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         {isAuthenticated ? (
           <>
             <NotificationBell />

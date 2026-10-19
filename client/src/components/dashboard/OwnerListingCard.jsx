@@ -52,9 +52,29 @@ export function OwnerListingCard({ property, onToggleAvailability }) {
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 border border-slate-200/70">
                 {PROPERTY_TYPE_LABELS[property.type] || property.type}
               </span>
-              <Badge variant={property.status === 'approved' ? 'verified' : 'pending'}>
-                {property.status === 'approved' ? 'Approved & Active' : 'Pending Verification'}
-              </Badge>
+              {property.status === 'approved' ? (
+                vacantRoomsCount > 0 ? (
+                  <Badge variant="verified" size="sm">
+                    Available ({vacantRoomsCount} vacant)
+                  </Badge>
+                ) : rooms.length > 0 ? (
+                  <Badge variant="occupied" size="sm">
+                    Occupied (0 vacant)
+                  </Badge>
+                ) : (
+                  <Badge variant="default" size="sm">
+                    No Units Configured
+                  </Badge>
+                )
+              ) : property.status === 'inactive' ? (
+                <Badge variant="default" size="sm">
+                  Inactive
+                </Badge>
+              ) : (
+                <Badge variant="pending" size="sm">
+                  Pending Verification
+                </Badge>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500">
               <div className="flex items-center gap-1.5 min-w-0">

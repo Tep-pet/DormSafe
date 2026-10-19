@@ -26,7 +26,6 @@ export const ROUTES = {
   ADMIN_MANAGE_TENANTS: '/admin/manage-tenants',
   ADMIN_AUDIT_LOG: '/admin/audit-log',
   ADMIN_MODERATE: '/admin/moderate',
-  COMPONENTS: '/components',
 };
 
 /** Default landing page per role after login */

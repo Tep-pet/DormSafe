@@ -303,10 +303,15 @@ export function MyStayPage() {
             <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
               When your landlord adds your verified student email to their tenant roster, your stay details, payment logs, and move-out verification will appear here automatically.
             </p>
-            <div className="mt-5">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
               <Link to={ROUTES.STUDENT_SEARCH}>
                 <Button size="sm" variant="primary" radius="full" startContent={<Home size={14} />}>
                   Explore Verified Dorms
+                </Button>
+              </Link>
+              <Link to={ROUTES.STUDENT_REQUESTS}>
+                <Button size="sm" variant="secondary" radius="full" startContent={<Clock size={14} />}>
+                  My Room Requests
                 </Button>
               </Link>
             </div>

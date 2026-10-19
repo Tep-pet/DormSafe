@@ -109,11 +109,6 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md' }) {
       <footer className="relative z-10 border-t border-slate-200/70 bg-white/50 backdrop-blur-xs py-2.5 px-6 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
           <span className="text-[11px]">&copy; {new Date().getFullYear()} DormSafe &bull; Ateneo de Davao University</span>
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
-            <span>Housing Safety Portal</span>
-            <span>&bull;</span>
-            <Link to="/components" className="hover:text-ateneo-blue transition-colors">Design System</Link>
-          </div>
         </div>
       </footer>
     </div>

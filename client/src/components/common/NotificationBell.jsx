@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Bell, RotateCw, Inbox, Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { notificationService } from '../../services/notificationService';
 
 export function NotificationBell() {
-  const { accessToken, isAuthenticated } = useAuth();
+  const { accessToken, isAuthenticated, role } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState([]);
@@ -125,29 +126,74 @@ export function NotificationBell() {
                 <p className="text-xs font-medium">No notifications yet</p>
               </div>
             ) : (
-              items.map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-3.5 text-left transition ${
-                    n.read_at ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50/70'
-                  }`}
-                >
-                  <p className="text-xs font-semibold text-slate-900">{n.title}</p>
-                  {n.body && (
-                    <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">{n.body}</p>
-                  )}
-                  {!n.read_at && (
-                    <button
-                      type="button"
-                      onClick={() => handleRead(n.id)}
-                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-ateneo-blue hover:underline"
-                    >
-                      <Check size={11} strokeWidth={2.5} />
-                      <span>Mark as read</span>
-                    </button>
-                  )}
-                </div>
-              ))
+              items.map((n) => {
+                const isRoomReq =
+                  n.metadata?.kind === 'room_request_event' ||
+                  n.title?.toLowerCase().includes('room') ||
+                  n.title?.toLowerCase().includes('inquiry') ||
+                  n.title?.toLowerCase().includes('request');
+
+                const targetLink =
+                  role === 'owner'
+                    ? '/owner/requests'
+                    : role === 'student'
+                    ? '/student/requests'
+                    : null;
+
+                const linkText =
+                  role === 'owner'
+                    ? 'View in Room Requests →'
+                    : 'View Request Status →';
+
+                return (
+                  <div
+                    key={n.id}
+                    className={`p-3.5 text-left transition ${
+                      n.read_at ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50/70'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-slate-900 leading-snug">{n.title}</p>
+                      {!n.read_at && (
+                        <span className="h-2 w-2 rounded-full bg-ateneo-blue shrink-0 mt-0.5" />
+                      )}
+                    </div>
+
+                    {n.body && (
+                      <p className="mt-1 text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+                        {n.body}
+                      </p>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100/80">
+                      {isRoomReq && targetLink ? (
+                        <Link
+                          to={targetLink}
+                          onClick={() => setIsOpen(false)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-ateneo-blue hover:underline"
+                        >
+                          {linkText}
+                        </Link>
+                      ) : (
+                        <span className="text-[10px] text-slate-400">
+                          {n.created_at ? new Date(n.created_at).toLocaleDateString() : ''}
+                        </span>
+                      )}
+
+                      {!n.read_at && (
+                        <button
+                          type="button"
+                          onClick={() => handleRead(n.id)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900"
+                        >
+                          <Check size={11} strokeWidth={2.5} />
+                          <span>Mark read</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

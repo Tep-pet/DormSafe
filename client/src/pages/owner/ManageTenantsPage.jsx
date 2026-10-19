@@ -219,7 +219,7 @@ export function ManageTenantsPage() {
         onClick={() => load()}
         startContent={!loading && <RefreshCw size={14} />}
       >
-        Sync Roster
+        Refresh Roster
       </Button>
     </div>
   );

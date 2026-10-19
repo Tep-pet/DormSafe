@@ -38,10 +38,6 @@ import { StudentRouteLayout } from './routes/StudentRouteLayout';
 import { GuestRoute } from './routes/GuestRoute';
 import { ROLES } from './constants/roles';
 
-const ComponentsShowcasePage = React.lazy(() =>
-  import('./pages/dev/ComponentsShowcasePage').then((m) => ({ default: m.ComponentsShowcasePage }))
-);
-
 export default function App() {
   return (
     <AuthProvider>
@@ -50,16 +46,6 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomeRedirect />} />
-              {import.meta.env.DEV && (
-                <Route
-                  path="/components"
-                  element={
-                    <React.Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Loading showcase…</div>}>
-                      <ComponentsShowcasePage />
-                    </React.Suspense>
-                  }
-                />
-              )}
               <Route element={<GuestRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />

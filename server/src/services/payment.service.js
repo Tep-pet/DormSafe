@@ -65,6 +65,7 @@ export async function createPayment(ownerId, payload) {
       paid_date: payload.status === 'paid' ? payload.paid_date || new Date().toISOString().slice(0, 10) : null,
       status: payload.status || 'pending',
       notes: payload.notes || null,
+      receipt_storage_path: payload.status === 'paid' ? 'samples/sample-receipt.png' : null,
     })
     .select()
     .single();
@@ -77,7 +78,17 @@ export async function updatePaymentStatus(paymentId, ownerId, status) {
   await assertPaymentOwnedBy(paymentId, ownerId);
 
   const updates = { status };
-  if (status === 'paid') updates.paid_date = new Date().toISOString().slice(0, 10);
+  if (status === 'paid') {
+    updates.paid_date = new Date().toISOString().slice(0, 10);
+    const { data: current } = await supabaseAdmin
+      .from('payments')
+      .select('receipt_storage_path')
+      .eq('id', paymentId)
+      .single();
+    if (!current?.receipt_storage_path) {
+      updates.receipt_storage_path = 'samples/sample-receipt.png';
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('payments')
@@ -102,17 +113,22 @@ export async function getStudentPayments(studentId) {
 
   const { data, error } = await supabaseAdmin
     .from('payments')
-    .select('id, amount, due_date, paid_date, status, notes, tenant_id')
+    .select('id, amount, due_date, paid_date, status, notes, tenant_id, receipt_storage_path')
     .in('tenant_id', tenantIds)
     .order('due_date', { ascending: false });
 
   if (error) throw error;
 
   const tenantMap = Object.fromEntries((tenants || []).map((t) => [t.id, t]));
-  return (data || []).map((p) => ({
-    ...p,
-    property_name: tenantMap[p.tenant_id]?.properties?.name || null,
-  }));
+  return Promise.all(
+    (data || []).map(async (p) => ({
+      ...p,
+      property_name: tenantMap[p.tenant_id]?.properties?.name || null,
+      receipt_url: p.receipt_storage_path
+        ? await getSignedReceiptUrl(p.receipt_storage_path)
+        : null,
+    }))
+  );
 }
 
 export async function sendPaymentReminders(ownerId) {

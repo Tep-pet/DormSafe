@@ -186,5 +186,4 @@ export const ROUTE_TITLES = {
   [ROUTES.ADMIN_MANAGE_TENANTS]: { title: 'Manage Tenants', subtitle: 'Campus-wide tenant directory and lease status' },
   [ROUTES.ADMIN_AUDIT_LOG]: { title: 'Audit Log', subtitle: 'Historical record of verification and listing approval actions' },
   [ROUTES.ADMIN_MODERATE]: { title: 'Reviews & Reports', subtitle: 'Moderation queue for property reviews and tenant reports' },
-  [ROUTES.COMPONENTS]: { title: 'Design System & Component Showcase', subtitle: 'Live UI library, depth comparison, and interaction testing' },
 };

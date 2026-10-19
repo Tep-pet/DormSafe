@@ -70,16 +70,23 @@ $env:SUPABASE_INSECURE_SSL="1"   # Windows — only if seed fails with SSL error
 npm run seed
 ```
 
-**Demo accounts** (after seed):
+**Default Accounts**:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@dormsafe.test` | `Admin123!` |
-| Owner (per property) | `owner.ivory1104@dormsafe.test`, etc. | `Owner123!` |
+| Role | Name | Email | Password | Assigned Property |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | DormSafe Admin | `admin@dormsafe.test` | `Admin123!` | System Dashboard |
+| **Owner** | Twinkle Blanco | `blancotwinkle@gmail.com` | `Owner123!` | Ivory Residences |
+| **Owner** | Rhea Palima | `rheapalima09@gmail.com` | `Owner123!` | Ivory Residences (Room 2004) |
+| **Owner** | Jerly Ugapay | `jerlyugapay@gmail.com` | `Owner123!` | Juan Luna Boarding House |
+| **Owner** | May Andaya | `andayamay111@gmail.com` | `Owner123!` | Residencia de Maria Goretti |
+| **Owner** | Williamor Corpuz | `w.macguilles@gmail.com` | `Owner123!` | Correla Dormitory |
+| **Owner** | Trisha Paula Gwatwo | `buildingblocks.davao@gmail.com` | `Owner123!` | BRC Dormitory |
+| **Student** | Stephanie Palima | `stephanie.palima@addu.edu.ph` | `Student123!` | Tenant at Juan Luna |
+| **Student** | Samantha Aguirre | `samantha.aguirre@addu.edu.ph` | `Student123!` | Tenant at Correla |
+| **Student** | Franshiska Pacatang | `franshiska.pacatang@addu.edu.ph` | `Student123!` | Tenant at Goretti |
+| **Student** | Zhea Zafra | `zhea.zafra@addu.edu.ph` | `Student123!` | Tenant at BRC |
+| **Student** | Rachel Tan | `rachel.tan@addu.edu.ph` | `Student123!` | Reservation at Juan Luna |
 
-Students are **not** seeded — register at `/register`, then have an admin approve the account under **Verify Accounts**.
-
-Each seeded property has its own owner. `owner.cezar@dormsafe.test` stays pending until admin approval (demo pending-owner flow).
 
 ### 2. Environment variables
 
@@ -213,6 +220,7 @@ All protected routes expect `Authorization: Bearer <access_token>`.
 
 ## Development notes
 
-- Seed script: `server/scripts/seedPlaces.js` (reads `Places/` folders)
+- Seed places: `cd server && npm run seed` (reads `Places/` folders)
+- Seed sample data (5 students & live samples): `cd server && npm run seed:samples`
 - Image uploads: **50 KB – 5 MB** per file (listings and verification documents)
 - Client production build: `cd client && npm run build`

@@ -50,11 +50,11 @@ const PROPERTIES = [
       { label: 'With AC (lower)', price: 5500, capacity: 1 },
       { label: 'With AC (upper)', price: 6500, capacity: 1 },
     ],
-    rules: ['Bawal mag saba pag gabii', 'Pwede mag luto', 'No visitor pag 10 pm', 'Naka lock ang gate by 10pm', 'No pets allowed'],
+    rules: ['Observe quiet hours during night hours', 'Cooking permitted in designated kitchen area', 'Visitors allowed until 10:00 PM only', 'Main gate locked strictly at 10:00 PM', 'No pets allowed'],
     imageDir: 'place2/place2',
   },
   {
-    ownerEmail: 'buildingblocks_davao@yahoo.com.ph',
+    ownerEmail: 'buildingblocks.davao@gmail.com',
     ownerName: 'Trisha Paula Gwatwo',
     contact_name: 'Trisha Paula Gwatwo',
     contact_phone: '09553561395',
@@ -63,17 +63,17 @@ const PROPERTIES = [
     address: 'Padre Gomez St & A Bonifacio St, Barangay 34-D, Davao City',
     latitude: 7.0680548,
     longitude: 125.6125343,
-    description: 'Co-ed Dormitory (Any Gender). Near campus (5 min walk). Amenities: Aircon, Study table, shelf, TV, and fire alarm.',
+    description: 'Co-ed dormitory open to any gender, situated just a 5-minute walk from Ateneo de Davao University. Amenities include air conditioning, study tables, shelves, TV, and fire safety systems.',
     approved: true,
     rooms: [
       { label: 'Good for 1', price: 10000, capacity: 1 },
       { label: 'Good for 2', price: 12000, capacity: 2 },
     ],
-    rules: ['No pets', 'Quiet Hours: 10pm - 6am', 'Curfew for visitors/guests only till 10pm', 'No smoking', 'No illegal or prohibited drugs', 'No cooking inside the room', 'Follow security protocols', 'No firearms', 'Respect shared facilities'],
+    rules: ['Respect shared facilities', 'Follow security protocols', 'Quiet Hours: 10:00 PM-6:00 AM', 'Curfew for visitors/guests until 10:00 PM only', 'No smoking', 'No cooking inside the room', 'No pets allowed', 'No firearms', 'No illegal or prohibited drugs'],
     imageDir: 'place5/place5',
   },
   {
-    ownerEmail: 'w.macguilles@yahoo.com',
+    ownerEmail: 'w.macguilles@gmail.com',
     ownerName: 'Williamor Corpuz',
     contact_name: 'Williamor Corpuz',
     contact_phone: '09128912466',
@@ -87,7 +87,7 @@ const PROPERTIES = [
     rooms: [
       { label: 'Room 1', price: 4000, capacity: 1 },
     ],
-    rules: ['Ladies only', 'No visitors overnight', 'Keep common areas clean', 'Quiet hours 10pm-6am'],
+    rules: ['Ladies only', 'Keep common areas clean', 'No visitors overnight', 'Quiet hours 10:00pm-6:00am'],
     imageDir: 'place5/place5',
   },
   {
@@ -109,30 +109,10 @@ const PROPERTIES = [
       { label: 'Room 4', price: 4000, capacity: 1 },
       { label: 'Room 5', price: 4000, capacity: 1 },
     ],
-    rules: ['Female only', 'No smoking', 'Curfew 10pm', 'Keep shared kitchen clean'],
+    rules: ['Female only', 'No smoking', 'Curfew at 10pm', 'Keep shared kitchen clean'],
     imageDir: 'place2/place2',
   },
-  {
-    ownerEmail: 'owner.cezar@dormsafe.test',
-    ownerName: 'Cezar Verbata',
-    contact_name: 'Cezar Verbata Dormitory',
-    contact_phone: null,
-    name: 'Cezar Verbata Dormitory',
-    type: 'dormitory',
-    address: 'Edes Bldg, Jacinto St, Barangay 29-C, Davao City',
-    latitude: 7.0735,
-    longitude: 125.6128,
-    description: 'Common kitchen and CR. All girls and boys mixed. Features: Free wifi and Small karinderya. Utilities: Electricity 15kW/hr, Water 250, Appliances 150. Note: No permit yet.',
-    approved: false,
-    rooms: [
-      { label: 'Single (3.5k)', price: 3500, capacity: 1 },
-      { label: 'Single (5k)', price: 5000, capacity: 1 },
-      { label: 'Single (6k)', price: 6000, capacity: 1 },
-      { label: 'Good for 2', price: 7000, capacity: 2 },
-    ],
-    rules: ['Bawal mag inom', 'Bawal mag luto', 'Bawal mag laba', 'Bawal saba', 'Bawal manimaho ang kwarto', 'No curfew'],
-    imageDir: 'place6/place6',
-  },
+
 ];
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif']);
@@ -342,7 +322,6 @@ async function main() {
   }
 
   console.log('\nDone! Approved listings are visible to students on the map.');
-  console.log('Cezar Verbata Dormitory is pending (no permit) — approve via admin when ready.');
   console.log(`\nAdmin login: ${SEED_ADMIN_EMAIL} / ${SEED_ADMIN_PASSWORD}`);
   console.log(`Owner password (all owners): ${DEFAULT_OWNER_PASSWORD}`);
   console.log('Owner emails: see seed output above (owner.*@dormsafe.test)');

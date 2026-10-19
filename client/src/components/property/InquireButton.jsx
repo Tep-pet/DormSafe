@@ -249,7 +249,7 @@ export function InquireButton({
                   radius="full"
                   onClick={handleAvail}
                   isLoading={sending}
-                  disabled={!room?.id || sent}
+                  disabled={!room?.id || sent || sending}
                   startContent={!sent ? <Send size={13} /> : <CheckCircle2 size={13} />}
                 >
                   {sent ? 'Sent' : 'Submit Request'}

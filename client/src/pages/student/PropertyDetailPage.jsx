@@ -353,6 +353,20 @@ export function PropertyDetailPage() {
                               >
                                 {formatPrice(room.price)}
                               </span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                                  room.is_available
+                                    ? isSelected
+                                      ? 'bg-emerald-500 text-white'
+                                      : 'bg-emerald-100 text-emerald-800'
+                                    : isSelected
+                                    ? 'bg-amber-500 text-white'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${room.is_available ? 'bg-white' : 'bg-current'}`} />
+                                {room.is_available ? 'Available' : 'Occupied'}
+                              </span>
                             </button>
                           );
                         })}
