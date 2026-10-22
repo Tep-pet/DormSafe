@@ -11,6 +11,14 @@ import studentsRoutes from './students.routes.js';
 
 const router = Router();
 
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'DormSafe API', timestamp: new Date().toISOString() });
+});
+
+router.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'DormSafe API' });
+});
+
 router.use('/auth', authRoutes);
 router.use('/proximity', proximityRoutes);
 router.use('/properties', propertiesRoutes);

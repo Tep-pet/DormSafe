@@ -10,13 +10,16 @@ function isAllowedOrigin(origin) {
   if (!origin || origin === env.corsOrigin) return true;
   try {
     const url = new URL(origin);
-    return (
-      url.protocol === 'http:' &&
+    const isLocalhost =
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
       (url.hostname === 'localhost' ||
         url.hostname === '127.0.0.1' ||
         url.hostname === '[::1]' ||
-        url.hostname === '::1')
-    );
+        url.hostname === '::1');
+    const isVercel =
+      url.protocol === 'https:' &&
+      (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app');
+    return isLocalhost || isVercel;
   } catch {
     return false;
   }

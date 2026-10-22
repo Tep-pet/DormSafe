@@ -1,11 +1,39 @@
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+const FALLBACK_GATE_DATA = {
+  searchRadiusKm: 2,
+  gates: {
+    jacinto: {
+      id: 'jacinto',
+      label: 'Jacinto Campus Gate',
+      lat: 7.072,
+      lng: 125.6141,
+      note: 'E. Jacinto St entrance, east side of AdDU Jacinto campus (OSM bounds)',
+    },
+    roxas: {
+      id: 'roxas',
+      label: 'Roxas Campus Gate',
+      lat: 7.0718,
+      lng: 125.6123,
+      note: 'Roxas Ave entrance, west side of AdDU Jacinto campus (OSM bounds)',
+    },
+  },
+  defaultGate: 'jacinto',
+};
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const gateData = JSON.parse(
-  readFileSync(join(__dirname, '../../../shared/campusGates.json'), 'utf8')
-);
+let gateData = FALLBACK_GATE_DATA;
+
+try {
+  const jsonPath = join(__dirname, '../../../shared/campusGates.json');
+  if (existsSync(jsonPath)) {
+    gateData = JSON.parse(readFileSync(jsonPath, 'utf8'));
+  }
+} catch {
+  // Safe fallback if shared folder is not in deployment container
+}
 
 /** Server-side campus gate coordinates (shared with client via shared/campusGates.json) */
 export const SEARCH_RADIUS_KM = gateData.searchRadiusKm;
@@ -20,3 +48,4 @@ export const CAMPUS_GATES = Object.fromEntries(
 export function getGate(gateId) {
   return CAMPUS_GATES[gateId] || CAMPUS_GATES[gateData.defaultGate];
 }
+

@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 dotenv.config();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '../../.env') });
+
 
 // Local dev fix for "fetch failed" SSL errors on some Windows networks
 if (process.env.SUPABASE_INSECURE_SSL === '1') {
