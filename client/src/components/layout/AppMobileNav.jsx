@@ -202,8 +202,8 @@ export function AppMobileBottomBar() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-md lg:hidden">
-      <nav className="flex items-center justify-around px-2 py-1.5">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md lg:hidden pb-[env(safe-area-inset-bottom,0px)] shadow-lg">
+      <nav className="flex items-center justify-around px-2 py-1 max-w-md mx-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.to;
           return (
@@ -211,11 +211,11 @@ export function AppMobileBottomBar() {
               key={link.to}
               to={link.to}
               className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-colors ${
-                isActive ? 'text-ateneo-blue font-semibold' : 'text-gray-500 hover:text-gray-900'
+                isActive ? 'text-ateneo-blue font-semibold' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Icon name={link.icon} className={`h-5 w-5 ${isActive ? 'text-ateneo-blue' : 'text-gray-400'}`} />
-              <span className="text-[10px]">{link.label}</span>
+              <Icon name={link.icon} className={`h-5 w-5 ${isActive ? 'text-ateneo-blue' : 'text-slate-400'}`} />
+              <span className="text-[10px] tracking-tight">{link.label}</span>
             </Link>
           );
         })}

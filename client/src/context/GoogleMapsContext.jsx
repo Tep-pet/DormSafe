@@ -41,24 +41,20 @@ export function useGoogleMaps() {
 /** Shown when Google rejects the browser API key (billing, referrer, or wrong APIs) */
 export function GoogleMapsErrorHelp() {
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-      <p className="font-medium">Google Maps could not load</p>
-      <ul className="mt-2 list-inside list-disc space-y-1 text-amber-900">
+    <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-3.5 sm:p-4 text-xs sm:text-sm text-amber-950 max-w-full overflow-hidden">
+      <p className="font-semibold text-amber-950">Google Maps could not load</p>
+      <ul className="mt-2 list-inside list-disc space-y-1.5 text-amber-900 leading-relaxed">
         <li>
-          <strong>Billing</strong> must be enabled on your Google Cloud project (required even for
-          free tier)
+          <strong>Billing</strong> must be enabled on your Google Cloud project (required even for free tier).
         </li>
         <li>
-          Use a <strong>browser key</strong> in <code className="rounded bg-amber-100 px-1">client/.env</code>{' '}
-          with referrer <code className="rounded bg-amber-100 px-1">http://localhost:5173/*</code>
+          If using HTTP referrer restrictions, add your live Vercel domain:{' '}
+          <code className="rounded bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-mono break-all inline-block mt-0.5">
+            https://*.vercel.app/*
+          </code>
         </li>
         <li>
-          That key needs <strong>Maps JavaScript API</strong> and <strong>Directions API</strong>{' '}
-          enabled under API restrictions
-        </li>
-        <li>
-          Use a <strong>separate server key</strong> in <code className="rounded bg-amber-100 px-1">server/.env</code>{' '}
-          (no referrer restriction) for Distance Matrix
+          Ensure <strong>Maps JavaScript API</strong> and <strong>Directions API</strong> are enabled in Google Cloud Console.
         </li>
       </ul>
     </div>

@@ -33,17 +33,17 @@ export function PropertyFilters({ filters, onChange }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3.5 border-b border-slate-200/80 pb-3.5">
-      {/* Inline Filter Inputs */}
-      <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+    <div className="w-full border-b border-slate-200/80 pb-3 sm:pb-4 min-w-0">
+      {/* Responsive Filter Container */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full min-w-0">
         {/* Search Query Input */}
-        <div className="relative w-full sm:w-56">
+        <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={filters.q || ''}
             onChange={(e) => update('q', e.target.value)}
-            placeholder="Search by description (e.g. wifi, girls, aircon, kitchen)..."
+            placeholder="Search by description (wifi, aircon, kitchen)..."
             className="h-10 w-full rounded-xl border border-slate-200/90 bg-white pl-8 pr-7 text-xs text-slate-800 placeholder:text-slate-400 focus:border-ateneo-blue focus:outline-hidden shadow-2xs"
           />
           {filters.q ? (
@@ -59,7 +59,7 @@ export function PropertyFilters({ filters, onChange }) {
         </div>
 
         {/* 1. Property Type Selector */}
-        <div className="w-full sm:w-44">
+        <div className="w-full sm:w-44 shrink-0">
           <Select
             value={filters.propertyType || ''}
             onChange={(e) => update('propertyType', e.target.value)}
@@ -74,8 +74,8 @@ export function PropertyFilters({ filters, onChange }) {
         </div>
 
         {/* 2 & 3. Price Range Inputs */}
-        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
-          <div className="relative w-full sm:w-32">
+        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center shrink-0">
+          <div className="relative w-full sm:w-28">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold pointer-events-none">
               ₱
             </span>
@@ -90,7 +90,7 @@ export function PropertyFilters({ filters, onChange }) {
             />
           </div>
 
-          <div className="relative w-full sm:w-32">
+          <div className="relative w-full sm:w-28">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold pointer-events-none">
               ₱
             </span>
@@ -114,7 +114,7 @@ export function PropertyFilters({ filters, onChange }) {
             variant="ghost"
             onClick={handleReset}
             startContent={<RotateCcw size={13} strokeWidth={2} />}
-            className="h-10 text-xs text-slate-500 hover:text-slate-900"
+            className="h-10 text-xs text-slate-500 hover:text-slate-900 w-full sm:w-auto shrink-0"
           >
             Reset
           </Button>

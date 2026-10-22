@@ -204,13 +204,14 @@ export function PropertyDetailPage() {
 
   // Golden Detail Standard: Header Action Bar
   const headerAction = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
       <Button
         variant="ghost"
         size="sm"
         radius="full"
         onClick={() => navigate(ROUTES.STUDENT_SEARCH)}
         startContent={<ArrowLeft size={14} strokeWidth={2} />}
+        className="flex-1 sm:flex-initial text-xs"
       >
         Back to Search
       </Button>
@@ -220,6 +221,7 @@ export function PropertyDetailPage() {
         size="sm"
         radius="full"
         onClick={handleToggleSave}
+        className="flex-1 sm:flex-initial text-xs"
         startContent={
           <Bookmark
             size={14}
@@ -236,22 +238,25 @@ export function PropertyDetailPage() {
         size="sm"
         radius="full"
         onClick={() => setShowReport(true)}
+        className="text-xs"
         startContent={<Flag size={14} strokeWidth={2} className="text-slate-500" />}
       >
         Report
       </Button>
 
       {property && (
-        <InquireButton
-          contactName={resolvedContact.contactName || property.contact_name}
-          contactPhone={resolvedContact.contactPhone || property.contact_phone}
-          contactEmail={resolvedContact.contactEmail || property.contact_email}
-          description={property.description}
-          propertyName={property.name}
-          propertyId={property.id}
-          room={selectedRoom}
-          accessToken={accessToken}
-        />
+        <div className="w-full sm:w-auto shrink-0">
+          <InquireButton
+            contactName={resolvedContact.contactName || property.contact_name}
+            contactPhone={resolvedContact.contactPhone || property.contact_phone}
+            contactEmail={resolvedContact.contactEmail || property.contact_email}
+            description={property.description}
+            propertyName={property.name}
+            propertyId={property.id}
+            room={selectedRoom}
+            accessToken={accessToken}
+          />
+        </div>
       )}
     </div>
   );
@@ -282,9 +287,9 @@ export function PropertyDetailPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6 min-w-0 w-full">
           {/* Header Metadata Ribbon */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-slate-200/90 bg-white/95 p-3 sm:p-4 shadow-xs min-w-0 w-full">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-2xs">
                 {PROPERTY_TYPE_LABELS[property.type] || property.type}
@@ -305,32 +310,32 @@ export function PropertyDetailPage() {
           </div>
 
           {/* 2-Column Responsive Layout: Left Details + Right Map & Landlord */}
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
+          <div className="grid gap-6 lg:grid-cols-12 items-start min-w-0 w-full">
             {/* ------------------------------------------------------------- */}
             {/* LEFT COLUMN: ROOMS, PHOTOS, RULES, REVIEWS (7 cols) */}
             {/* ------------------------------------------------------------- */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-6 min-w-0 w-full">
               {/* Card 1: Room Selector & Inspection */}
-              <Card shadow="none" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs">
-                <CardHeader className="border-b border-slate-100 p-4 sm:p-5 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900">Rooms & Pricing</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+              <Card shadow="none" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs min-w-0 overflow-hidden">
+                <CardHeader className="border-b border-slate-100 p-3.5 sm:p-5 flex items-center justify-between min-w-0">
+                  <div className="min-w-0 flex-1 mr-2">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 truncate">Rooms & Pricing</h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">
                       Select a unit to inspect availability, amenities, and photos
                     </p>
                   </div>
                   {property.rooms?.length > 0 && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
                       {property.rooms.length} {property.rooms.length === 1 ? 'room' : 'rooms'}
                     </span>
                   )}
                 </CardHeader>
 
-                <CardBody className="p-4 sm:p-5 space-y-4">
+                <CardBody className="p-3.5 sm:p-5 space-y-4 min-w-0 overflow-hidden">
                   {/* Room Selection Tabs */}
                   {property.rooms?.length > 0 ? (
-                    <div className="w-full overflow-x-auto no-scrollbar py-0.5">
-                      <div className="inline-flex min-w-full sm:min-w-0 items-center gap-1.5 p-1 rounded-2xl bg-slate-100/90 border border-slate-200/70 shrink-0">
+                    <div className="w-full max-w-full overflow-x-auto no-scrollbar py-1">
+                      <div className="inline-flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100/90 border border-slate-200/70 shrink-0">
                         {property.rooms.map((room) => {
                           const isSelected = room.id === selectedRoomId;
                           return (
@@ -458,14 +463,14 @@ export function PropertyDetailPage() {
                       {/* Room Photo Gallery */}
                       {selectedRoom.images?.length > 0 ? (
                         <div className="pt-2">
-                          <p className="text-xs font-semibold text-slate-700 mb-2">Room Photos</p>
-                          <div className="grid grid-cols-3 gap-2.5">
+                          <p className="text-xs font-semibold text-slate-700 mb-2">Room Photos ({selectedRoom.images.length})</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                             {selectedRoom.images.map((img) => (
                               <button
                                 key={img.id}
                                 type="button"
                                 onClick={() => setActivePhotoPreview(img.url)}
-                                className="group relative h-28 w-full rounded-xl overflow-hidden border border-slate-200/80 bg-slate-100 focus:outline-hidden hover:opacity-95 transition"
+                                className="group relative h-28 sm:h-32 w-full rounded-xl overflow-hidden border border-slate-200/80 bg-slate-100 focus:outline-hidden hover:opacity-95 transition"
                               >
                                 <img
                                   src={img.url}
@@ -641,7 +646,7 @@ export function PropertyDetailPage() {
             {/* ------------------------------------------------------------- */}
             {/* RIGHT COLUMN: DIRECTIONS MAP, LANDLORD & SAFETY (5 cols) */}
             {/* ------------------------------------------------------------- */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 space-y-5 sm:space-y-6 min-w-0 w-full">
               {/* Card A: Location & Campus Directions */}
               <Card shadow="none" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
                 <CardHeader className="border-b border-slate-100 p-4 sm:p-5 flex items-center justify-between">

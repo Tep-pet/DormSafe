@@ -108,12 +108,13 @@ export function SearchPage() {
   const activeGateLabel = CAMPUS_GATES[filters.gate]?.label || 'Ateneo';
 
   const headerAction = (
-    <div className="flex items-center gap-2">
-      <Link to={ROUTES.STUDENT_SAVED}>
+    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+      <Link to={ROUTES.STUDENT_SAVED} className="flex-1 sm:flex-initial">
         <Button
           size="sm"
           radius="full"
           variant="secondary"
+          className="w-full sm:w-auto text-xs"
           startContent={<Bookmark size={14} strokeWidth={2} />}
         >
           Saved Listings
@@ -125,6 +126,7 @@ export function SearchPage() {
         variant="ghost"
         onClick={refetch}
         isLoading={loading}
+        className="text-xs"
         startContent={<RefreshCw size={13} strokeWidth={2} />}
       >
         Refresh
@@ -138,12 +140,12 @@ export function SearchPage() {
       subtitle={`Verified dormitories and boarding houses within 2 km of ${activeGateLabel}`}
       headerAction={headerAction}
     >
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5 min-w-0 w-full">
         {/* Single-Row Compact Filter Toolbar */}
         <PropertyFilters filters={filters} onChange={handleFilterChange} />
 
         {/* Mobile / Tablet View Switcher Toggle (lg:hidden) */}
-        <div className="flex lg:hidden items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/80">
+        <div className="flex lg:hidden items-center p-1 rounded-2xl bg-slate-100 border border-slate-200/80 w-full min-w-0">
           <button
             type="button"
             onClick={() => setMobileView('list')}
@@ -171,9 +173,9 @@ export function SearchPage() {
         </div>
 
         {/* Main 2-Column Responsive Layout: Map + Listing Grid */}
-        <div className="grid gap-6 lg:grid-cols-12 items-start">
+        <div className="grid gap-6 lg:grid-cols-12 items-start min-w-0 w-full">
           {/* Left / Desktop Sticky Map Column (5 cols) */}
-          <div className={`lg:col-span-5 lg:sticky lg:top-24 ${mobileView === 'list' ? 'hidden lg:block' : 'block'}`}>
+          <div className={`lg:col-span-5 lg:sticky lg:top-24 min-w-0 w-full ${mobileView === 'list' ? 'hidden lg:block' : 'block'}`}>
             <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-xs">
               <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
@@ -184,7 +186,7 @@ export function SearchPage() {
                   {filteredProperties.length} dorms mapped
                 </span>
               </div>
-              <div className="h-[360px] sm:h-[420px] lg:h-[540px]">
+              <div className="h-[320px] sm:h-[400px] lg:h-[540px]">
                 <MapView
                   gateId={filters.gate}
                   properties={filteredProperties}
@@ -195,7 +197,7 @@ export function SearchPage() {
           </div>
 
           {/* Right / Listing Column (7 cols) */}
-          <div className={`lg:col-span-7 space-y-4 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
+          <div className={`lg:col-span-7 space-y-4 min-w-0 w-full ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
             {/* Section Header with count */}
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
               <div>

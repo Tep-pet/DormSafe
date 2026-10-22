@@ -49,7 +49,7 @@ export function AppShell({
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-ateneo-blue">
+    <div className="flex h-screen w-full max-w-full overflow-hidden bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-ateneo-blue">
       {/* 1. Floating Left Sidebar (Spans top-to-bottom / hits ceiling with elegant margins) */}
       {hasSidebar && (
         <div className="hidden lg:flex flex-col flex-shrink-0 p-3 sm:p-4 pr-0 h-screen z-20">
@@ -67,11 +67,11 @@ export function AppShell({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className={`flex flex-1 flex-col overflow-y-scroll [scrollbar-gutter:stable] min-h-0 min-w-0 relative ${scrollbarClassName}`}
+        className={`flex flex-1 flex-col overflow-y-scroll overflow-x-hidden min-h-0 min-w-0 w-full max-w-full relative ${scrollbarClassName}`}
       >
         {/* Topbar: Floating capsule sitting on the side of sidebar */}
-        <div className="sticky top-0 z-30 pt-3 sm:pt-4 pointer-events-none">
-          <div className={fullWidth ? 'w-full px-4 sm:px-6 lg:px-8' : 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'}>
+        <div className="sticky top-0 z-30 pt-1.5 sm:pt-4 pointer-events-none">
+          <div className={fullWidth ? 'w-full px-2 sm:px-6 lg:px-8' : 'mx-auto w-full max-w-7xl px-2 sm:px-6 lg:px-8'}>
             <AppHeader
               isScrolled={isScrolled}
               hasSidebar={hasSidebar}
@@ -82,30 +82,30 @@ export function AppShell({
         </div>
 
         {/* Universal Page Viewport with Smooth Graceful Transition */}
-        <div className="flex-1 flex flex-col min-h-full">
-          <PageTransition pageKey={location.pathname} className="flex-1 flex flex-col">
-            <main className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-full min-w-0 w-full max-w-full">
+          <PageTransition pageKey={location.pathname} className="flex-1 flex flex-col min-w-0 w-full max-w-full">
+            <main className="flex-1 flex flex-col min-w-0 w-full max-w-full">
               {/* Direct fallback for standalone AppShell usage without PageContainer */}
               {showBreadcrumbs && (
-                <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+                <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6">
                   <AppBreadcrumbs customCrumbs={customBreadcrumbs} />
                 </div>
               )}
               {(title || subtitle || headerAction) && (
-                <header className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
+                <header className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                  <div className="min-w-0 flex-1">
                     {title && (
-                      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                      <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl break-words">
                         {title}
                       </h1>
                     )}
                     {subtitle && (
-                      <p className="mt-1 text-xs text-slate-500 font-normal leading-relaxed">
+                      <p className="mt-1 text-xs text-slate-500 font-normal leading-relaxed break-words">
                         {subtitle}
                       </p>
                     )}
                   </div>
-                  {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}
+                  {headerAction && <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">{headerAction}</div>}
                 </header>
               )}
 
