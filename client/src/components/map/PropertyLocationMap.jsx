@@ -6,7 +6,8 @@ import {
   Polyline,
 } from '@react-google-maps/api';
 import { CAMPUS_GATES } from '../../constants/campusGates';
-import { useGoogleMaps, GoogleMapsErrorHelp } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { LeafletPropertyMap } from './LeafletPropertyMap';
 import { Loader } from '../common/Loader';
 import { Button } from '../common/Button';
 import { WalkingTimeBadge } from './WalkingTimeBadge';
@@ -204,17 +205,15 @@ export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
     `&destination=${isJuanLuna ? '7.0725891,125.6160124' : encodeURIComponent(destinationAddress)}` +
     `&travelmode=walking`;
 
-  if (!apiKey) {
+  // Seamless fallback to OpenStreetMap / Leaflet if Google Maps is rejected or loading fails
+  if (!apiKey || loadError || authFailed) {
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-600">
-        Map unavailable — add <code className="rounded bg-slate-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
-        client/.env
-      </div>
+      <LeafletPropertyMap
+        property={property}
+        gateId={gateId}
+        walkingMinutes={walkingMinutes}
+      />
     );
-  }
-
-  if (loadError || authFailed) {
-    return <GoogleMapsErrorHelp />;
   }
 
   if (!isLoaded) return <Loader message="Loading map…" />;

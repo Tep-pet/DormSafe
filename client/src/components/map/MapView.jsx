@@ -1,6 +1,7 @@
 import { GoogleMap, Marker, Circle } from '@react-google-maps/api';
 import { CAMPUS_GATES, SEARCH_RADIUS_KM } from '../../constants/campusGates';
-import { useGoogleMaps, GoogleMapsErrorHelp } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { LeafletMapView } from './LeafletMapView';
 import { Loader } from '../common/Loader';
 
 const mapContainerStyle = { width: '100%', height: '100%', minHeight: '400px' };
@@ -15,23 +16,21 @@ const mapOptions = {
 
 /**
  * Google Maps view with campus gate, 2 km radius, and property markers.
- * Script is preloaded app-wide via GoogleMapsProvider (target: load < 3s).
+ * Falls back seamlessly to Leaflet/OpenStreetMap if Google Maps is unauthorized or fails.
  */
 export function MapView({ gateId = 'jacinto', properties = [], onMarkerClick }) {
   const { isLoaded, loadError, authFailed, apiKey } = useGoogleMaps();
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
 
-  if (!apiKey) {
+  // Seamless fallback to OpenStreetMap / Leaflet if Google Maps is rejected or loading fails
+  if (!apiKey || loadError || authFailed) {
     return (
-      <div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-600">
-        Add <code className="mx-1 rounded bg-slate-200 px-1">VITE_GOOGLE_MAPS_API_KEY</code> to
-        client/.env to enable the map.
-      </div>
+      <LeafletMapView
+        gateId={gateId}
+        properties={properties}
+        onMarkerClick={onMarkerClick}
+      />
     );
-  }
-
-  if (loadError || authFailed) {
-    return <GoogleMapsErrorHelp />;
   }
 
   if (!isLoaded) return <Loader message="Loading map…" />;
