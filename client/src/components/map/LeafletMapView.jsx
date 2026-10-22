@@ -32,15 +32,10 @@ export function LeafletMapView({ gateId = 'jacinto', properties = [], onMarkerCl
         attributionControl: false,
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
-
-      // Attribution
-      L.control
-        .attribution({ position: 'bottomright', prefix: '© OpenStreetMap © CARTO' })
-        .addTo(map);
 
       mapInstanceRef.current = map;
     }
