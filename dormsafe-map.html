@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DormSafe — Free Interactive Campus Map (AdDU)</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root {
+      --addu-blue: #003366;
+      --addu-gold: #c5a900;
+      --emerald: #059669;
+      --slate-800: #1e293b;
+      --slate-500: #64748b;
+      --slate-100: #f1f5f9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 1000;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--addu-blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      border: 2px solid var(--addu-gold);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--addu-blue);
+      letter-spacing: -0.3px;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--slate-500);
+      display: block;
+    }
+
+    /* Search & Filter Bar */
+    .search-wrapper {
+      flex: 1;
+      max-width: 360px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      border-radius: 9999px;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--addu-blue);
+      box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    /* Map Viewport */
+    #map {
+      flex: 1;
+      width: 100%;
+      z-index: 10;
+    }
+
+    /* Live GPS Pulsing Blue Dot (Grab-like) */
+    @keyframes pulseGrab {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+      }
+      70% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 16px rgba(37, 99, 235, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+      }
+    }
+
+    .user-live-pin {
+      width: 18px;
+      height: 18px;
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      animation: pulseGrab 2s infinite;
+    }
+
+    /* Dorm Map Price Badge */
+    .dorm-badge {
+      background: #ffffff;
+      color: var(--addu-blue);
+      border: 2px solid var(--addu-blue);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .dorm-badge:hover {
+      transform: scale(1.08);
+      background: var(--addu-blue);
+      color: #ffffff;
+    }
+
+    /* Floating Action Buttons */
+    .map-fab-container {
+      position: absolute;
+      top: 68px;
+      right: 14px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .fab-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--slate-800);
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .fab-btn:hover {
+      background: #f8fafc;
+      color: var(--addu-blue);
+      transform: scale(1.05);
+    }
+
+    /* GPS Status Alert */
+    .alert-banner {
+      position: absolute;
+      top: 68px;
+      left: 14px;
+      right: 64px;
+      background: #f59e0b;
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Mobile Bottom Sheet Card */
+    .bottom-sheet {
+      position: absolute;
+      bottom: 16px;
+      left: 12px;
+      right: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .sheet-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--addu-blue);
+      line-height: 1.2;
+    }
+
+    .sheet-address {
+      font-size: 11px;
+      color: var(--slate-500);
+      margin-top: 2px;
+    }
+
+    .sheet-close {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--slate-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sheet-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .stat-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate-800);
+    }
+
+    .stat-price {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--emerald);
+    }
+
+    .route-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mode-toggle {
+      display: flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 8px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--slate-500);
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: #ffffff;
+      color: var(--addu-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .clear-btn {
+      flex: 1;
+      padding: 8px;
+      background: #f1f5f9;
+      color: var(--slate-800);
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .clear-btn:hover {
+      background: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">D</div>
+        <div>
+          <span class="brand-title">DormSafe</span>
+          <span class="brand-sub">Ateneo de Davao Campus Map</span>
+        </div>
+      </div>
+
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          id="dormSearch"
+          type="text"
+          class="search-input"
+          placeholder="Search dorms by name..."
+        />
+      </div>
+    </header>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Floating Buttons -->
+    <div class="map-fab-container">
+      <button id="recenterBtn" class="fab-btn" title="Recenter on my location">🎯</button>
+      <button id="campusBtn" class="fab-btn" title="Center on Ateneo Gate">🏛️</button>
+    </div>
+
+    <!-- GPS Warning Banner -->
+    <div id="gpsAlert" class="alert-banner">
+      <span>Location permission denied. Starting from Ateneo Gate (tap map to set pin).</span>
+    </div>
+
+    <!-- Bottom Sheet Card for Selected Dorm -->
+    <div id="dormSheet" class="bottom-sheet">
+      <div class="sheet-header">
+        <div>
+          <h3 id="sheetTitle" class="sheet-title">Dorm Name</h3>
+          <p id="sheetAddress" class="sheet-address">Address</p>
+        </div>
+        <button id="sheetClose" class="sheet-close">✕</button>
+      </div>
+
+      <div class="sheet-stats">
+        <div>
+          <div class="stat-badge">Rent</div>
+          <div id="sheetPrice" class="stat-price">₱0/mo</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="stat-badge">Estimated Time</div>
+          <div id="sheetEta" style="font-size: 12px; font-weight: 700; color: #2563eb;">Calculating...</div>
+        </div>
+      </div>
+
+      <div class="route-controls">
+        <div class="mode-toggle">
+          <button id="modeWalk" class="mode-btn active">🚶 Walk</button>
+          <button id="modeDrive" class="mode-btn">🚗 Drive</button>
+        </div>
+        <button id="clearRouteBtn" class="clear-btn">Clear Route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script>
+    // ==========================================
+    // 1. DORM DATA (EDIT YOUR DORMS HERE)
+    // ==========================================
+    const SAMPLE_DORMS = [
+      {
+        id: 1,
+        name: "Juan Luna Boarding House",
+        address: "Brgy 29-c 102-1 purok-2 Juan Luna St, Davao City",
+        lat: 7.0725891,
+        lng: 125.6160124,
+        price: 2500,
+        contact: "09123456789",
+        photo: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400"
+      },
+      {
+        id: 2,
+        name: "Correla Dormitory",
+        address: "108 Roxas Avenue, Davao City",
+        lat: 7.06945,
+        lng: 125.61468,
+        price: 4500,
+        contact: "09987654321",
+        photo: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400"
+      },
+      {
+        id: 3,
+        name: "BRC Dormitory",
+        address: "Padre Gomez St, Poblacion District, Davao City",
+        lat: 7.0680548,
+        lng: 125.6125343,
+        price: 3500,
+        contact: "09234567890",
+        photo: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=400"
+      },
+      {
+        id: 4,
+        name: "Ivory Residences",
+        address: "J.P. Laurel Ave, Poblacion District, Davao City",
+        lat: 7.0871921,
+        lng: 125.6091495,
+        price: 5500,
+        contact: "09345678901",
+        photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"
+      },
+      {
+        id: 5,
+        name: "Residencia de Maria Goretti",
+        address: "Claro M. Recto St, Poblacion District, Davao City",
+        lat: 7.071800,
+        lng: 125.611200,
+        price: 3000,
+        contact: "09456789012",
+        photo: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
+      }
+    ];
+
+    // Ateneo de Davao Jacinto Campus Gate Coordinates
+    const ADDU_GATE = {
+      name: "Ateneo de Davao (Jacinto Gate)",
+      lat: 7.0712406,
+      lng: 125.6134491,
+      radiusKm: 2.0
+    };
+
+    // State Variables
+    let userCoords = null; // { lat, lng }
+    let manualCoords = null;
+    let activeDorm = null;
+    let travelMode = 'foot'; // 'foot' or 'driving'
+    let routePolyline = null;
+    let dormMarkers = [];
+
+    // ==========================================
+    // 2. INITIALIZE MAP & TILES
+    // ==========================================
+    const map = L.map('map', {
+      center: [ADDU_GATE.lat, ADDU_GATE.lng],
+      zoom: 15,
+      zoomControl: false
+    });
+
+    // Free OpenStreetMap Tiles (No API key, No credit card)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Add Ateneo Campus Origin Marker
+    const gateIcon = L.divIcon({
+      className: 'gate-marker',
+      html: `
+        <div style="background:#003366; color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #c5a900; box-shadow:0 4px 10px rgba(0,0,0,0.3); font-weight:800; font-size:13px;">
+          A
+        </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    L.marker([ADDU_GATE.lat, ADDU_GATE.lng], { icon: gateIcon })
+      .addTo(map)
+      .bindPopup(`<b>${ADDU_GATE.name}</b><br/>Campus Perimeter Center`);
+
+    // 2 km Radius Circle
+    L.circle([ADDU_GATE.lat, ADDU_GATE.lng], {
+      radius: ADDU_GATE.radiusKm * 1000,
+      color: '#003366',
+      fillColor: '#003366',
+      fillOpacity: 0.05,
+      weight: 2,
+      dashArray: '5, 5'
+    }).addTo(map);
+
+    // ==========================================
+    // 3. RENDER DORM PINS
+    // ==========================================
+    function renderDorms(dorms) {
+      dormMarkers.forEach(m => m.remove());
+      dormMarkers = [];
+
+      dorms.forEach(dorm => {
+        const icon = L.divIcon({
+          className: 'dorm-pin',
+          html: `<div class="dorm-badge">🏠 ₱${dorm.price.toLocaleString()}</div>`,
+          iconSize: [80, 26],
+          iconAnchor: [40, 13]
+        });
+
+        const marker = L.marker([dorm.lat, dorm.lng], { icon }).addTo(map);
+        marker.on('click', () => selectDorm(dorm));
+        dormMarkers.push({ marker, dorm });
+      });
+    }
+
+    renderDorms(SAMPLE_DORMS);
+
+    // ==========================================
+    // 4. LIVE GEOLOCATION (watchPosition)
+    // ==========================================
+    let userMarker = null;
+    let accuracyCircle = null;
+
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          userCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          };
+
+          const userLatLng = [userCoords.lat, userCoords.lng];
+
+          if (!userMarker) {
+            const userIcon = L.divIcon({
+              className: 'user-pin',
+              html: '<div class="user-live-pin" title="You are here"></div>',
+              iconSize: [18, 18],
+              iconAnchor: [9, 9]
+            });
+
+            userMarker = L.marker(userLatLng, { icon: userIcon, zIndexOffset: 1000 })
+              .addTo(map)
+              .bindPopup('<b>You are here</b><br/>Live GPS tracking active');
+
+            accuracyCircle = L.circle(userLatLng, {
+              radius: Math.min(userCoords.accuracy, 150),
+              color: '#3b82f6',
+              fillColor: '#93c5fd',
+              fillOpacity: 0.15,
+              weight: 1
+            }).addTo(map);
+          } else {
+            userMarker.setLatLng(userLatLng);
+            accuracyCircle.setLatLng(userLatLng);
+            accuracyCircle.setRadius(Math.min(userCoords.accuracy, 150));
+          }
+
+          // If a dorm route is active, update it in real time as the student moves
+          if (activeDorm) {
+            drawRoute();
+          }
+        },
+        (err) => {
+          console.warn('Geolocation denied or error:', err.message);
+          document.getElementById('gpsAlert').style.display = 'flex';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
+    } else {
+      document.getElementById('gpsAlert').style.display = 'flex';
+    }
+
+    // ==========================================
+    // 5. OSRM ROUTING (WALKING & DRIVING)
+    // ==========================================
+    async function drawRoute() {
+      if (!activeDorm) return;
+
+      // Start from user live location, or manual pin, or fallback to Ateneo Gate
+      const start = manualCoords || userCoords || ADDU_GATE;
+      const end = activeDorm;
+
+      const url = `https://router.project-osrm.org/route/v1/${travelMode}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.routes && data.routes[0]) {
+          const route = data.routes[0];
+          const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+
+          if (routePolyline) {
+            routePolyline.remove();
+          }
+
+          routePolyline = L.polyline(coords, {
+            color: travelMode === 'driving' ? '#0284c7' : '#003366',
+            weight: 5,
+            opacity: 0.85,
+            dashArray: travelMode === 'driving' ? null : '6, 8',
+            lineCap: 'round'
+          }).addTo(map);
+
+          map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
+
+          const distMeters = Math.round(route.distance);
+          const distStr = distMeters >= 1000 ? `${(distMeters / 1000).toFixed(1)} km` : `${distMeters} m`;
+          const durationMins = Math.max(1, Math.round(route.duration / 60));
+
+          document.getElementById('sheetEta').textContent = `~${durationMins} min (${distStr})`;
+        }
+      } catch (err) {
+        console.warn('OSRM route error:', err);
+      }
+    }
+
+    // Select Dorm & Open Bottom Sheet
+    function selectDorm(dorm) {
+      activeDorm = dorm;
+      document.getElementById('sheetTitle').textContent = dorm.name;
+      document.getElementById('sheetAddress').textContent = dorm.address;
+      document.getElementById('sheetPrice').textContent = `₱${dorm.price.toLocaleString()}/mo`;
+      document.getElementById('sheetEta').textContent = 'Calculating route...';
+      document.getElementById('dormSheet').style.display = 'flex';
+      drawRoute();
+    }
+
+    // Manual start point on map click if needed
+    let manualMarker = null;
+    map.on('click', (e) => {
+      if (!userCoords) {
+        manualCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+        if (!manualMarker) {
+          manualMarker = L.marker([manualCoords.lat, manualCoords.lng]).addTo(map).bindPopup('Manual Start').openPopup();
+        } else {
+          manualMarker.setLatLng([manualCoords.lat, manualCoords.lng]);
+        }
+        if (activeDorm) drawRoute();
+      }
+    });
+
+    // UI Event Listeners
+    document.getElementById('recenterBtn').addEventListener('click', () => {
+      if (userCoords) {
+        map.setView([userCoords.lat, userCoords.lng], 16, { animate: true });
+      } else {
+        map.setView([ADDU_GATE.lat, ADDU_GATE.lng], 15, { animate: true });
+      }
+    });
+
+    document.getElementById('campusBtn').addEventListener('click', () => {
+      map.setView([ADDU_GATE.lat, ADDU_GATE.lng], 16, { animate: true });
+    });
+
+    document.getElementById('sheetClose').addEventListener('click', () => {
+      document.getElementById('dormSheet').style.display = 'none';
+      if (routePolyline) {
+        routePolyline.remove();
+        routePolyline = null;
+      }
+      activeDorm = null;
+    });
+
+    document.getElementById('clearRouteBtn').addEventListener('click', () => {
+      document.getElementById('sheetClose').click();
+    });
+
+    // Walk / Drive Toggle
+    document.getElementById('modeWalk').addEventListener('click', () => {
+      travelMode = 'foot';
+      document.getElementById('modeWalk').classList.add('active');
+      document.getElementById('modeDrive').classList.remove('active');
+      drawRoute();
+    });
+
+    document.getElementById('modeDrive').addEventListener('click', () => {
+      travelMode = 'driving';
+      document.getElementById('modeDrive').classList.add('active');
+      document.getElementById('modeWalk').classList.remove('active');
+      drawRoute();
+    });
+
+    // Search filter
+    document.getElementById('dormSearch').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = SAMPLE_DORMS.filter(d => d.name.toLowerCase().includes(q) || d.address.toLowerCase().includes(q));
+      renderDorms(filtered);
+    });
+  </script>
+</body>
+</html>
