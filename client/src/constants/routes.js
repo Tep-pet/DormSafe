@@ -4,6 +4,8 @@ export const ROUTES = {
   REGISTER: '/register',
   STUDENT_SEARCH: '/student/search',
   STUDENT_PROPERTY: '/student/property/:id',
+  STUDENT_NAVIGATE: '/student/navigate/:id',
+  NAVIGATE: '/navigate/:id',
   STUDENT_VERIFICATION: '/student/verification',
   STUDENT_MY_STAY: '/student/my-stay',
   STUDENT_REQUESTS: '/student/requests',

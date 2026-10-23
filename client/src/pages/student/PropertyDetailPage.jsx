@@ -34,6 +34,7 @@ import {
   ExternalLink,
   MessageSquare,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Badge } from '../../components/common/Badge';
@@ -672,14 +673,16 @@ export function PropertyDetailPage() {
                     <p className="text-[11px] text-slate-500">
                       Need live turn-by-turn guidance from your GPS?
                     </p>
-                    <a
-                      href="/dormsafe-tracker/index.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-ateneo-blue hover:text-blue-700 transition flex items-center gap-1"
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      color="primary"
+                      onPress={() => navigate(`/navigate/${property.id}`)}
+                      startContent={<Compass size={14} className="text-ateneo-blue" />}
+                      className="font-bold text-xs bg-blue-50 text-ateneo-blue border border-blue-200/60 hover:bg-blue-100"
                     >
-                      <span>🧭 Track My Route (Live GPS) ↗</span>
-                    </a>
+                      Live GPS Tracker
+                    </Button>
                   </div>
                 </CardBody>
               </Card>

@@ -69,9 +69,9 @@ export function AppShell({
         onScroll={handleScroll}
         className={`flex flex-1 flex-col overflow-y-scroll overflow-x-hidden min-h-0 min-w-0 w-full max-w-full relative ${scrollbarClassName}`}
       >
-        {/* Topbar: Floating capsule sitting on the side of sidebar */}
-        <div className="sticky top-0 z-30 pt-1.5 sm:pt-4 pointer-events-none">
-          <div className={fullWidth ? 'w-full px-2 sm:px-6 lg:px-8' : 'mx-auto w-full max-w-7xl px-2 sm:px-6 lg:px-8'}>
+        {/* Topbar: Fixed firmly at the top (not floating) */}
+        <div className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+          <div className={fullWidth ? 'w-full px-3 sm:px-6 lg:px-8' : 'mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8'}>
             <AppHeader
               isScrolled={isScrolled}
               hasSidebar={hasSidebar}

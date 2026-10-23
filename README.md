@@ -9,7 +9,7 @@ A student housing platform for Ateneo de Davao — search nearby dorms, manage s
 | Frontend | React 19, Vite, Tailwind CSS, React Router |
 | Backend | Node.js, Express |
 | Database | Supabase (PostgreSQL, Auth, Storage) |
-| Maps | Google Maps JavaScript, Directions, Distance Matrix, Geocoding |
+| Maps | MapLibre GL JS, OpenStreetMap, OpenRouteService, Browser Geolocation |
 
 ## Project Structure
 
@@ -87,25 +87,20 @@ Do **not** re-run `copy` if your `.env` files already have real keys — it over
 | anon public key | `VITE_SUPABASE_ANON_KEY` | — |
 | service_role key | — | `SUPABASE_SERVICE_ROLE_KEY` |
 
-**Google Maps** — enable in [Google Cloud Console](https://console.cloud.google.com/):
+**Mapping & Pedestrian Routing (100% Free — Zero Google Services & Zero Credit Cards)**:
 
-- Maps JavaScript API + Directions API (client)
-- Distance Matrix API + Geocoding API (server)
-
-Use **two keys** in production/dev when possible:
-
-| Key | Restrictions | Variable |
-|-----|--------------|----------|
-| Browser | HTTP referrers: `http://localhost:5173/*` | `VITE_GOOGLE_MAPS_API_KEY` |
-| Server | No referrer restriction | `GOOGLE_MAPS_API_KEY` |
+- **Map Engine**: MapLibre GL JS + WebGL hardware acceleration (Grab-style heading-up rotation)
+- **Base Map Tiles**: OpenStreetMap / Offline Vector PMTiles
+- **Live Pedestrian Routing**: OpenRouteService (`/foot-walking`, 2,000 requests/day free tier)
+- **Geocoding**: OpenStreetMap Nominatim
 
 `client/.env` example:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_GOOGLE_MAPS_API_KEY=your-browser-maps-key
 VITE_API_URL=http://localhost:5000
+VITE_ORS_API_KEY=your-free-openrouteservice-key
 ```
 
 `server/.env` example:
@@ -114,7 +109,7 @@ VITE_API_URL=http://localhost:5000
 PORT=5000
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GOOGLE_MAPS_API_KEY=your-server-maps-key
+OPENROUTESERVICE_API_KEY=your-free-openrouteservice-key
 CORS_ORIGIN=http://localhost:5173
 SUPABASE_INSECURE_SSL=1
 ```

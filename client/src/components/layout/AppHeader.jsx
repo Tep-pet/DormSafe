@@ -24,13 +24,7 @@ export function AppHeader({
   ];
 
   return (
-    <header
-      className={`pointer-events-auto w-full h-13 sm:h-16 px-3 sm:px-6 rounded-xl sm:rounded-2xl lg:rounded-3xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-between gap-2 sm:gap-4 ${
-        isScrolled
-          ? 'bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm'
-          : 'bg-white/80 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none border border-slate-200/50 sm:border-transparent shadow-2xs sm:shadow-none'
-      }`}
-    >
+    <header className="w-full h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
       {/* Left Side: Mobile Menu Button + Brand Logo */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {/* Mobile hamburger menu toggle */}

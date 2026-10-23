@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { getGate, SEARCH_RADIUS_KM } from '../config/campusGates.js';
 import { getBoundingBox, isWithinRadiusKm } from '../utils/haversine.js';
 import { getPropertyPrimaryImageUrl, flattenRoomImages, mapRoomImages } from '../utils/propertyImages.js';
-import { getWalkingDurationsBatch, getWalkingDurationMinutes } from './googleMaps.service.js';
+import { getWalkingDurationsBatch, getWalkingDurationMinutes } from './matrixRouting.service.js';
 import { enrichRoomsWithStayInfo } from './stay.service.js';
 import { getApprovedReviews } from './review.service.js';
 import { getFavoriteIds } from './favorite.service.js';

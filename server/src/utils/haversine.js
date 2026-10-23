@@ -2,7 +2,7 @@ const EARTH_RADIUS_KM = 6371;
 
 /**
  * Haversine formula — straight-line distance between two coordinates.
- * Used as a fast pre-filter before Google Maps walking distance (proposal §3.3).
+ * Used as a fast pre-filter before pedestrian walking distance calculation.
  */
 export function haversineKm(lat1, lng1, lat2, lng2) {
   const toRad = (deg) => (deg * Math.PI) / 180;

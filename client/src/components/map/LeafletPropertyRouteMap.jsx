@@ -4,8 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES } from '../../constants/campusGates';
 import { getAccuratePinpoint, calculateStraightLineDistance } from '../../utils/propertyCoordinates';
 import { WalkingTimeBadge } from './WalkingTimeBadge';
-import { Button } from '../common/Button';
-import { Footprints, Car, MapPin, Navigation, ExternalLink } from 'lucide-react';
+import { Footprints, Car, MapPin, Navigation } from 'lucide-react';
 
 // Setup Leaflet default marker icons for bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -32,9 +31,6 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
   const [travelMode, setTravelMode] = useState('walking');
   const [routeStats, setRouteStats] = useState(null);
   const [isRouting, setIsRouting] = useState(false);
-
-  // External Google Maps directions URL (exact starting point: Ateneo Gate -> property pinpoint)
-  const mapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${gate.lat},${gate.lng}&destination=${pinpoint.lat},${pinpoint.lng}&travelmode=${travelMode === 'driving' ? 'driving' : 'walking'}`;
 
   // 1. Initialize Leaflet Map (runs once on container mount)
   useEffect(() => {
@@ -306,12 +302,6 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
               <span>Drive</span>
             </button>
           </div>
-
-          <a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer">
-            <Button type="button" variant="secondary" size="sm" radius="full" className="text-xs">
-              Open in Google Maps ↗
-            </Button>
-          </a>
         </div>
       </div>
 

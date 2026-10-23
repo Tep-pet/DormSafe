@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { getPublicImageUrl } from './upload.service.js';
 import { getPrimaryImage } from '../utils/propertyImages.js';
 import { getGate } from '../config/campusGates.js';
-import { getWalkingDurationMinutes } from './googleMaps.service.js';
+import { getWalkingDurationMinutes } from './matrixRouting.service.js';
 
 export async function toggleFavorite(studentId, propertyId) {
   const { data: existing } = await supabaseAdmin

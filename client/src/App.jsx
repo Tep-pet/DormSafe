@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
-import { GoogleMapsProvider } from './context/GoogleMapsContext';
 import { ToastProvider } from './context/ToastContext';
+import { LiveNavigationPage } from './pages/student/LiveNavigationPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { RoleRoute } from './routes/RoleRoute';
 import { VerifiedRoute } from './routes/VerifiedRoute';
@@ -42,8 +42,7 @@ import { ROLES } from './constants/roles';
 export default function App() {
   return (
     <AuthProvider>
-      <GoogleMapsProvider>
-        <ToastProvider>
+      <ToastProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomeRedirect />} />
@@ -70,6 +69,7 @@ export default function App() {
                       <Route path="/student/my-stay" element={<MyStayPage />} />
                       <Route path="/student/requests" element={<RoomRequestsPage />} />
                       <Route path="/student/property/:id" element={<PropertyDetailPage />} />
+                      <Route path="/student/navigate/:id" element={<LiveNavigationPage />} />
                     </Route>
                   </Route>
                 </Route>
@@ -105,12 +105,12 @@ export default function App() {
                 </Route>
               </Route>
 
+              <Route path="/navigate/:id" element={<LiveNavigationPage />} />
               <Route path="*" element={<HomeRedirect />} />
             </Routes>
             <Analytics />
           </BrowserRouter>
         </ToastProvider>
-      </GoogleMapsProvider>
     </AuthProvider>
   );
 }
