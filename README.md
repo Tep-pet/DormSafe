@@ -149,15 +149,21 @@ Restart whichever process you changed `.env` for.
 
 | Role | Main pages |
 |------|------------|
-| Student | `/student/search`, `/student/saved`, `/student/my-stay`, `/student/property/:id` |
+| Student | `/student/search`, `/student/saved`, `/student/my-stay`, `/student/property/:id`, `/navigate/:id` (Real-Time GPS Tracker) |
 | Owner | `/owner/dashboard`, `/owner/listings`, `/owner/add-property`, `/owner/tenants`, `/owner/payments`, `/owner/analytics`, `/owner/verification` |
 | Admin | `/admin/dashboard`, `/admin/verify-accounts`, `/admin/approve-listings`, `/admin/manage-users`, `/admin/manage-tenants`, `/admin/audit-log`, `/admin/moderate` |
 
 Unverified students and owners land on their verification page until an admin approves the account.
 
+## Production deployment
+
+- Live Web App: **https://dormsafe.vercel.app**
+- Backup Domain: **https://dorm-safe.vercel.app**
+- Standalone Map: **https://dormsafe.vercel.app/map.html**
+
 ## API overview
 
-Base URL: `http://localhost:5000/api`
+Base URL: `http://localhost:5000/api` (Local) / `/api` (Vercel)
 
 | Prefix | Purpose |
 |--------|---------|
@@ -178,8 +184,8 @@ All protected routes expect `Authorization: Bearer <access_token>`.
 | Problem | Fix |
 |---------|-----|
 | `relation "…" does not exist` | Run missing migrations (especially `006`–`008`) in Supabase SQL Editor |
-| Geocode error on edit listing (`REQUEST_DENIED`) | Use a **server** Maps key without browser referrer restrictions; enable Geocoding API. Unchanged addresses save without re-geocoding |
-| Walking times all identical | Check server logs; enable Distance Matrix on the **server** key |
+| Geocoding / Routing without external key | OpenStreetMap Nominatim and OSRM are used by default with automatic Haversine fallback; no billing required |
+| GPS position unavailable on desktop | Laptops/desktops without hardware GPS automatically initialize Ateneo Jacinto Gate as starting position |
 | `fetch failed` / SSL on seed | Set `SUPABASE_INSECURE_SSL=1` in `server/.env` |
 | Blank owner verification page | Fixed in current build — refresh; page must not depend on owner dashboard context |
 | Payment reminders say **0 sent** | Add due payments in **Payment Log**, or wait 24h if already notified; active tenants without paid rent this month also get a generic reminder |

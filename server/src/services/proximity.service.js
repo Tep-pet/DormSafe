@@ -91,7 +91,7 @@ function enrichProperty(property, walkingMinutes) {
 /**
  * Proximity Algorithm (proposal §3.3):
  * 1. Load approved listings near gate (SQL bbox + haversine)
- * 2. Compute walking time via Google Maps Distance Matrix
+ * 2. Compute walking time via OpenRouteService Matrix (with Haversine fallback)
  * 3. Sort by walking duration
  */
 export async function searchNearbyProperties({ gate, minPrice, maxPrice, propertyType }) {

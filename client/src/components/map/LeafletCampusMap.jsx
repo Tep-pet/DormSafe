@@ -522,7 +522,7 @@ export function LeafletCampusMap({
                 </div>
               </div>
 
-              {/* Mode Toggle & Google Maps Link */}
+              {/* Mode Toggle & Live Navigation */}
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
                   <button
