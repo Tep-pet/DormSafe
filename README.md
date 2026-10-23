@@ -2,9 +2,6 @@
 
 A student housing platform for Ateneo de Davao — search nearby dorms, manage stays and tenants, and review listings through a verified workflow.
 
-**Capstone 2 Project** — Aguirre, Pacatang, Palima  
-Ateneo de Davao University · SY 2025–2026
-
 ## Tech Stack
 
 | Layer | Stack |
