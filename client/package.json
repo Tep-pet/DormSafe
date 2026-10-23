@@ -13,6 +13,7 @@
     "@heroui/theme": "^2.4.26",
     "@react-google-maps/api": "^2.20.6",
     "@supabase/supabase-js": "^2.49.1",
+    "@vercel/analytics": "^2.0.1",
     "framer-motion": "^13.5.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.49.0",

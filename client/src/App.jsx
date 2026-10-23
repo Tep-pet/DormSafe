@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleMapsProvider } from './context/GoogleMapsContext';
 import { ToastProvider } from './context/ToastContext';
@@ -106,6 +107,7 @@ export default function App() {
 
               <Route path="*" element={<HomeRedirect />} />
             </Routes>
+            <Analytics />
           </BrowserRouter>
         </ToastProvider>
       </GoogleMapsProvider>
