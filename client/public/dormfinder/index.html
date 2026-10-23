@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <title>DormFinder — Real-Time Student Route Tracker</title>
+
+  <!-- Leaflet 1.9.4 CSS (100% Free, Open Source) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <!-- DormFinder Tracker Stylesheet -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header Navigation -->
+    <header class="header-bar">
+      <div class="brand-section">
+        <div class="brand-logo">DF</div>
+        <div class="brand-info">
+          <h1>DormFinder</h1>
+          <p>AdDU Jacinto 2 km Campus Tracker</p>
+        </div>
+      </div>
+
+      <!-- Accommodation Selector for Easy Testing -->
+      <div class="accommodation-selector">
+        <select id="selectAccommodation" aria-label="Select Accommodation">
+          <!-- Dynamically populated from mockAccommodations.js -->
+        </select>
+      </div>
+    </header>
+
+    <!-- Map Canvas Container -->
+    <div id="map"></div>
+
+    <!-- Floating Map Controls -->
+    <div class="map-floating-controls">
+      <button id="btnRecenterMe" class="control-btn" title="Recenter on me" aria-label="Recenter on me">
+        🎯
+      </button>
+      <button id="btnRecenterDest" class="control-btn" title="Recenter on accommodation" aria-label="Recenter on accommodation">
+        🏛️
+      </button>
+    </div>
+
+    <!-- Arrival Celebration Toast (Triggered within 20 meters) -->
+    <div id="arrivalBanner" class="arrival-toast hidden">
+      <div class="arrival-content">
+        <span class="arrival-icon">🎉</span>
+        <div class="arrival-text">
+          <h4 id="arrivalTitle">You've arrived!</h4>
+          <p id="arrivalSubtitle">You have reached your destination.</p>
+        </div>
+      </div>
+      <button id="btnDismissArrival" class="arrival-dismiss-btn" aria-label="Close arrival notice">✕</button>
+    </div>
+
+    <!-- Error / Fallback Banner -->
+    <div id="errorBanner" class="error-banner hidden">
+      <div class="error-header">
+        <span>⚠️</span>
+        <span id="errorTitle">Location Access Required</span>
+      </div>
+      <p id="errorDesc" class="error-desc">
+        Unable to access your location. Tap "Try Again" or adjust browser permissions.
+      </p>
+      <button id="btnRetryLocation" class="btn-retry">Try Again</button>
+    </div>
+
+    <!-- Bottom Action & Info Drawer -->
+    <div class="bottom-drawer">
+      <div class="bottom-card">
+        <!-- Accommodation Summary -->
+        <div class="accommodation-summary">
+          <div>
+            <h2 id="cardAccName" class="acc-title">Juan Luna Boarding House</h2>
+            <p id="cardAccAddress" class="acc-address">Brgy 29-C, Juan Luna St, Poblacion District, Davao City</p>
+          </div>
+          <div id="cardAccPrice" class="acc-price">₱2,500/mo</div>
+        </div>
+
+        <!-- Live Route Info Card (Appears during tracking) -->
+        <div id="routeInfoCard" class="route-stats-grid hidden">
+          <div class="stat-item">
+            <span class="stat-label">Distance</span>
+            <span id="routeDistance" class="stat-value">-- m</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Estimated Walking ETA</span>
+            <span id="routeEta" class="stat-value eta">-- min</span>
+          </div>
+          <span id="fallbackBadge" class="fallback-badge" style="display: none;">Direct Distance (Fallback)</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <button id="btnStartTrack" class="btn-main btn-primary">
+          <span>🧭</span>
+          <span>Show me the way / Track my route</span>
+        </button>
+
+        <button id="btnStopTrack" class="btn-main btn-danger hidden">
+          <span>🛑</span>
+          <span>Stop tracking</span>
+        </button>
+
+        <!-- Live Status Bar -->
+        <div class="tracker-status-bar">
+          <span class="status-dot"></span>
+          <span id="trackerStatus">Select accommodation and tap "Show me the way"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Permission Modal (Philippines Data Privacy Act Compliant) -->
+    <div id="permissionModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon">📍</div>
+          <div>
+            <h3 class="modal-title">Enable Live Navigation?</h3>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <p>
+            DormFinder wants to use your location to show how far this place is from you and guide you there. Your location is not stored.
+          </p>
+
+          <div class="privacy-notice">
+            <span>🛡️</span>
+            <div>
+              <strong>Data Privacy Notice:</strong> In accordance with the Philippine Data Privacy Act of 2012 (RA 10173), your geographic coordinates are processed strictly in your local browser and are never saved or sent to any server.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btnDenyLocation" class="btn-not-now">Not now</button>
+          <button id="btnAllowLocation" class="btn-allow">Allow</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet 1.9.4 JS (Free CDN) -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- Application Logic (ES Module) -->
+  <script type="module">
+    import { mockAccommodations, getAccommodationById } from './mockAccommodations.js';
+    import {
+      initMap,
+      requestLocation,
+      confirmAndStartTracking,
+      cancelPermission,
+      stopTracking,
+      resetTracker,
+      recenterOnUser,
+      recenterOnAccommodation
+    } from './tracker.js';
+
+    // Current active accommodation
+    let currentAccommodation = mockAccommodations[0];
+
+    // Initialize UI on DOM Ready
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Populate accommodation dropdown
+      const selectEl = document.getElementById('selectAccommodation');
+      mockAccommodations.forEach((acc) => {
+        const option = document.createElement('option');
+        option.value = acc.id;
+        option.textContent = `${acc.name} (${acc.type.replace('_', ' ')})`;
+        selectEl.appendChild(option);
+      });
+
+      // 2. Initialize Leaflet Map
+      initMap('map', currentAccommodation);
+      updateCard(currentAccommodation);
+
+      // 3. Dropdown Change Handler
+      selectEl.addEventListener('change', (e) => {
+        const selected = getAccommodationById(e.target.value);
+        if (selected) {
+          currentAccommodation = selected;
+          resetTracker();
+          initMap('map', currentAccommodation);
+          updateCard(currentAccommodation);
+        }
+      });
+
+      // 4. "Show me the way / Track my route" button click
+      const btnStart = document.getElementById('btnStartTrack');
+      btnStart.addEventListener('click', () => {
+        requestLocation({
+          onArrival: (acc) => {
+            document.getElementById('arrivalTitle').textContent = "You've arrived!";
+            document.getElementById('arrivalSubtitle').textContent = `Welcome to ${acc.name}.`;
+          }
+        });
+      });
+
+      // 5. Permission Modal Buttons
+      document.getElementById('btnAllowLocation').addEventListener('click', () => {
+        confirmAndStartTracking();
+      });
+
+      document.getElementById('btnDenyLocation').addEventListener('click', () => {
+        cancelPermission();
+      });
+
+      // 6. Stop Tracking button
+      document.getElementById('btnStopTrack').addEventListener('click', () => {
+        stopTracking();
+      });
+
+      // 7. Recenter Controls
+      document.getElementById('btnRecenterMe').addEventListener('click', () => {
+        recenterOnUser();
+      });
+
+      document.getElementById('btnRecenterDest').addEventListener('click', () => {
+        recenterOnAccommodation();
+      });
+
+      // 8. Error retry button
+      document.getElementById('btnRetryLocation').addEventListener('click', () => {
+        document.getElementById('errorBanner').classList.add('hidden');
+        confirmAndStartTracking();
+      });
+
+      // 9. Dismiss arrival banner
+      document.getElementById('btnDismissArrival').addEventListener('click', () => {
+        document.getElementById('arrivalBanner').classList.add('hidden');
+      });
+    });
+
+    function updateCard(acc) {
+      document.getElementById('cardAccName').textContent = acc.name;
+      document.getElementById('cardAccAddress').textContent = acc.address;
+      document.getElementById('cardAccPrice').textContent = `₱${acc.price.toLocaleString()}/mo`;
+    }
+  </script>
+</body>
+</html>

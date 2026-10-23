@@ -668,6 +668,19 @@ export function PropertyDetailPage() {
                       walkingMinutes={property.walking_minutes}
                     />
                   </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <p className="text-[11px] text-slate-500">
+                      Need live turn-by-turn guidance from your GPS?
+                    </p>
+                    <a
+                      href="/dormfinder/index.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-ateneo-blue hover:text-blue-700 transition flex items-center gap-1"
+                    >
+                      <span>🧭 Track My Route (Live GPS) ↗</span>
+                    </a>
+                  </div>
                 </CardBody>
               </Card>
 
