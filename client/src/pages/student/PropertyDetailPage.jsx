@@ -673,7 +673,7 @@ export function PropertyDetailPage() {
                       Need live turn-by-turn guidance from your GPS?
                     </p>
                     <a
-                      href="/dormfinder/index.html"
+                      href="/dormsafe-tracker/index.html"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs font-bold text-ateneo-blue hover:text-blue-700 transition flex items-center gap-1"

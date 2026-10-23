@@ -1,4 +1,4 @@
-# DormFinder — Real-Time Location Tracking Map Feature
+# DormSafe — Real-Time Location Tracking Map Feature
 
 An open-source, mobile-first live location tracker designed for Ateneo de Davao University (AdDU) students. It guides students in real time from their current position to selected dormitories, boarding houses, and apartments within 2 km of campus.
 
@@ -25,11 +25,11 @@ Since the project uses ES Modules (`import`/`export`), serve it over HTTP:
 
 ```bash
 # Using Python
-cd dormfinder
+cd dormsafe-tracker
 python -m http.server 8080
 
 # Or using Node.js npx serve
-npx serve dormfinder
+npx serve dormsafe-tracker
 ```
 
 Then open `http://localhost:8080` in your browser.
@@ -37,7 +37,7 @@ Then open `http://localhost:8080` in your browser.
 ### Option 2: Integrated with DormSafe / Vite Dev Server
 The files are also available directly in the public assets directory:
 ```
-http://localhost:5173/dormfinder/index.html
+http://localhost:5173/dormsafe-tracker/index.html
 ```
 
 ---
@@ -63,7 +63,7 @@ http://localhost:5173/dormfinder/index.html
 
 To connect to your real backend or Supabase API:
 
-1. Open `dormfinder/mockAccommodations.js` (or import from your API service).
+1. Open `dormsafe-tracker/mockAccommodations.js` (or import from your API service).
 2. Replace `mockAccommodations` with a dynamic `fetch()` call:
 
 ```javascript
@@ -84,14 +84,14 @@ export async function fetchAccommodations() {
 }
 ```
 
-3. In `dormfinder/index.html`, await `fetchAccommodations()` and pass the resulting array to populate the dropdown and markers.
+3. In `dormsafe-tracker/index.html`, await `fetchAccommodations()` and pass the resulting array to populate the dropdown and markers.
 
 ---
 
 ## 📐 Project Structure
 
 ```
-dormfinder/
+dormsafe-tracker/
 ├── index.html              # Mobile-first interactive UI, permission modal, map container
 ├── style.css               # AdDU Blue & Gold theme, pulsing radar marker, responsive cards
 ├── tracker.js              # Modular tracking logic: requestLocation, startTracking, getRoute, stopTracking

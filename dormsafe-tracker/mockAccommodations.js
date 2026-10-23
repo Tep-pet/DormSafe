@@ -1,5 +1,5 @@
 /**
- * Mock Accommodations Data for DormFinder
+ * Mock Accommodations Data for DormSafe
  * Sample accommodations located within 2 km of Ateneo de Davao University (AdDU Jacinto Campus)
  * 
  * Fields per accommodation:

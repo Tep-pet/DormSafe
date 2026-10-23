@@ -1,5 +1,5 @@
 /**
- * DormFinder Real-Time Location Tracker
+ * DormSafe Real-Time Location Tracker
  * 
  * Free & Open-Source Tech Stack:
  * - Map: Leaflet.js
@@ -500,7 +500,7 @@ function handleGeolocationError(error) {
       isDenied = true;
       friendlyTitle = 'Location Permission Denied';
       friendlyMsg =
-        'DormFinder needs location permission to guide you. To enable it, tap the lock/tune icon beside your address bar, allow Location, and tap "Try Again".';
+        'DormSafe needs location permission to guide you. To enable it, tap the lock/tune icon beside your address bar, allow Location, and tap "Try Again".';
       break;
     case 2: // POSITION_UNAVAILABLE
       friendlyTitle = 'GPS Unavailable';
