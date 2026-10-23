@@ -7,7 +7,7 @@ import {
   ModalFooter,
   Button,
 } from '@heroui/react';
-import { Navigation, ShieldCheck, MapPin } from 'lucide-react';
+import { Navigation, MapPin } from 'lucide-react';
 
 export function PermissionPromptModal({ isOpen, onAllow, onDeny }) {
   return (
@@ -37,13 +37,6 @@ export function PermissionPromptModal({ isOpen, onAllow, onDeny }) {
             <MapPin size={18} className="text-ateneo-blue shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               DormSafe needs your location to display your live position and walking ETA in real time.
-            </p>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-900">
-            <ShieldCheck size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-            <p className="leading-relaxed text-[11px]">
-              <strong>RA 10173 Privacy Compliance:</strong> Your coordinates are processed exclusively in your browser and are never stored on any database or server.
             </p>
           </div>
         </ModalBody>

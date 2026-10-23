@@ -147,6 +147,7 @@ export function LiveNavigationPage() {
     setOriginName(landmark.name);
     setShowLandmarkModal(false);
     setRecenterCount((c) => c + 1);
+    RouteService.reset();
   };
 
   if (loading) {

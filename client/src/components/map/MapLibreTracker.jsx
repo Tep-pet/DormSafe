@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './MapLibreTracker.css';
 import { RouteService } from '../../services/map/RouteService.js';
 import { MapConfig } from '../../services/map/MapConfig.js';
+import { getAccuratePinpoint } from '../../utils/propertyCoordinates.js';
 
 export function MapLibreTracker({
   property,
@@ -20,9 +21,11 @@ export function MapLibreTracker({
   const userMarkerRef = useRef(null);
   const destMarkerRef = useRef(null);
   const hasFittedBoundsRef = useRef(false);
+  const cachedCoordinatesRef = useRef(null);
 
-  const destLat = Number(property?.latitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[0]);
-  const destLng = Number(property?.longitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[1]);
+  const accuratePinpoint = getAccuratePinpoint(property);
+  const destLat = Number(accuratePinpoint?.lat || property?.latitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[0]);
+  const destLng = Number(accuratePinpoint?.lng || property?.longitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[1]);
 
   // 1. Initialize MapLibre GL Map
   useEffect(() => {
@@ -80,38 +83,58 @@ export function MapLibreTracker({
       .setLngLat([destLng, destLat])
       .addTo(map);
 
-    // Initial load polyline source
-    map.on('load', () => {
-      if (!map.getSource('walking-route')) {
-        map.addSource('walking-route', {
+    // Helper to configure route source and vibrant styling
+    const setupRouteLayers = (targetMap) => {
+      if (!targetMap.getSource('walking-route')) {
+        const initialCoords = cachedCoordinatesRef.current;
+        const initialData = (initialCoords && initialCoords.length >= 2)
+          ? {
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: initialCoords.map(([lat, lng]) => [lng, lat]),
+              },
+            }
+          : { type: 'FeatureCollection', features: [] };
+
+        targetMap.addSource('walking-route', {
           type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
+          data: initialData,
         });
 
-        // Background polyline outline
-        map.addLayer({
+        // Background polyline outline (crisp white casing for contrast)
+        targetMap.addLayer({
           id: 'walking-route-casing',
           type: 'line',
           source: 'walking-route',
           layout: { 'line-join': 'round', 'line-cap': 'round' },
           paint: {
             'line-color': '#ffffff',
-            'line-width': 8,
+            'line-width': 9,
+            'line-opacity': 0.95,
           },
         });
 
-        // AdDU Blue dashed walking line
-        map.addLayer({
+        // Primary solid walking route line (Ateneo / Grab style high-contrast blue)
+        targetMap.addLayer({
           id: 'walking-route-line',
           type: 'line',
           source: 'walking-route',
           layout: { 'line-join': 'round', 'line-cap': 'round' },
           paint: {
-            'line-color': '#003366',
-            'line-width': 5,
-            'line-dasharray': [2, 2],
+            'line-color': '#0052cc',
+            'line-width': 6,
+            'line-opacity': 0.95,
           },
         });
+      }
+    };
+
+    // Initial load polyline source
+    map.on('load', () => {
+      setupRouteLayers(map);
+      if (cachedCoordinatesRef.current) {
+        renderPolyline(cachedCoordinatesRef.current);
       }
     });
 
@@ -156,16 +179,22 @@ export function MapLibreTracker({
       userMarkerRef.current.setLngLat([lng, lat]);
     }
 
-    // Fit bounds on first coordinate lock
+    // Immediately render direct connecting line so user location and place are always visually connected
+    renderPolyline([
+      [lat, lng],
+      [destLat, destLng],
+    ]);
+
+    // Fit bounds smoothly on coordinate updates
     if (!hasFittedBoundsRef.current) {
       hasFittedBoundsRef.current = true;
       const bounds = new maplibregl.LngLatBounds();
       bounds.extend([lng, lat]);
       bounds.extend([destLng, destLat]);
-      map.fitBounds(bounds, { padding: { top: 90, bottom: 220, left: 40, right: 40 }, maxZoom: 17 });
+      map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
     }
 
-    // Update position in RouteService
+    // Update position in RouteService to get exact street-level walking paths
     RouteService.updateStudentPosition(
       { lat, lng },
       { lat: destLat, lng: destLng },
@@ -193,12 +222,15 @@ export function MapLibreTracker({
     const bounds = new maplibregl.LngLatBounds();
     bounds.extend([userLocation.lng, userLocation.lat]);
     bounds.extend([destLng, destLat]);
-    map.fitBounds(bounds, { padding: { top: 90, bottom: 220, left: 40, right: 40 }, maxZoom: 17.5 });
+    map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17.5 });
   }, [recenterTrigger, userLocation, destLat, destLng]);
 
   const renderPolyline = (coordinates) => {
+    if (!coordinates || coordinates.length < 2) return;
+    cachedCoordinatesRef.current = coordinates;
+
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
     const geojsonData = {
       type: 'Feature',

@@ -1,3 +1,4 @@
+import { OSRMRouteAdapter } from './adapters/OSRMRouteAdapter.js';
 import { OpenRouteServiceAdapter } from './adapters/OpenRouteServiceAdapter.js';
 import { FallbackRouteAdapter } from './adapters/FallbackRouteAdapter.js';
 import { calculateHaversineMeters, distanceToPolylineMeters } from './GeoUtils.js';
@@ -5,7 +6,8 @@ import { MapConfig } from './MapConfig.js';
 
 class RouteServiceManager {
   constructor() {
-    this.primaryAdapter = new OpenRouteServiceAdapter();
+    this.osrmAdapter = new OSRMRouteAdapter();
+    this.orsAdapter = new OpenRouteServiceAdapter();
     this.fallbackAdapter = new FallbackRouteAdapter();
 
     this.currentRoute = null; // { coordinates, distanceMeters, durationMinutes, isFallback }
@@ -30,10 +32,22 @@ class RouteServiceManager {
   async fetchRoute(origin, destination) {
     const now = Date.now();
     try {
-      this.currentRoute = await this.primaryAdapter.getWalkingRoute(origin, destination);
-    } catch (err) {
-      console.warn('Primary routing unavailable, using direct walking fallback:', err.message);
-      this.currentRoute = await this.fallbackAdapter.getWalkingRoute(origin, destination);
+      // 1. Try Project OSRM (100% free, zero-key, full street sidewalks)
+      this.currentRoute = await this.osrmAdapter.getWalkingRoute(origin, destination);
+    } catch (osrmErr) {
+      console.warn('OSRM routing error, trying secondary:', osrmErr.message);
+      try {
+        // 2. Try OpenRouteService if API key configured
+        if (MapConfig.orsApiKey) {
+          this.currentRoute = await this.orsAdapter.getWalkingRoute(origin, destination);
+        } else {
+          throw new Error('ORS key not provided');
+        }
+      } catch (orsErr) {
+        console.warn('Secondary routing unavailable, using direct walking line:', orsErr.message);
+        // 3. Fallback to straight line connecting student to accommodation
+        this.currentRoute = await this.fallbackAdapter.getWalkingRoute(origin, destination);
+      }
     }
     this.lastRequestTime = now;
     this.lastRequestPos = { ...origin };
