@@ -32,6 +32,13 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
   const [routeStats, setRouteStats] = useState(null);
   const [isRouting, setIsRouting] = useState(false);
 
+  // Initial distance estimate
+  const initialEstimate = calculateStraightLineDistance(gate.lat, gate.lng, pinpoint.lat, pinpoint.lng);
+  const [durations, setDurations] = useState({
+    walking: walkingMinutes || initialEstimate.durationMinutes,
+    driving: Math.max(1, Math.round(initialEstimate.distanceMeters / 333)),
+  });
+
   // 1. Initialize Leaflet Map (runs once on container mount)
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -186,10 +193,16 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         // Auto zoom and center to show the entire route from Ateneo to property
         map.fitBounds(polyline.getBounds(), { padding: [48, 48], maxZoom: 17 });
 
-        setRouteStats({
-          distance: Math.round(route.distance),
-          duration: Math.max(1, Math.round(route.duration / 60)),
-        });
+        const dist = Math.round(route.distance);
+        const mins = Math.max(1, Math.round(route.duration / 60));
+
+        setRouteStats({ distance: dist, duration: mins });
+        setDurations((prev) => ({
+          ...prev,
+          [travelMode]: mins,
+          ...(travelMode === 'walking' && !prev.driving ? { driving: Math.max(1, Math.round(dist / 333)) } : {}),
+          ...(travelMode === 'driving' && !prev.walking ? { walking: Math.max(1, Math.round(dist / 80)) } : {}),
+        }));
         return;
       }
       throw new Error('No OSRM route returned');
@@ -264,7 +277,25 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
           </div>
 
           {displayMinutes && (
-            <WalkingTimeBadge minutes={displayMinutes} />
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-2xs ${
+                travelMode === 'driving'
+                  ? 'bg-sky-50 text-sky-800 border border-sky-200'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              }`}
+            >
+              {travelMode === 'driving' ? (
+                <>
+                  <Car size={13} className="text-sky-600" />
+                  <span>{displayMinutes} min drive</span>
+                </>
+              ) : (
+                <>
+                  <Footprints size={13} className="text-emerald-600" />
+                  <span>{displayMinutes} min walk</span>
+                </>
+              )}
+            </span>
           )}
 
           {displayDistance && (
@@ -275,31 +306,33 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mode Toggle (Walk / Drive) */}
+          {/* Mode Toggle (Walk / Drive with Minutes) */}
           <div className="flex items-center rounded-lg bg-white border border-slate-200 p-0.5 text-xs font-semibold shadow-2xs">
             <button
               type="button"
               onClick={() => setTravelMode('walking')}
-              className={`px-2 py-1 rounded-md transition flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 ${
                 travelMode === 'walking'
                   ? 'bg-ateneo-blue text-white shadow-2xs font-bold'
-                  : 'text-slate-500 hover:text-slate-700'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
+              title="View walking route"
             >
               <Footprints className="h-3.5 w-3.5" />
-              <span>Walk</span>
+              <span>Walk {durations.walking ? `(${durations.walking} min)` : ''}</span>
             </button>
             <button
               type="button"
               onClick={() => setTravelMode('driving')}
-              className={`px-2 py-1 rounded-md transition flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1.5 ${
                 travelMode === 'driving'
                   ? 'bg-ateneo-blue text-white shadow-2xs font-bold'
-                  : 'text-slate-500 hover:text-slate-700'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
+              title="View driving route"
             >
               <Car className="h-3.5 w-3.5" />
-              <span>Drive</span>
+              <span>Drive {durations.driving ? `(${durations.driving} min)` : ''}</span>
             </button>
           </div>
         </div>

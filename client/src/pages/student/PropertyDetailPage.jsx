@@ -677,7 +677,7 @@ export function PropertyDetailPage() {
                       size="sm"
                       variant="flat"
                       color="primary"
-                      onPress={() => navigate(`/navigate/${property.id}`)}
+                      onPress={() => navigate(`/navigate/${property.id}`, { state: { property } })}
                       startContent={<Compass size={14} className="text-ateneo-blue" />}
                       className="font-bold text-xs bg-blue-50 text-ateneo-blue border border-blue-200/60 hover:bg-blue-100"
                     >

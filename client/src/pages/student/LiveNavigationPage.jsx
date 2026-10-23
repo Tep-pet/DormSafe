@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Compass, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Compass, AlertTriangle, ShieldCheck, MapPin } from 'lucide-react';
 import { MapLibreTracker } from '../../components/map/MapLibreTracker.jsx';
 import { TrackingBottomSheet } from '../../components/map/TrackingBottomSheet.jsx';
 import { PermissionPromptModal } from '../../components/map/PermissionPromptModal.jsx';
@@ -8,13 +8,19 @@ import { LandmarkSelectorModal, ADDU_LANDMARKS } from '../../components/map/Land
 import { proximityService } from '../../services/proximityService.js';
 import { GeolocationEngine } from '../../services/map/GeolocationEngine.js';
 import { RouteService } from '../../services/map/RouteService.js';
+import { useAuth } from '../../hooks/useAuth.js';
 
 export function LiveNavigationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { accessToken } = useAuth();
 
-  const [property, setProperty] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // If passed directly via router state, use it immediately (zero loading screen)
+  const passedProperty = location.state?.property;
+
+  const [property, setProperty] = useState(passedProperty || null);
+  const [loading, setLoading] = useState(!passedProperty);
   const [error, setError] = useState(null);
 
   // Permission & Modals
@@ -24,7 +30,7 @@ export function LiveNavigationPage() {
   // Live Location & Navigation State
   const [userLocation, setUserLocation] = useState(null);
   const [userBearing, setUserBearing] = useState(0);
-  const [originName, setOriginName] = useState(null);
+  const [originName, setOriginName] = useState('Ateneo Main Gate (Jacinto)');
   const [routeStats, setRouteStats] = useState({ distanceMeters: null, durationMinutes: null });
   const [isArrived, setIsArrived] = useState(false);
   const [isCompassMode, setIsCompassMode] = useState(true);
@@ -32,13 +38,19 @@ export function LiveNavigationPage() {
 
   const wakeLockRef = useRef(null);
 
-  // 1. Fetch Accommodation Data
+  // 1. Fetch Accommodation Data if not already in state
   useEffect(() => {
     let isMounted = true;
+    if (passedProperty) {
+      setProperty(passedProperty);
+      setLoading(false);
+      return;
+    }
+
     async function fetchProperty() {
       try {
         setLoading(true);
-        const data = await proximityService.getPropertyById(id);
+        const data = await proximityService.getPropertyById(id, 'jacinto', accessToken);
         if (isMounted) setProperty(data);
       } catch (err) {
         console.error('Error fetching property for navigation:', err);
@@ -53,7 +65,7 @@ export function LiveNavigationPage() {
       isMounted = false;
       RouteService.reset();
     };
-  }, [id]);
+  }, [id, passedProperty, accessToken]);
 
   // 2. Request Mobile Screen WakeLock (prevents phone screen turning black while walking)
   useEffect(() => {
@@ -62,7 +74,7 @@ export function LiveNavigationPage() {
         try {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
         } catch {
-          // Wake lock request failed or unsupported — silent ignore
+          // Silent ignore if unsupported
         }
       }
     }
@@ -81,9 +93,8 @@ export function LiveNavigationPage() {
       if (status === 'granted') {
         startLiveGPS();
       } else if (status === 'denied') {
-        // Fall back directly to campus landmark picker
-        setShowLandmarkModal(true);
-        setOriginName('AdDU Jacinto Gate');
+        // Fall back directly to campus landmark picker (e.g. for desktop or denied users)
+        setOriginName('Ateneo Main Gate (Jacinto)');
         setUserLocation({ lat: ADDU_LANDMARKS[0].lat, lng: ADDU_LANDMARKS[0].lng });
       } else {
         // 'prompt' -> Show educational pre-permission modal first
@@ -98,21 +109,34 @@ export function LiveNavigationPage() {
 
   const startLiveGPS = () => {
     setShowPermissionModal(false);
-    setOriginName('My Live Location (GPS)');
+
+    // Fallback timer for laptops / desktops without hardware GPS chips (3.5 seconds)
+    const fallbackTimer = setTimeout(() => {
+      setUserLocation((curr) => {
+        if (!curr) {
+          console.info('GPS hardware fix delayed (common on laptops/desktops). Using default Ateneo Jacinto Gate.');
+          setOriginName('Ateneo Main Gate (Jacinto)');
+          return { lat: ADDU_LANDMARKS[0].lat, lng: ADDU_LANDMARKS[0].lng };
+        }
+        return curr;
+      });
+    }, 3500);
 
     GeolocationEngine.startTracking({
       onLocation: (pos) => {
+        clearTimeout(fallbackTimer);
         setUserLocation(pos);
+        setOriginName('My Live Location (GPS)');
       },
       onBearing: (bearing) => {
         setUserBearing(bearing);
       },
       onError: (err) => {
-        if (err.code === 1) { // User denied native browser prompt
-          setShowLandmarkModal(true);
-          setOriginName('AdDU Jacinto Gate');
-          setUserLocation({ lat: ADDU_LANDMARKS[0].lat, lng: ADDU_LANDMARKS[0].lng });
-        }
+        clearTimeout(fallbackTimer);
+        console.warn('Geolocation error / device GPS unavailable:', err.message);
+        // Fall back gracefully to Ateneo Jacinto Gate so desktop and laptop users immediately see the route
+        setUserLocation({ lat: ADDU_LANDMARKS[0].lat, lng: ADDU_LANDMARKS[0].lng });
+        setOriginName('Ateneo Main Gate (Jacinto)');
       },
     });
   };
@@ -122,7 +146,6 @@ export function LiveNavigationPage() {
     setUserLocation({ lat: landmark.lat, lng: landmark.lng });
     setOriginName(landmark.name);
     setShowLandmarkModal(false);
-    // Trigger recenter
     setRecenterCount((c) => c + 1);
   };
 
@@ -153,29 +176,44 @@ export function LiveNavigationPage() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-950 select-none">
-      {/* Top Floating Controls Overlay */}
+      {/* Top Floating Controls Overlay — fully responsive on mobile, tablet, and laptop */}
       <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
         <button
           onClick={() => navigate(-1)}
-          className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/90 text-slate-800 text-xs font-bold backdrop-blur-md border border-slate-200/90 shadow-lg active:scale-95 transition"
+          className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/95 text-slate-800 text-xs font-bold backdrop-blur-md border border-slate-200/90 shadow-lg active:scale-95 transition hover:bg-slate-50"
         >
           <ArrowLeft size={14} />
           <span>Exit Map</span>
         </button>
 
-        {/* Heading / Compass Mode Toggle */}
-        <button
-          onClick={() => setIsCompassMode((prev) => !prev)}
-          className={`pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full backdrop-blur-md border shadow-lg transition active:scale-95 text-xs font-bold ${
-            isCompassMode
-              ? 'bg-ateneo-blue text-white border-blue-400'
-              : 'bg-white/90 text-slate-700 border-slate-200/90'
-          }`}
-          title={isCompassMode ? 'Map rotates with your walking direction' : 'Map locked North-up'}
-        >
-          <Compass size={15} className={isCompassMode ? 'animate-spin-slow' : ''} />
-          <span>{isCompassMode ? 'Heading-Up' : 'North-Up'}</span>
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Starting Origin Quick Selector (essential for laptops/desktops without GPS) */}
+          <button
+            onClick={() => setShowLandmarkModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/95 text-ateneo-blue text-xs font-bold backdrop-blur-md border border-slate-200/90 shadow-lg active:scale-95 transition hover:bg-blue-50"
+            title="Click to change starting campus gate or landmark"
+          >
+            <MapPin size={13} className="text-ateneo-blue shrink-0" />
+            <span className="hidden sm:inline text-slate-500 font-normal">Origin:</span>
+            <span className="max-w-[110px] sm:max-w-[150px] md:max-w-[180px] truncate">
+              {originName.replace('Ateneo ', '')}
+            </span>
+          </button>
+
+          {/* Heading / Compass Mode Toggle */}
+          <button
+            onClick={() => setIsCompassMode((prev) => !prev)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-md border shadow-lg transition active:scale-95 text-xs font-bold ${
+              isCompassMode
+                ? 'bg-ateneo-blue text-white border-blue-400'
+                : 'bg-white/95 text-slate-700 border-slate-200/90 hover:bg-slate-50'
+            }`}
+            title={isCompassMode ? 'Map rotates with your walking direction' : 'Map locked North-up'}
+          >
+            <Compass size={15} />
+            <span className="hidden md:inline">{isCompassMode ? 'Heading-Up' : 'North-Up'}</span>
+          </button>
+        </div>
       </div>
 
       {/* MapLibre GL 3D Walking Canvas */}
@@ -189,7 +227,7 @@ export function LiveNavigationPage() {
         onArrival={() => setIsArrived(true)}
       />
 
-      {/* Grab-Style Responsive Bottom Sheet */}
+      {/* Responsive Grab-Style Bottom Sheet (Mobile, Tablet & Laptop Friendly) */}
       <TrackingBottomSheet
         property={property}
         routeStats={routeStats}
@@ -206,13 +244,12 @@ export function LiveNavigationPage() {
         onAllow={startLiveGPS}
         onDeny={() => {
           setShowPermissionModal(false);
-          setShowLandmarkModal(true);
-          setOriginName('AdDU Jacinto Gate');
+          setOriginName('Ateneo Main Gate (Jacinto)');
           setUserLocation({ lat: ADDU_LANDMARKS[0].lat, lng: ADDU_LANDMARKS[0].lng });
         }}
       />
 
-      {/* Campus Landmark Selector Modal (GPS Denied Fallback) */}
+      {/* Campus Landmark Selector Modal */}
       <LandmarkSelectorModal
         isOpen={showLandmarkModal}
         onSelect={handleLandmarkSelect}

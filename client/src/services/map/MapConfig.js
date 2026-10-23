@@ -21,7 +21,7 @@ export const MapConfig = {
     RE_ROUTE_THROTTLE_MS: 20000, // 20s minimum between routing API requests
     ARRIVAL_METERS: 20,         // "You've arrived" within 20m of accommodation
     WALKING_SPEED_MPS: 1.33,    // ~4.8 km/h pedestrian velocity
-    ACCURACY_REJECT_METERS: 60, // Reject noisy GPS readings > 60m uncertainty
+    ACCURACY_REJECT_METERS: 250, // Allow laptop/tablet Wi-Fi location (reject only >250m)
   },
 
   // Campus Bounding Box (Ateneo de Davao Jacinto + 2km perimeter)

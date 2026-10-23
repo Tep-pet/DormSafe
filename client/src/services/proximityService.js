@@ -20,4 +20,9 @@ export const proximityService = {
     if (gate) params.set('gate', gate);
     return apiClient.get(`/api/proximity/properties/${id}?${params.toString()}`, token);
   },
+
+  async getPropertyById(id, gate, token) {
+    const res = await this.getPropertyDetail(id, gate, token);
+    return res?.data || res;
+  },
 };
