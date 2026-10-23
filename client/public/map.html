@@ -633,17 +633,17 @@
 
   <script>
     // ==========================================================================
-    // 1. DORM DATA (EDIT YOUR DORMS HERE)
+    // 1. DORM DATA (ACCURATE VERIFIED PINPOINTS)
     // ==========================================================================
     const DORMS = [
       {
         id: 1,
         name: "Juan Luna Boarding House",
-        address: "Brgy 29-C, Juan Luna St, Poblacion District, Davao City",
+        address: "Brgy 29-C, 102-1 Juan Luna St, Poblacion District, Davao City",
         lat: 7.0725891,
         lng: 125.6160124,
         price: 2500,
-        contact: "0917-123-4567"
+        contact: "09922506670"
       },
       {
         id: 2,
@@ -651,44 +651,44 @@
         address: "108 Roxas Avenue, Poblacion District, Davao City",
         lat: 7.0694500,
         lng: 125.6146800,
-        price: 4500,
-        contact: "0920-987-6543"
+        price: 4000,
+        contact: "09128912466"
       },
       {
         id: 3,
         name: "BRC Dormitory",
-        address: "Padre Gomez St, Poblacion District, Davao City",
+        address: "Padre Gomez St & A. Bonifacio St, Barangay 34-D, Davao City",
         lat: 7.0680548,
         lng: 125.6125343,
-        price: 3500,
-        contact: "0932-456-7890"
+        price: 10000,
+        contact: "09553561395"
       },
       {
         id: 4,
         name: "Ivory Residences",
-        address: "J.P. Laurel Ave, Poblacion District, Davao City",
+        address: "3JP5+WVM, J.P. Laurel Ave, Poblacion District, Davao City",
         lat: 7.0871921,
         lng: 125.6091495,
-        price: 5500,
-        contact: "0918-555-0192"
+        price: 35000,
+        contact: "09053391365"
       },
       {
         id: 5,
         name: "Residencia de Maria Goretti",
-        address: "Claro M. Recto St, Poblacion District, Davao City",
-        lat: 7.0718000,
-        lng: 125.6112000,
-        price: 3000,
-        contact: "0922-888-3411"
+        address: "32 Padre Faura St, Poblacion District, Davao City",
+        lat: 7.0695629,
+        lng: 125.6152546,
+        price: 3500,
+        contact: "09305456322"
       }
     ];
 
-    // Ateneo de Davao Jacinto & Roxas Campus Center
+    // Ateneo de Davao Jacinto Campus Origin
     const ADDU_CAMPUS = {
       name: "Ateneo de Davao University",
       gate: "Jacinto Campus Gate",
-      lat: 7.0712406,
-      lng: 125.6134491,
+      lat: 7.0720,
+      lng: 125.6141,
       radiusKm: 2.0
     };
 
@@ -876,8 +876,8 @@
     async function drawInPageRoute(autoZoom = true) {
       if (!selectedDorm) return;
 
-      // Start: live GPS -> manual pin -> fallback to Ateneo Gate
-      const start = userLocation || manualLocation || ADDU_CAMPUS;
+      // Starting point: Ateneo de Davao University campus gate (or manual pin if placed)
+      const start = manualLocation || ADDU_CAMPUS;
       const end = selectedDorm;
 
       const btnRoute = document.getElementById("btnShowRoute");

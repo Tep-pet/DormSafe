@@ -83,3 +83,18 @@ body {
   font-family: inherit;
   z-index: 10 !important;
 }
+
+.custom-dorm-pill:hover > div {
+  transform: scale(1.08) !important;
+  box-shadow: 0 6px 16px rgba(0, 51, 102, 0.3) !important;
+}
+
+.custom-gate-pin, .addu-start-gate-pin {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.custom-gate-pin:hover, .addu-start-gate-pin:hover {
+  transform: scale(1.12);
+}
+
