@@ -233,12 +233,6 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
       {/* Map Container */}
       <div className="h-[280px] sm:h-[350px] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-xs relative">
         <div ref={mapContainerRef} className="w-full h-full z-10" />
-
-        <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
-          <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-slate-700 shadow-xs border border-slate-200">
-            🚶 Direct Navigation Route
-          </span>
-        </div>
       </div>
     </div>
   );

@@ -432,12 +432,6 @@ export function LeafletCampusMap({
 
       {/* Floating Map Controls & GPS Status Bar */}
       <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2 pointer-events-none">
-        {/* Free Map Badge */}
-        <div className="pointer-events-auto rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-700 shadow-md border border-slate-200 flex items-center gap-1.5 backdrop-blur-xs">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>OpenStreetMap Active</span>
-        </div>
-
         {/* Live GPS Recenter Button */}
         <button
           type="button"
