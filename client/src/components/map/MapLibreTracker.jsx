@@ -44,12 +44,17 @@ function ensureRouteOnMap(map, rawCoordinates) {
   if (validCoords.length < 2) return false;
 
   const geojsonData = {
-    type: 'Feature',
-    properties: {},
-    geometry: {
-      type: 'LineString',
-      coordinates: validCoords,
-    },
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: validCoords,
+        },
+      },
+    ],
   };
 
   const existingSource = map.getSource('walking-route');
