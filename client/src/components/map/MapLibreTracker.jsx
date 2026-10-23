@@ -7,6 +7,92 @@ import { RouteService } from '../../services/map/RouteService.js';
 import { MapConfig } from '../../services/map/MapConfig.js';
 import { getAccuratePinpoint } from '../../utils/propertyCoordinates.js';
 
+/**
+ * Normalizes coordinate pairs to [longitude, latitude] for GeoJSON.
+ * Davao City: Longitude ~125.x, Latitude ~7.x.
+ * This prevents inverted coordinates regardless of data source.
+ */
+function toLngLatPair(coord) {
+  if (Array.isArray(coord)) {
+    const [a, b] = coord;
+    if (a > 50 && b < 50) return [a, b]; // already [lng, lat]
+    return [b, a]; // was [lat, lng]
+  }
+  if (coord && typeof coord === 'object') {
+    const lat = Number(coord.lat ?? coord.latitude);
+    const lng = Number(coord.lng ?? coord.longitude);
+    return [lng, lat];
+  }
+  return coord;
+}
+
+/**
+ * Ensures walking route source and solid route line layers exist and are updated.
+ */
+function ensureRouteOnMap(map, rawCoordinates) {
+  if (!map || !map.isStyleLoaded()) return false;
+  if (!rawCoordinates || rawCoordinates.length < 2) return false;
+
+  const validCoords = rawCoordinates
+    .map(toLngLatPair)
+    .filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat));
+
+  if (validCoords.length < 2) return false;
+
+  const geojsonData = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: validCoords,
+    },
+  };
+
+  const existingSource = map.getSource('walking-route');
+  if (existingSource) {
+    existingSource.setData(geojsonData);
+    return true;
+  }
+
+  // Add GeoJSON source
+  map.addSource('walking-route', {
+    type: 'geojson',
+    data: geojsonData,
+  });
+
+  // Background white casing for contrast against street map
+  if (!map.getLayer('walking-route-casing')) {
+    map.addLayer({
+      id: 'walking-route-casing',
+      type: 'line',
+      source: 'walking-route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 10,
+        'line-opacity': 0.95,
+      },
+    });
+  }
+
+  // Primary bold blue navigation line
+  if (!map.getLayer('walking-route-line')) {
+    map.addLayer({
+      id: 'walking-route-line',
+      type: 'line',
+      source: 'walking-route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#0052cc',
+        'line-width': 6,
+        'line-opacity': 0.95,
+      },
+    });
+  }
+
+  return true;
+}
+
 export function MapLibreTracker({
   property,
   userLocation,
@@ -27,6 +113,22 @@ export function MapLibreTracker({
   const destLat = Number(accuratePinpoint?.lat || property?.latitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[0]);
   const destLng = Number(accuratePinpoint?.lng || property?.longitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[1]);
 
+  const renderPolyline = (coordinates) => {
+    if (!coordinates || coordinates.length < 2) return;
+    cachedCoordinatesRef.current = coordinates;
+
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.isStyleLoaded()) {
+      ensureRouteOnMap(map, coordinates);
+    } else {
+      map.once('styledata', () => {
+        ensureRouteOnMap(map, coordinates);
+      });
+    }
+  };
+
   // 1. Initialize MapLibre GL Map
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -35,8 +137,6 @@ export function MapLibreTracker({
     const protocol = new pmtiles.Protocol();
     maplibregl.addProtocol('pmtiles', protocol.tile);
 
-    // High performance hybrid vector / raster style
-    // Seamlessly falls back to OpenStreetMap raster tiles if local pmtiles is not yet compiled
     const mapStyle = {
       version: 8,
       sources: {
@@ -64,7 +164,7 @@ export function MapLibreTracker({
       style: mapStyle,
       center: [destLng, destLat],
       zoom: 16.5,
-      pitch: 35, // 35-degree tilt for pedestrian navigation perspective
+      pitch: 35,
       bearing: 0,
       attributionControl: { compact: true },
     });
@@ -83,60 +183,14 @@ export function MapLibreTracker({
       .setLngLat([destLng, destLat])
       .addTo(map);
 
-    // Helper to configure route source and vibrant styling
-    const setupRouteLayers = (targetMap) => {
-      if (!targetMap.getSource('walking-route')) {
-        const initialCoords = cachedCoordinatesRef.current;
-        const initialData = (initialCoords && initialCoords.length >= 2)
-          ? {
-              type: 'Feature',
-              geometry: {
-                type: 'LineString',
-                coordinates: initialCoords.map(([lat, lng]) => [lng, lat]),
-              },
-            }
-          : { type: 'FeatureCollection', features: [] };
-
-        targetMap.addSource('walking-route', {
-          type: 'geojson',
-          data: initialData,
-        });
-
-        // Background polyline outline (crisp white casing for contrast)
-        targetMap.addLayer({
-          id: 'walking-route-casing',
-          type: 'line',
-          source: 'walking-route',
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: {
-            'line-color': '#ffffff',
-            'line-width': 9,
-            'line-opacity': 0.95,
-          },
-        });
-
-        // Primary solid walking route line (Ateneo / Grab style high-contrast blue)
-        targetMap.addLayer({
-          id: 'walking-route-line',
-          type: 'line',
-          source: 'walking-route',
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: {
-            'line-color': '#0052cc',
-            'line-width': 6,
-            'line-opacity': 0.95,
-          },
-        });
+    const onMapReady = () => {
+      if (cachedCoordinatesRef.current) {
+        ensureRouteOnMap(map, cachedCoordinatesRef.current);
       }
     };
 
-    // Initial load polyline source
-    map.on('load', () => {
-      setupRouteLayers(map);
-      if (cachedCoordinatesRef.current) {
-        renderPolyline(cachedCoordinatesRef.current);
-      }
-    });
+    map.on('load', onMapReady);
+    map.on('styledata', onMapReady);
 
     return () => {
       map.remove();
@@ -224,27 +278,6 @@ export function MapLibreTracker({
     bounds.extend([destLng, destLat]);
     map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17.5 });
   }, [recenterTrigger, userLocation, destLat, destLng]);
-
-  const renderPolyline = (coordinates) => {
-    if (!coordinates || coordinates.length < 2) return;
-    cachedCoordinatesRef.current = coordinates;
-
-    const map = mapRef.current;
-    if (!map) return;
-
-    const geojsonData = {
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: coordinates.map(([lat, lng]) => [lng, lat]),
-      },
-    };
-
-    const source = map.getSource('walking-route');
-    if (source) {
-      source.setData(geojsonData);
-    }
-  };
 
   return <div ref={mapContainerRef} className="maplibre-container" />;
 }
