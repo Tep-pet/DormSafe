@@ -1,8 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import * as maplibregl from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import * as pmtiles from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './MapLibreTracker.css';
+
+// Configure Web Worker for Vite production bundle
+maplibregl.setWorkerUrl(workerUrl);
 import { RouteService } from '../../services/map/RouteService.js';
 import { MapConfig } from '../../services/map/MapConfig.js';
 import { getAccuratePinpoint } from '../../utils/propertyCoordinates.js';
