@@ -306,7 +306,7 @@ export function MyStayPage() {
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
               <Link to={ROUTES.STUDENT_SEARCH}>
                 <Button size="sm" variant="primary" radius="full" startContent={<Home size={14} />}>
-                  Explore Verified Dorms
+                  Explore Dorms
                 </Button>
               </Link>
               <Link to={ROUTES.STUDENT_REQUESTS}>

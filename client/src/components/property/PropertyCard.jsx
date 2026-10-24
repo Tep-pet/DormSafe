@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, CardFooter } from '@heroui/react';
-import { MapPin, ImageOff, ShieldCheck, BedDouble } from 'lucide-react';
-import { Badge } from '../common/Badge';
+import { MapPin, ImageOff, BedDouble } from 'lucide-react';
 import { WalkingTimeBadge } from '../map/WalkingTimeBadge';
 import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
@@ -39,15 +38,9 @@ export function PropertyCard({ property, gate, isSelected = false }) {
             </div>
           )}
 
-          {/* Top Left: Verified & Availability Badges */}
-          <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-1.5">
-            {property.is_verified && (
-              <Badge variant="verified" size="sm" className="shadow-xs backdrop-blur-xs font-semibold">
-                <ShieldCheck size={12} className="mr-1 inline-block shrink-0" />
-                Verified
-              </Badge>
-            )}
-            {property.available_rooms != null && (
+          {/* Top Left: Availability Badge */}
+          {property.available_rooms != null && (
+            <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-1.5">
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold shadow-xs backdrop-blur-xs flex items-center gap-1 ${
                   property.available_rooms === 0
@@ -72,8 +65,8 @@ export function PropertyCard({ property, gate, isSelected = false }) {
                   ? `${property.available_rooms} ${property.available_rooms === 1 ? 'room' : 'rooms'} left`
                   : 'Available'}
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Top Right: Property Type Chip */}
           <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">

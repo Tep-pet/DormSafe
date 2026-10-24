@@ -166,7 +166,7 @@ export const NAVIGATION_CONFIG = {
 };
 
 export const ROUTE_TITLES = {
-  [ROUTES.STUDENT_SEARCH]: { title: 'Find Housing Near Ateneo', subtitle: 'Verified listings within 2 km of Jacinto or Roxas campus gates' },
+  [ROUTES.STUDENT_SEARCH]: { title: 'Find Housing Near Ateneo', subtitle: 'Listings within 2 km of Jacinto or Roxas campus gates' },
   [ROUTES.STUDENT_SAVED]: { title: 'Saved Listings', subtitle: 'Properties you bookmarked for comparison' },
   [ROUTES.STUDENT_MY_STAY]: { title: 'My Stay', subtitle: 'Your active lease, payment log, and maintenance requests' },
   [ROUTES.STUDENT_REQUESTS]: { title: 'Room Requests & Waitlist', subtitle: 'Track your reservation inquiries and position in room queues' },

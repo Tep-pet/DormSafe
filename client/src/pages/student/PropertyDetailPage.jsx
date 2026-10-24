@@ -295,12 +295,6 @@ export function PropertyDetailPage() {
               <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-2xs">
                 {PROPERTY_TYPE_LABELS[property.type] || property.type}
               </span>
-              {property.is_verified && (
-                <Badge variant="verified" size="sm" className="font-semibold">
-                  <ShieldCheck size={13} className="mr-1 inline-block shrink-0" />
-                  Verified Listing
-                </Badge>
-              )}
               <WalkingTimeBadge minutes={property.walking_minutes} />
             </div>
 

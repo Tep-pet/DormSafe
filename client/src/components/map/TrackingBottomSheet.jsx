@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ShieldCheck,
   Footprints,
   Phone,
   Navigation,
@@ -53,12 +52,6 @@ export function TrackingBottomSheet({
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-ateneo-blue">
                   Walking Route
                 </span>
-                {property?.is_verified && (
-                  <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <ShieldCheck size={12} />
-                    Verified
-                  </span>
-                )}
               </div>
               <h3 className="text-base font-bold text-slate-900 truncate mt-1">
                 {property?.name || 'Selected Accommodation'}

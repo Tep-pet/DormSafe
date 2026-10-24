@@ -137,7 +137,7 @@ export function SearchPage() {
   return (
     <PageContainer
       title="Find Housing Near Ateneo"
-      subtitle={`Verified dormitories and boarding houses within 2 km of ${activeGateLabel}`}
+      subtitle={`Dormitories and boarding houses within 2 km of ${activeGateLabel}`}
       headerAction={headerAction}
     >
       <div className="space-y-4 sm:space-y-5 min-w-0 w-full">
@@ -250,7 +250,7 @@ export function SearchPage() {
                 <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                   {filters.q
                     ? `No properties found matching "${filters.q}". Try a different keyword or reset filters.`
-                    : `No verified properties match your current price or property type filters within 2 km of ${activeGateLabel}.`}
+                    : `No properties match your current price or property type filters within 2 km of ${activeGateLabel}.`}
                 </p>
                 <div className="mt-4 flex items-center justify-center gap-2">
                   {filters.q && (
