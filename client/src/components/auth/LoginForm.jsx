@@ -55,9 +55,6 @@ export function LoginForm() {
           autoComplete="email"
           placeholder="your-email@addu.edu.ph"
           startContent={<Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />}
-          classNames={{
-            label: '!text-white font-medium drop-shadow-xs',
-          }}
         />
 
         <Input
@@ -70,9 +67,6 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="••••••••"
           startContent={<Lock className="h-4 w-4 text-slate-400 flex-shrink-0" />}
-          classNames={{
-            label: '!text-white font-medium drop-shadow-xs',
-          }}
           endContent={
             <button
               type="button"

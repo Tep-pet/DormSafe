@@ -14,7 +14,7 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
   const hasBg = Boolean(backgroundImage);
 
   return (
-    <div className={`relative min-h-screen lg:h-screen lg:max-h-screen w-full ${hasBg ? 'bg-slate-900' : 'bg-slate-50'} flex flex-col justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none`}>
+    <div className={`relative min-h-screen lg:h-screen lg:max-h-screen w-full ${hasBg ? 'bg-slate-100' : 'bg-slate-50'} flex flex-col justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none`}>
       {/* Background Image & Overlays */}
       {hasBg ? (
         <>
@@ -23,9 +23,9 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
             alt="Ateneo Campus Background"
             className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
           />
-          <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/65 via-slate-950/20 to-slate-950/45 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(6,182,212,0.12),transparent_50%)] pointer-events-none" />
+          {/* Clean, bright daylight scrim - completely light, no dark blue filter */}
+          <div className="absolute inset-0 bg-white/35 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-white/65 pointer-events-none" />
         </>
       ) : (
         <>
@@ -36,9 +36,9 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
       )}
 
       {/* Top Mobile Bar */}
-      <header className={`lg:hidden relative z-10 flex items-center justify-between px-6 py-3.5 ${hasBg ? 'bg-slate-900/60 backdrop-blur-md border-b border-white/10 text-white' : 'bg-white/80 backdrop-blur-md border-b border-slate-200/80'}`}>
-        <BrandLogo size="sm" variant={hasBg ? 'dark' : 'light'} />
-        <span className={`text-xs font-semibold ${hasBg ? 'text-slate-300' : 'text-slate-500'}`}>Campus Housing</span>
+      <header className="lg:hidden relative z-10 flex items-center justify-between px-6 py-3.5 bg-white/85 backdrop-blur-md border-b border-slate-200/80">
+        <BrandLogo size="sm" variant="light" />
+        <span className="text-xs font-semibold text-slate-500">Campus Housing</span>
       </header>
 
       {/* Main Content Area */}
@@ -48,28 +48,28 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
           {/* Left Column: Institutional Brand & Pillars (Visible on Desktop) */}
           <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-center space-y-4 xl:space-y-6 pr-2">
             <div>
-              <BrandLogo size="lg" showSubtitle={true} subtitle="Ateneo de Davao University" variant={hasBg ? 'dark' : 'light'} />
+              <BrandLogo size="lg" showSubtitle={true} subtitle="Ateneo de Davao University" variant="light" />
               
-              <div className={`mt-3 inline-flex items-center gap-2 rounded-full border ${hasBg ? 'border-white/20 bg-slate-900/50 text-white' : 'border-blue-200 bg-blue-50/90 text-ateneo-blue'} px-3 py-0.5 text-[11px] font-semibold shadow-2xs backdrop-blur-xs`}>
-                <span className={`flex h-1.5 w-1.5 rounded-full ${hasBg ? 'bg-cyan-400' : 'bg-blue-600'} animate-pulse`} />
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/90 text-ateneo-blue px-3 py-0.5 text-[11px] font-semibold shadow-xs backdrop-blur-md">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
                 Official Student Housing Platform
               </div>
 
-              <h1 className={`mt-2.5 text-2xl xl:text-3xl 2xl:text-4xl font-black tracking-tight ${hasBg ? 'text-white drop-shadow-md' : 'text-slate-900'} leading-tight`}>
+              <h1 className="mt-2.5 text-2xl xl:text-3xl 2xl:text-4xl font-black tracking-tight text-slate-900 leading-tight">
                 Your Safe Gateway to <br />
-                <span className={hasBg ? 'bg-gradient-to-r from-cyan-300 via-sky-300 to-blue-300 bg-clip-text text-transparent' : 'bg-gradient-to-r from-ateneo-blue via-blue-700 to-indigo-600 bg-clip-text text-transparent'}>
+                <span className="bg-gradient-to-r from-ateneo-blue via-blue-700 to-indigo-600 bg-clip-text text-transparent">
                   Ateneo Off-Campus Living
                 </span>
               </h1>
               
-              <p className={`mt-1.5 text-xs xl:text-sm ${hasBg ? 'text-slate-100 drop-shadow-sm' : 'text-slate-600'} leading-relaxed max-w-lg`}>
+              <p className="mt-1.5 text-xs xl:text-sm text-slate-600 leading-relaxed max-w-lg">
                 Verified dormitories, certified landlords, and administrative safety moderation—curated exclusively for the Ateneo de Davao community.
               </p>
             </div>
 
             {/* Feature Trust Badges */}
             <div className="space-y-2.5 max-w-lg">
-              <div className={`flex items-center gap-3 rounded-2xl border ${hasBg ? 'border-white/40 bg-white/80 shadow-md' : 'border-slate-200/80 bg-white/80 shadow-xs'} p-2.5 xl:p-3 backdrop-blur-md transition-transform hover:-translate-y-0.5`}>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/80 bg-white/85 p-2.5 xl:p-3 shadow-sm shadow-slate-900/5 backdrop-blur-md transition-transform hover:-translate-y-0.5">
                 <div className="flex h-8 w-8 xl:h-9 xl:w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-ateneo-blue border border-blue-100">
                   <MapPin className="h-4 w-4 xl:h-4.5 xl:w-4.5" />
                 </div>
@@ -81,7 +81,7 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
                 </div>
               </div>
 
-              <div className={`flex items-center gap-3 rounded-2xl border ${hasBg ? 'border-white/40 bg-white/80 shadow-md' : 'border-slate-200/80 bg-white/80 shadow-xs'} p-2.5 xl:p-3 backdrop-blur-md transition-transform hover:-translate-y-0.5`}>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/80 bg-white/85 p-2.5 xl:p-3 shadow-sm shadow-slate-900/5 backdrop-blur-md transition-transform hover:-translate-y-0.5">
                 <div className="flex h-8 w-8 xl:h-9 xl:w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
                   <ShieldCheck className="h-4 w-4 xl:h-4.5 xl:w-4.5" />
                 </div>
@@ -93,7 +93,7 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
                 </div>
               </div>
 
-              <div className={`flex items-center gap-3 rounded-2xl border ${hasBg ? 'border-white/40 bg-white/80 shadow-md' : 'border-slate-200/80 bg-white/80 shadow-xs'} p-2.5 xl:p-3 backdrop-blur-md transition-transform hover:-translate-y-0.5`}>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/80 bg-white/85 p-2.5 xl:p-3 shadow-sm shadow-slate-900/5 backdrop-blur-md transition-transform hover:-translate-y-0.5">
                 <div className="flex h-8 w-8 xl:h-9 xl:w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
                   <Building2 className="h-4 w-4 xl:h-4.5 xl:w-4.5" />
                 </div>
@@ -107,8 +107,8 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
             </div>
 
             {/* University Tagline Footer Note */}
-            <div className={`flex items-center gap-2 text-[11px] font-medium ${hasBg ? 'text-slate-200 drop-shadow-xs' : 'text-slate-500'} pt-1`}>
-              <CheckCircle2 className={`h-3.5 w-3.5 ${hasBg ? 'text-cyan-300' : 'text-ateneo-blue'} flex-shrink-0`} />
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 pt-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-ateneo-blue flex-shrink-0" />
               <span>Fortes in Fide • Leaders in Service</span>
             </div>
           </div>
@@ -124,7 +124,7 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
       </main>
 
       {/* Standalone Auth Footer */}
-      <footer className={`relative z-10 border-t ${hasBg ? 'border-white/15 bg-slate-950/50 text-slate-300' : 'border-slate-200/70 bg-white/50 text-slate-500'} backdrop-blur-xs py-2.5 px-6 text-center text-xs`}>
+      <footer className="relative z-10 border-t border-slate-200/70 bg-white/60 text-slate-600 backdrop-blur-md py-2.5 px-6 text-center text-xs">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
           <span className="text-[11px]">&copy; {new Date().getFullYear()} DormSafe &bull; Ateneo de Davao University</span>
         </div>
