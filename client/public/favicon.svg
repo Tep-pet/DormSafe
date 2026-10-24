@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#002C6C" />
+      <stop offset="50%" stop-color="#0A3D8A" />
+      <stop offset="100%" stop-color="#1E5FB8" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="4" y1="2" x2="28" y2="30.5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(255, 255, 255, 0.35)" />
+      <stop offset="1" stop-color="rgba(255, 255, 255, 0.08)" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded App Icon Background -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+
+  <!-- Custom Vector Icon: Shield Crest + Dorm Gables + Archway + Star -->
+  <g transform="translate(10, 8) scale(1.375)">
+    <!-- Outer Protective Shield -->
+    <path
+      d="M16 2L4 6.5V14.8C4 22.2 9.1 28.5 16 30.5C22.9 28.5 28 22.2 28 14.8V6.5L16 2Z"
+      fill="url(#shieldGrad)"
+      stroke="rgba(255, 255, 255, 0.65)"
+      stroke-width="1.5"
+    />
+
+    <!-- Architectural Gables / Modern Dorm Roof -->
+    <path
+      d="M8.5 16.5L16 10.5L23.5 16.5"
+      stroke="#ffffff"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- Secure Archway / Doorway Entrance -->
+    <path
+      d="M12.5 18.5V23.5C12.5 24.3 13.2 25 14 25H18C18.8 25 19.5 24.3 19.5 23.5V18.5"
+      stroke="#ffffff"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+
+    <!-- Ateneo Gold Star / Security Spark -->
+    <path
+      d="M16 4.8L16.7 6.6L18.6 6.8L17.2 8.1L17.6 9.9L16 9L14.4 9.9L14.8 8.1L13.4 6.8L15.3 6.6L16 4.8Z"
+      fill="#FBBF24"
+    />
+  </g>
+
+  <!-- Gold Beacon Dot at Bottom Right -->
+  <circle cx="51" cy="51" r="6.5" fill="#F59E0B" stroke="#ffffff" stroke-width="2.5" />
+</svg>

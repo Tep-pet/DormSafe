@@ -41,13 +41,18 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
     licensePath = await uploadDoc(licenseFile, userId, 'license');
   }
 
+  const isStudent = role === 'student';
+  const initialStatus = isStudent ? 'approved' : 'pending';
+
   const { data, error } = await supabaseAdmin
     .from('account_verifications')
     .insert({
       user_id: userId,
       id_storage_path: idPath,
       license_storage_path: licensePath,
-      status: 'pending',
+      status: initialStatus,
+      reviewed_at: isStudent ? new Date().toISOString() : null,
+      notes: isStudent ? 'Automatic verification on registration (student survey)' : null,
     })
     .select()
     .single();
@@ -56,7 +61,7 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
 
   await supabaseAdmin
     .from('profiles')
-    .update({ verification_status: 'pending', updated_at: new Date().toISOString() })
+    .update({ verification_status: initialStatus, updated_at: new Date().toISOString() })
     .eq('id', userId);
 
   const { data: profile } = await supabaseAdmin
@@ -65,12 +70,14 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
     .eq('id', userId)
     .single();
 
-  await notifyAdmins({
-    type: 'account_submitted',
-    title: `New ${profile?.role || 'user'} application`,
-    body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
-    metadata: { verification_id: data.id, user_id: userId, role: profile?.role },
-  });
+  if (!isStudent) {
+    await notifyAdmins({
+      type: 'account_submitted',
+      title: `New ${profile?.role || 'user'} application`,
+      body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
+      metadata: { verification_id: data.id, user_id: userId, role: profile?.role },
+    });
+  }
 
   return data;
 }

@@ -67,14 +67,19 @@ export function RegisterForm() {
       });
       await login({ email: form.email.trim(), password: form.password });
 
-      toast.success({
-        title: 'Account Created',
-        message: 'Your registration was submitted for administrator review.',
-      });
-
-      const verificationRoute =
-        form.role === 'owner' ? ROUTES.OWNER_VERIFICATION : ROUTES.STUDENT_VERIFICATION;
-      navigate(verificationRoute);
+      if (form.role === 'student') {
+        toast.success({
+          title: 'Welcome to DormSafe!',
+          message: 'Your student account has been verified. You can now explore accommodations.',
+        });
+        navigate(ROUTES.STUDENT_SEARCH);
+      } else {
+        toast.success({
+          title: 'Account Created',
+          message: 'Your registration was submitted for administrator review.',
+        });
+        navigate(ROUTES.OWNER_VERIFICATION);
+      }
     } catch (err) {
       const msg = err.message || 'Registration failed';
       setError(msg);

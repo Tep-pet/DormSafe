@@ -3,14 +3,19 @@ import nodemailer from 'nodemailer';
 function smtpConfig() {
   const host = (process.env.SMTP_HOST || '').trim();
   const user = (process.env.SMTP_USER || '').trim();
-  const pass = (process.env.SMTP_PASS || '').trim();
+  // Strip any accidental spaces from Google App Password (e.g. "abcd efgh ijkl mnop")
+  const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '').trim();
   if (!host || !user || !pass) return null;
+
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const isSecure = process.env.SMTP_SECURE === '1' || port === 465;
+
   return {
     host,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === '1',
+    port,
+    secure: isSecure,
     auth: { user, pass },
-    from: (process.env.SMTP_FROM || user).trim(),
+    from: (process.env.SMTP_FROM || `DormSafe <${user}>`).trim(),
   };
 }
 
@@ -21,13 +26,20 @@ export function canEmail(address) {
 }
 
 /**
- * Send the same notice as the in-app bell.
- * Missing SMTP settings or a non-deliverable address do not fail the request.
+ * Send notification email via SMTP (e.g. Gmail).
+ * Supports both text and optional html body.
+ * Failures are caught and logged without crashing the caller.
  */
-export async function sendAccountEmail(to, subject, text) {
-  if (!canEmail(to)) return { sent: false, reason: 'undeliverable' };
+export async function sendAccountEmail(to, subject, text, html = null) {
+  if (!canEmail(to)) {
+    console.log(`[DormSafe Mail] Skipped test/non-deliverable email address: ${to}`);
+    return { sent: false, reason: 'undeliverable' };
+  }
   const config = smtpConfig();
-  if (!config) return { sent: false, reason: 'smtp_not_configured' };
+  if (!config) {
+    console.warn('[DormSafe Mail] SMTP not configured in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS).');
+    return { sent: false, reason: 'smtp_not_configured' };
+  }
 
   try {
     const transport = nodemailer.createTransport({
@@ -36,15 +48,22 @@ export async function sendAccountEmail(to, subject, text) {
       secure: config.secure,
       auth: config.auth,
     });
-    await transport.sendMail({
+
+    const mailOptions = {
       from: config.from,
       to: to.trim(),
       subject,
       text,
-    });
-    return { sent: true };
+    };
+    if (html) {
+      mailOptions.html = html;
+    }
+
+    const info = await transport.sendMail(mailOptions);
+    console.log(`[DormSafe Mail] Email successfully sent to ${to.trim()} (MessageID: ${info.messageId})`);
+    return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.warn('DormSafe email failed:', err.message);
-    return { sent: false, reason: 'send_failed' };
+    console.error(`[DormSafe Mail] Failed to send email to ${to.trim()}:`, err.message);
+    return { sent: false, reason: 'send_failed', error: err.message };
   }
 }

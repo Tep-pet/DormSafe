@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Input, Textarea } from '../common/Input';
+import { DatePicker } from '../common/DatePicker';
 import { resolvePropertyContact } from '../../utils/parseContact';
 import { studentService } from '../../services/studentService';
 import { ROUTES } from '../../constants/routes';
@@ -70,7 +71,7 @@ export function InquireButton({
       return;
     }
     if (moveOut < moveIn) {
-      setError('Move-out date must be on or after move-in date');
+      setError('Move-out date must be later than or equal to move-in date');
       return;
     }
     setSending(true);
@@ -88,7 +89,7 @@ export function InquireButton({
       );
       setSent(true);
     } catch (err) {
-      setError(err.message || 'Could not notify the owner');
+      setError(err.message || 'Could not send inquiry to the landlord. Please try again.');
     } finally {
       setSending(false);
     }
@@ -113,10 +114,10 @@ export function InquireButton({
         size="md"
         backdrop="blur"
         classNames={{
-          base: 'rounded-2xl border border-slate-200/90 shadow-2xl bg-white',
-          header: 'border-b border-slate-100 p-5',
-          body: 'p-5 space-y-4',
-          footer: 'border-t border-slate-100 p-4 bg-slate-50/50',
+          base: 'rounded-2xl border border-slate-200 shadow-2xl bg-white overflow-visible',
+          header: 'border-b border-blue-50 p-5 bg-gradient-to-r from-blue-50/60 via-white to-white rounded-t-2xl',
+          body: 'p-5 space-y-4 overflow-visible',
+          footer: 'border-t border-slate-100 p-4 bg-white rounded-b-2xl',
         }}
       >
         <ModalContent>
@@ -124,54 +125,56 @@ export function InquireButton({
             <>
               <ModalHeader className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2 text-ateneo-blue">
-                  <Building2 size={18} />
+                  <div className="h-7 w-7 rounded-lg bg-blue-100/70 text-ateneo-blue flex items-center justify-center">
+                    <Building2 size={16} />
+                  </div>
                   <h3 className="text-base font-bold text-slate-900">Inquire & Request Room</h3>
                 </div>
-                <p className="text-xs font-normal text-slate-500">{propertyName}</p>
+                <p className="text-xs font-medium text-slate-500 pl-9">{propertyName}</p>
               </ModalHeader>
 
               <ModalBody>
-                {/* Landlord Info Ribbon */}
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 space-y-2">
+                {/* Landlord Info Ribbon - Ateneo Blue Tinted Card */}
+                <div className="rounded-2xl border border-blue-100/90 bg-gradient-to-br from-blue-50/80 via-sky-50/40 to-indigo-50/30 p-4 space-y-2.5 shadow-2xs">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <User size={12} className="text-slate-400" />
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                      <User size={13} className="text-ateneo-blue" />
                       Landlord:
                     </span>
-                    <span className="font-semibold text-slate-800">{name || 'Property Owner'}</span>
+                    <span className="font-bold text-slate-900">{name || 'Property Owner'}</span>
                   </div>
 
                   {phone && (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 flex items-center gap-1">
-                        <Phone size={12} className="text-slate-400" />
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <Phone size={13} className="text-ateneo-blue" />
                         Direct Line:
                       </span>
-                      <span className="font-bold text-ateneo-blue">{phone}</span>
+                      <span className="font-bold text-ateneo-blue tracking-wide">{phone}</span>
                     </div>
                   )}
 
                   {email && (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 flex items-center gap-1">
-                        <Mail size={12} className="text-slate-400" />
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <Mail size={13} className="text-ateneo-blue" />
                         Email:
                       </span>
                       <a
                         href={`mailto:${email}`}
-                        className="font-bold text-ateneo-blue hover:underline break-all"
+                        className="font-bold text-ateneo-blue hover:text-blue-800 hover:underline break-all"
                       >
                         {email}
                       </a>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200/70">
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <BedDouble size={12} className="text-slate-400" />
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-blue-100/90">
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                      <BedDouble size={13} className="text-ateneo-blue" />
                       Selected Unit:
                     </span>
-                    <span className="font-bold text-slate-800 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px]">
+                    <span className="font-bold text-ateneo-blue px-2.5 py-0.5 rounded-lg bg-white border border-blue-200/90 shadow-2xs text-[11px]">
                       {room?.label || 'Choose a room on detail view'}
                     </span>
                   </div>
@@ -179,19 +182,19 @@ export function InquireButton({
 
                 {/* Form Inputs */}
                 <div className="space-y-3">
-                  <Input
+                  <DatePicker
                     label="Move-In Date"
-                    type="date"
                     value={moveIn}
-                    onChange={(e) => setMoveIn(e.target.value)}
+                    onChange={setMoveIn}
                     required
                   />
 
-                  <Input
+                  <DatePicker
                     label="Move-Out Date"
-                    type="date"
                     value={moveOut}
-                    onChange={(e) => setMoveOut(e.target.value)}
+                    onChange={setMoveOut}
+                    minDate={moveIn}
+                    placement="top"
                     required
                   />
 
@@ -209,9 +212,9 @@ export function InquireButton({
                   <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 text-xs text-emerald-800 flex items-start gap-2 shadow-2xs">
                     <CheckCircle2 size={16} className="shrink-0 text-emerald-600 mt-0.5" />
                     <div>
-                      <p className="font-bold">Request Sent to Owner!</p>
+                      <p className="font-bold">Your inquiry has been sent to the landlord</p>
                       <p className="mt-0.5 text-emerald-700">
-                        The property owner has received your move-in dates. Track your inquiry status under{' '}
+                        The property owner has received your move-in dates and message. Track your inquiry status under{' '}
                         <Link
                           to={ROUTES.STUDENT_REQUESTS}
                           className="font-bold text-ateneo-blue underline hover:text-blue-800"

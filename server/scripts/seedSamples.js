@@ -422,7 +422,7 @@ async function main() {
       student_email: rachel.email,
       owner_id: juanLuna.owner_id,
       owner_name: owner.full_name || 'Jerly Ugapay',
-      owner_email: owner.email || 'jerlyugapay@gmail.com',
+      owner_email: owner.email || 'fmppacatang@addu.edu.ph',
       move_in_date: '2026-11-01',
       move_out_date: '2027-04-30',
       note: 'Good day Ate Jerly! Inquiring for 2nd semester accommodation. Moving in right after midterms.',

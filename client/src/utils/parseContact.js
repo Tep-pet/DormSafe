@@ -7,13 +7,13 @@ export const KNOWN_DORM_CONTACTS = {
   'ivory 2004': { email: 'rheapalima09@gmail.com', name: 'Rhea Palima' },
   'ivory residences room 1104': { email: 'blancotwinkle@gmail.com', name: 'Twinkle Blanco' },
   'ivory 1104': { email: 'blancotwinkle@gmail.com', name: 'Twinkle Blanco' },
-  'brc dormitory': { email: 'buildingblocks.davao@gmail.com', name: 'Trisha Paula Gwatwo' },
-  'juan luna boarding house': { email: 'jerlyugapay@gmail.com', name: 'Jerly Ugapay' },
-  'juna boarding house': { email: 'jerlyugapay@gmail.com', name: 'Jerly Ugapay' },
-  'correla dormitory': { email: 'w.macguilles@gmail.com', name: 'Williamor Corpuz' },
-  'residencia de maria': { email: 'andayamay111@gmail.com', name: 'May Andaya' },
-  'residencia de maria goretti': { email: 'andayamay111@gmail.com', name: 'May Andaya' },
-  'residencia': { email: 'andayamay111@gmail.com', name: 'May Andaya' },
+  'brc dormitory': { email: 'sgpalima@addu.edu.ph', name: 'Trisha Paula Gwatwo' },
+  'juan luna boarding house': { email: 'fmppacatang@addu.edu.ph', name: 'Jerly Ugapay' },
+  'juna boarding house': { email: 'fmppacatang@addu.edu.ph', name: 'Jerly Ugapay' },
+  'correla dormitory': { email: 'lssaguirre@addu.edu.ph', name: 'Williamor Corpuz' },
+  'residencia de maria': { email: 'lssaguirre@addu.edu.ph', name: 'May Andaya' },
+  'residencia de maria goretti': { email: 'lssaguirre@addu.edu.ph', name: 'May Andaya' },
+  'residencia': { email: 'lssaguirre@addu.edu.ph', name: 'May Andaya' },
 };
 
 export function parseContactFromDescription(description) {

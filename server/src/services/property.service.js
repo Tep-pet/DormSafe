@@ -17,8 +17,13 @@ const PROPERTY_SELECT = `
 const OWNER_PUBLIC_EMAILS = {
   'owner.ivory1104@dormsafe.test': 'blancotwinkle@gmail.com',
   'owner.ivory2004@dormsafe.test': 'rheapalima09@gmail.com',
-  'owner.brc@dormsafe.test': 'buildingblocks_davao@yahoo.com.ph',
-  'owner.juan@dormsafe.test': 'jerlyugapay@gmail.com',
+  'owner.brc@dormsafe.test': 'sgpalima@addu.edu.ph',
+  'buildingblocks.davao@gmail.com': 'sgpalima@addu.edu.ph',
+  'buildingblocks_davao@yahoo.com.ph': 'sgpalima@addu.edu.ph',
+  'w.macguilles@gmail.com': 'lssaguirre@addu.edu.ph',
+  'andayamay111@gmail.com': 'lssaguirre@addu.edu.ph',
+  'owner.juan@dormsafe.test': 'fmppacatang@addu.edu.ph',
+  'jerlyugapay@gmail.com': 'fmppacatang@addu.edu.ph',
 };
 
 export async function createProperty(ownerId, payload) {
