@@ -48,11 +48,11 @@ export function LoginForm({ variant = 'light' }) {
         <div className="space-y-3">
           {/* Pill 1: Email / Username */}
           <div className="space-y-1 text-left">
-            <label htmlFor="email" className="block text-xs font-medium text-slate-300 pl-3">
+            <label htmlFor="email" className="block text-xs font-medium text-slate-200 pl-3">
               Username or Email
             </label>
             <div className="relative flex items-center">
-              <div className="absolute left-4 pointer-events-none text-slate-400">
+              <div className="absolute left-4 pointer-events-none text-slate-300">
                 <Mail className="h-4 w-4" />
               </div>
               <input
@@ -63,18 +63,18 @@ export function LoginForm({ variant = 'light' }) {
                 required
                 autoComplete="email"
                 placeholder="your-email@addu.edu.ph"
-                className="w-full rounded-full border border-slate-700/80 bg-slate-900/80 pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 backdrop-blur-md transition-all focus:border-cyan-400 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#0f172a_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff]"
+                className="w-full rounded-full border border-white/25 bg-slate-900/40 hover:bg-slate-900/55 pl-11 pr-4 py-3 text-sm text-white placeholder-slate-300 backdrop-blur-md transition-all focus:border-cyan-300 focus:bg-slate-900/70 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#0f172a_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff]"
               />
             </div>
           </div>
 
           {/* Pill 2: Password */}
           <div className="space-y-1 text-left">
-            <label htmlFor="password" className="block text-xs font-medium text-slate-300 pl-3">
+            <label htmlFor="password" className="block text-xs font-medium text-slate-200 pl-3">
               Password
             </label>
             <div className="relative flex items-center">
-              <div className="absolute left-4 pointer-events-none text-slate-400">
+              <div className="absolute left-4 pointer-events-none text-slate-300">
                 <Lock className="h-4 w-4" />
               </div>
               <input
@@ -85,12 +85,12 @@ export function LoginForm({ variant = 'light' }) {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full rounded-full border border-slate-700/80 bg-slate-900/80 pl-11 pr-11 py-3 text-sm text-white placeholder-slate-500 backdrop-blur-md transition-all focus:border-cyan-400 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#0f172a_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff]"
+                className="w-full rounded-full border border-white/25 bg-slate-900/40 hover:bg-slate-900/55 pl-11 pr-11 py-3 text-sm text-white placeholder-slate-300 backdrop-blur-md transition-all focus:border-cyan-300 focus:bg-slate-900/70 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 [color-scheme:dark] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#0f172a_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 text-slate-400 hover:text-slate-200 focus:outline-none transition-colors p-1"
+                className="absolute right-4 text-slate-300 hover:text-white focus:outline-none transition-colors p-1"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -98,17 +98,17 @@ export function LoginForm({ variant = 'light' }) {
             </div>
           </div>
 
-          {/* Pill 3: Campus Site Indicator (Inspired by Photo 2) */}
+          {/* Pill 3: Campus Site Indicator */}
           <div className="space-y-1 text-left">
-            <span className="block text-xs font-medium text-slate-300 pl-3">
+            <span className="block text-xs font-medium text-slate-200 pl-3">
               Campus Site
             </span>
-            <div className="flex items-center justify-between rounded-full border border-slate-700/80 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-200 backdrop-blur-md">
+            <div className="flex items-center justify-between rounded-full border border-white/20 bg-slate-900/40 px-4 py-2.5 text-sm text-slate-100 backdrop-blur-md">
               <div className="flex items-center gap-2.5 min-w-0">
-                <MapPin className="h-4 w-4 text-cyan-400 shrink-0" />
-                <span className="text-xs font-medium truncate text-slate-300">Ateneo de Davao (Jacinto / Matina)</span>
+                <MapPin className="h-4 w-4 text-cyan-300 shrink-0" />
+                <span className="text-xs font-medium truncate text-slate-200">Ateneo de Davao (Jacinto / Matina)</span>
               </div>
-              <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/90 px-2 py-0.5 rounded-full border border-cyan-800/40 shrink-0">
+              <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-full border border-cyan-400/40 shrink-0">
                 Active
               </span>
             </div>
@@ -116,21 +116,21 @@ export function LoginForm({ variant = 'light' }) {
         </div>
 
         {error && (
-          <div className="flex items-start gap-2.5 rounded-2xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="flex items-start gap-2.5 rounded-2xl border border-rose-500/30 bg-rose-950/50 p-3 text-xs text-rose-200 backdrop-blur-md animate-in fade-in duration-200">
             <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5 text-rose-400" />
             <span className="font-medium">{error}</span>
           </div>
         )}
 
-        {/* Pill 4: Login Now Button (matching Photo 2) */}
+        {/* Pill 4: Lighter, Vibrant Login Now Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full border border-slate-600/70 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3 text-sm shadow-xl shadow-black/40 hover:shadow-cyan-500/25 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer mt-2"
+          className="w-full rounded-full border border-blue-400/40 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-3 text-sm shadow-lg shadow-blue-500/30 hover:shadow-cyan-400/40 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer mt-2"
         >
           {loading ? (
             <>
-              <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               <span>Authenticating…</span>
             </>
           ) : (
@@ -140,7 +140,7 @@ export function LoginForm({ variant = 'light' }) {
 
         {/* Forgot Password note */}
         <div className="text-center pt-1">
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-slate-300">
             Forgot Password? Contact Ateneo ICT Administrator
           </span>
         </div>
