@@ -93,7 +93,7 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        className="w-full h-10 text-sm font-semibold shadow-md shadow-blue-900/10 mt-1"
+        className="w-full h-10 text-sm font-bold bg-gradient-to-r from-ateneo-blue via-blue-700 to-indigo-700 hover:opacity-95 text-white rounded-xl shadow-md shadow-blue-900/15 mt-1"
         isLoading={loading}
       >
         {loading ? 'Authenticating…' : 'Sign in to Account'}
