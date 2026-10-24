@@ -21,6 +21,7 @@ export function BrandLogo({
   asLink = true,
   to = '/',
   className = '',
+  variant = 'light',
 }) {
   const sizeMap = {
     xs: {
@@ -135,15 +136,29 @@ export function BrandLogo({
       {showText && (
         <div className="flex flex-col select-none">
           <div className="flex items-center tracking-tight">
-            <span className={`${s.title} text-slate-900 leading-none`}>
+            <span
+              className={`${s.title} ${
+                variant === 'dark' ? 'text-white' : 'text-slate-900'
+              } leading-none`}
+            >
               Dorm
             </span>
-            <span className={`${s.title} bg-gradient-to-r from-ateneo-blue via-blue-700 to-indigo-600 bg-clip-text text-transparent leading-none ml-0.5`}>
+            <span
+              className={`${s.title} ${
+                variant === 'dark'
+                  ? 'bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400'
+                  : 'bg-gradient-to-r from-ateneo-blue via-blue-700 to-indigo-600'
+              } bg-clip-text text-transparent leading-none ml-0.5`}
+            >
               Safe
             </span>
           </div>
           {showSubtitle && (
-            <span className={`${s.subtitle} font-bold text-slate-400 uppercase mt-1 leading-none`}>
+            <span
+              className={`${s.subtitle} font-bold ${
+                variant === 'dark' ? 'text-slate-300' : 'text-slate-400'
+              } uppercase mt-1 leading-none`}
+            >
               {subtitle}
             </span>
           )}
