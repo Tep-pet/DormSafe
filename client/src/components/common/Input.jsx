@@ -19,6 +19,7 @@ export function Input({
   required = false,
   isDisabled = false,
   disabled = false,
+  classNames: customClassNames = {},
   ...props
 }) {
   return (
@@ -38,10 +39,11 @@ export function Input({
         radius="lg"
         labelPlacement="outside"
         classNames={{
-          label: 'text-xs font-semibold text-slate-700 mb-1',
+          label: `text-xs font-semibold text-slate-700 mb-1 ${customClassNames.label || ''}`,
           inputWrapper:
-            'h-10 rounded-xl border border-slate-200/90 hover:border-slate-300 focus-within:!border-ateneo-blue bg-white shadow-2xs transition-colors',
-          input: 'text-xs sm:text-sm text-slate-900 placeholder:text-slate-400',
+            `h-10 rounded-xl border border-slate-200/90 hover:border-slate-300 focus-within:!border-ateneo-blue bg-white shadow-2xs transition-colors ${customClassNames.inputWrapper || ''}`,
+          input: `text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 ${customClassNames.input || ''}`,
+          ...customClassNames,
         }}
         {...props}
       />
