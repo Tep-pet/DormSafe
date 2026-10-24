@@ -48,7 +48,6 @@ const PROPERTIES = [
       { label: 'Standard', price: 2500, capacity: 1 },
       { label: 'Standard Plus', price: 3500, capacity: 1 },
       { label: 'With AC (lower)', price: 5500, capacity: 1 },
-      { label: 'With AC (upper)', price: 6500, capacity: 1 },
     ],
     rules: ['Observe quiet hours during night hours', 'Cooking permitted in designated kitchen area', 'Visitors allowed until 10:00 PM only', 'Main gate locked strictly at 10:00 PM', 'No pets allowed'],
     imageDir: 'place2/place2',
