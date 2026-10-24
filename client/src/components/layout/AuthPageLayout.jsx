@@ -15,18 +15,13 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
 
   return (
     <div className={`relative min-h-screen lg:h-screen lg:max-h-screen w-full ${hasBg ? 'bg-slate-100' : 'bg-slate-50'} flex flex-col justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none`}>
-      {/* Background Image & Overlays */}
+      {/* Background Image - Raw natural campus photo, no filter */}
       {hasBg ? (
-        <>
-          <img
-            src={backgroundImage}
-            alt="Ateneo Campus Background"
-            className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
-          />
-          {/* Clean, bright daylight scrim - completely light, no dark blue filter */}
-          <div className="absolute inset-0 bg-white/35 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-white/65 pointer-events-none" />
-        </>
+        <img
+          src={backgroundImage}
+          alt="Ateneo Campus Background"
+          className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+        />
       ) : (
         <>
           <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
@@ -46,11 +41,11 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 xl:gap-12 items-center">
           
           {/* Left Column: Institutional Brand & Pillars (Visible on Desktop) */}
-          <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-center space-y-4 xl:space-y-6 pr-2">
-            <div>
+          <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-center space-y-4 xl:space-y-5 pr-2">
+            <div className="rounded-3xl border border-white/80 bg-white/80 p-5 xl:p-6 shadow-sm shadow-slate-900/5 backdrop-blur-md">
               <BrandLogo size="lg" showSubtitle={true} subtitle="Ateneo de Davao University" variant="light" />
               
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/90 text-ateneo-blue px-3 py-0.5 text-[11px] font-semibold shadow-xs backdrop-blur-md">
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/90 text-ateneo-blue px-3 py-0.5 text-[11px] font-semibold shadow-2xs">
                 <span className="flex h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
                 Official Student Housing Platform
               </div>
@@ -107,7 +102,7 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
             </div>
 
             {/* University Tagline Footer Note */}
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 pt-1">
+            <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-700 py-1 px-3 rounded-full bg-white/80 backdrop-blur-xs border border-white/60 shadow-2xs w-fit">
               <CheckCircle2 className="h-3.5 w-3.5 text-ateneo-blue flex-shrink-0" />
               <span>Fortes in Fide • Leaders in Service</span>
             </div>

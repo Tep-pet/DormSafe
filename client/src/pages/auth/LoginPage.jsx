@@ -8,7 +8,7 @@ import { BrandLogo } from '../../components/common/BrandLogo';
 export function LoginPage() {
   return (
     <AuthPageLayout cardMaxWidth="max-w-md" backgroundImage={campusBg}>
-      <div className="rounded-3xl border border-white/70 bg-white/35 backdrop-blur-xl p-5 sm:p-7 xl:p-8 shadow-2xl shadow-slate-900/10">
+      <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 xl:p-8 shadow-2xl shadow-slate-900/15">
         {/* Mobile-only logo display */}
         <div className="lg:hidden mb-4 flex justify-center">
           <BrandLogo size="md" subtitle="Ateneo de Davao University" variant="light" />
