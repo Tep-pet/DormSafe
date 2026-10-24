@@ -42,8 +42,8 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
       <main className="relative z-10 flex-1 flex items-center justify-center p-3.5 sm:p-6 lg:py-4 lg:px-8 xl:py-6 xl:px-12">
         <div className="w-full max-w-5xl xl:max-w-6xl mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-slate-950/40 border border-white/30 grid grid-cols-1 lg:grid-cols-12">
           
-          {/* Left Column: Translucent Blue Graphic Side */}
-          <div className="relative overflow-hidden lg:col-span-7 bg-gradient-to-br from-[#002266]/75 via-ateneo-blue/70 to-[#1e1b4b]/75 backdrop-blur-xl p-6 sm:p-8 lg:p-9 xl:p-10 text-white flex flex-col justify-between">
+          {/* Left Column: Visibly Translucent Blue Frosted Glass Side */}
+          <div className="relative overflow-hidden lg:col-span-7 bg-gradient-to-br from-[#002878]/45 via-ateneo-blue/40 to-[#1e1b4b]/45 backdrop-blur-md p-6 sm:p-8 lg:p-9 xl:p-10 text-white flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/20">
             {/* Abstract Decorative Diagonal Shapes inspired by reference graphic */}
             <div className="absolute -bottom-8 -left-8 h-44 w-20 rounded-full bg-cyan-400/20 rotate-45 blur-xs pointer-events-none" />
             <div className="absolute top-1/3 -right-6 h-56 w-16 rounded-full bg-blue-300/15 rotate-45 blur-xs pointer-events-none" />
@@ -58,14 +58,14 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
                 Official Student Housing Platform
               </div>
 
-              <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-black tracking-tight text-white leading-tight">
+              <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-black tracking-tight text-white leading-tight drop-shadow-sm">
                 Your Safe Gateway to <br />
-                <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-white bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-sm">
                   Ateneo Off-Campus Living
                 </span>
               </h1>
               
-              <p className="text-xs xl:text-sm text-blue-100/90 leading-relaxed max-w-lg">
+              <p className="text-xs xl:text-sm text-blue-100 font-medium leading-relaxed max-w-lg drop-shadow-xs">
                 Verified dormitories, certified landlords, and administrative safety moderation—curated exclusively for the Ateneo de Davao community.
               </p>
             </div>
