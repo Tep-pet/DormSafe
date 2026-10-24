@@ -7,23 +7,23 @@ import { BrandLogo } from '../common/BrandLogo';
  * Dedicated Authentication Layout
  * Decoupled from AppShell.
  * Supports optional `backgroundImage`.
- * Inspires from split-card modal layout with branded graphic left side and translucent white right side.
+ * Inspires from split-card modal layout:
+ * - Natural untouched background photo
+ * - Translucent blue graphic left side
+ * - Solid crisp white right login side
  */
 export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', backgroundImage = null }) {
   const hasBg = Boolean(backgroundImage);
 
   return (
     <div className={`relative min-h-screen lg:h-screen lg:max-h-screen w-full ${hasBg ? 'bg-slate-900' : 'bg-slate-50'} flex flex-col justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden select-none`}>
-      {/* Background Image & Ambient Backdrop */}
+      {/* Background Image - untouched, natural photo with no filter or blur */}
       {hasBg ? (
-        <>
-          <img
-            src={backgroundImage}
-            alt="Ateneo Campus Background"
-            className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
-          />
-          <div className="absolute inset-0 bg-slate-950/25 backdrop-blur-[2px] pointer-events-none" />
-        </>
+        <img
+          src={backgroundImage}
+          alt="Ateneo Campus Background"
+          className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+        />
       ) : (
         <>
           <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
@@ -38,12 +38,12 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
         <span className={`text-xs font-semibold ${hasBg ? 'text-slate-200' : 'text-slate-500'}`}>Campus Housing</span>
       </header>
 
-      {/* Main Content Area: Unified Split Card Inspired by Inspo Design */}
+      {/* Main Content Area: Centered Split Card */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-3.5 sm:p-6 lg:py-4 lg:px-8 xl:py-6 xl:px-12">
-        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-slate-950/30 border border-white/30 grid grid-cols-1 lg:grid-cols-12">
+        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-slate-950/40 border border-white/30 grid grid-cols-1 lg:grid-cols-12">
           
-          {/* Left Column: Branded Graphic Side (Inspo from Reference Pic) */}
-          <div className="relative overflow-hidden lg:col-span-7 bg-gradient-to-br from-[#002266] via-ateneo-blue to-[#1e1b4b] p-6 sm:p-8 lg:p-9 xl:p-10 text-white flex flex-col justify-between">
+          {/* Left Column: Translucent Blue Graphic Side */}
+          <div className="relative overflow-hidden lg:col-span-7 bg-gradient-to-br from-[#002266]/75 via-ateneo-blue/70 to-[#1e1b4b]/75 backdrop-blur-xl p-6 sm:p-8 lg:p-9 xl:p-10 text-white flex flex-col justify-between">
             {/* Abstract Decorative Diagonal Shapes inspired by reference graphic */}
             <div className="absolute -bottom-8 -left-8 h-44 w-20 rounded-full bg-cyan-400/20 rotate-45 blur-xs pointer-events-none" />
             <div className="absolute top-1/3 -right-6 h-56 w-16 rounded-full bg-blue-300/15 rotate-45 blur-xs pointer-events-none" />
@@ -116,8 +116,8 @@ export function AuthPageLayout({ children, cardMaxWidth = 'max-w-md', background
             </div>
           </div>
 
-          {/* Right Column: "The White Part Made Translucent" */}
-          <div className="lg:col-span-5 bg-white/80 backdrop-blur-xl p-6 sm:p-8 xl:p-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-white/40">
+          {/* Right Column: Solid White Login Side */}
+          <div className="lg:col-span-5 bg-white p-6 sm:p-8 xl:p-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-slate-200/80">
             {children}
           </div>
 
