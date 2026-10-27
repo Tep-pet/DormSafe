@@ -9,6 +9,7 @@ import { proximityService } from '../../services/proximityService.js';
 import { GeolocationEngine } from '../../services/map/GeolocationEngine.js';
 import { RouteService } from '../../services/map/RouteService.js';
 import { useAuth } from '../../hooks/useAuth.js';
+import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates.js';
 
 export function LiveNavigationPage() {
   const { id } = useParams();
@@ -31,7 +32,10 @@ export function LiveNavigationPage() {
   const [userLocation, setUserLocation] = useState(null);
   const [userBearing, setUserBearing] = useState(0);
   const [originName, setOriginName] = useState('Ateneo Main Gate (Jacinto)');
-  const [routeStats, setRouteStats] = useState({ distanceMeters: null, durationMinutes: null });
+  const [routeStats, setRouteStats] = useState({
+    distanceMeters: passedProperty?.distance_meters || null,
+    durationMinutes: getKnownWalkingMinutes('jacinto', passedProperty) || passedProperty?.walking_minutes || null,
+  });
   const [isArrived, setIsArrived] = useState(false);
   const [isCompassMode, setIsCompassMode] = useState(true);
   const [recenterCount, setRecenterCount] = useState(0);

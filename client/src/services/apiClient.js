@@ -13,7 +13,11 @@ const API_URL = import.meta.env.VITE_API_URL || '';
  * Fallback: same-origin path (/api/...) proxied by Vite dev server
  */
 function getUrlCandidates(path) {
-  if (API_URL) {
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (API_URL && isLocalhost) {
     const primary = `${API_URL}${path}`;
     const fallback = path;
     return primary !== fallback ? [primary, fallback] : [primary];

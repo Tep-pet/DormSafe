@@ -23,13 +23,15 @@ const FALLBACK_GATE_DATA = {
   defaultGate: 'jacinto',
 };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 let gateData = FALLBACK_GATE_DATA;
 
 try {
-  const jsonPath = join(__dirname, '../../../shared/campusGates.json');
-  if (existsSync(jsonPath)) {
-    gateData = JSON.parse(readFileSync(jsonPath, 'utf8'));
+  if (typeof import.meta !== 'undefined' && import.meta.url) {
+    const currentDir = dirname(fileURLToPath(import.meta.url));
+    const jsonPath = join(currentDir, '../../../shared/campusGates.json');
+    if (existsSync(jsonPath)) {
+      gateData = JSON.parse(readFileSync(jsonPath, 'utf8'));
+    }
   }
 } catch {
   // Safe fallback if shared folder is not in deployment container

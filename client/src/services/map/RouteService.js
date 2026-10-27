@@ -106,9 +106,12 @@ class RouteServiceManager {
       this.consecutiveOffRouteFixes = 0;
 
       // Dynamic local update of remaining distance without calling API
+      const routeTotalDist = this.currentRoute.distanceMeters || distToDestination;
+      const routeTotalMins = this.currentRoute.durationMinutes || 1;
+      const progressRatio = Math.min(1, Math.max(0, distToDestination / (routeTotalDist || 1)));
       const remainingMinutes = Math.max(
         1,
-        Math.round(distToDestination / (MapConfig.THRESHOLDS.WALKING_SPEED_MPS * 60))
+        Math.round(progressRatio * routeTotalMins)
       );
 
       if (onRouteUpdated) {

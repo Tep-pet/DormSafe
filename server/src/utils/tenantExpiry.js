@@ -4,8 +4,16 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+let lastExpiryRun = 0;
+
 /** Free rooms and unlink expired tenants (move-out date passed). Keeps tenant record for history. */
 export async function processExpiredTenants() {
+  const now = Date.now();
+  if (now - lastExpiryRun < 60000) {
+    return 0;
+  }
+  lastExpiryRun = now;
+
   const today = todayStr();
   const { data: expired, error } = await supabaseAdmin
     .from('tenants')

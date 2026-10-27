@@ -29,33 +29,61 @@ export async function getActiveTenantForRoom(roomId) {
 }
 
 export async function enrichRoomsWithStayInfo(rooms, studentId = null) {
-  const enriched = [];
-  for (const room of rooms || []) {
-    const tenant = await getActiveTenantForRoom(room.id);
+  if (!rooms || rooms.length === 0) return [];
+
+  // Run expiry check once per batch (throttled)
+  await processExpiredTenants();
+
+  const roomIds = rooms.map((r) => r.id).filter(Boolean);
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Fetch active tenants and student reservations in parallel batch
+  const [tenantsRes, reservationsRes] = await Promise.all([
+    supabaseAdmin
+      .from('tenants')
+      .select('id, tenant_name, move_out_date, student_id, room_id, property_id')
+      .in('room_id', roomIds)
+      .not('move_out_date', 'is', null)
+      .gte('move_out_date', today)
+      .order('move_out_date', { ascending: true }),
+    studentId
+      ? supabaseAdmin
+          .from('room_reservations')
+          .select('id, reserved_start_date, status, room_id')
+          .in('room_id', roomIds)
+          .eq('student_id', studentId)
+          .eq('status', 'pending')
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const tenantsByRoom = new Map();
+  for (const t of tenantsRes.data || []) {
+    if (!tenantsByRoom.has(t.room_id)) {
+      tenantsByRoom.set(t.room_id, t);
+    }
+  }
+
+  const reservationsByRoom = new Map();
+  for (const r of reservationsRes.data || []) {
+    if (!reservationsByRoom.has(r.room_id)) {
+      reservationsByRoom.set(r.room_id, r);
+    }
+  }
+
+  return rooms.map((room) => {
+    const tenant = tenantsByRoom.get(room.id) || null;
     const daysLeft = tenant ? daysUntil(tenant.move_out_date) : null;
     const hasActiveTenant = tenant && daysLeft != null && daysLeft >= 0;
+    const myReservation = reservationsByRoom.get(room.id) || null;
 
-    let myReservation = null;
-    if (studentId) {
-      const { data } = await supabaseAdmin
-        .from('room_reservations')
-        .select('id, reserved_start_date, status')
-        .eq('room_id', room.id)
-        .eq('student_id', studentId)
-        .eq('status', 'pending')
-        .maybeSingle();
-      myReservation = data;
-    }
-
-    enriched.push({
+    return {
       ...room,
       tenant_move_out_date: tenant?.move_out_date || null,
       stay_ending_soon: hasActiveTenant && daysLeft <= STAY_WARNING_DAYS,
       can_reserve: hasActiveTenant && !room.is_available,
       my_reservation: myReservation,
-    });
-  }
-  return enriched;
+    };
+  });
 }
 
 /** Cancel reservations that start before the tenant's updated move-out date. */

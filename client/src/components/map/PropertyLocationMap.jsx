@@ -6,12 +6,13 @@ import { LeafletPropertyRouteMap } from './LeafletPropertyRouteMap';
  * Connects Ateneo campus gate to the selected property with OSRM routing.
  * Zero API keys or billing required.
  */
-export function PropertyLocationMap({ property, gateId, walkingMinutes }) {
+export function PropertyLocationMap({ property, gateId, walkingMinutes, onDurationChange }) {
   return (
     <LeafletPropertyRouteMap
       property={property}
       gateId={gateId}
       walkingMinutes={walkingMinutes}
+      onDurationChange={onDurationChange}
     />
   );
 }

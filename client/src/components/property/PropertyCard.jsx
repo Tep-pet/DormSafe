@@ -5,6 +5,7 @@ import { MapPin, ImageOff, BedDouble } from 'lucide-react';
 import { WalkingTimeBadge } from '../map/WalkingTimeBadge';
 import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
+import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
 
 export function PropertyCard({ property, gate, isSelected = false }) {
   const minPrice = property.min_price;
@@ -13,8 +14,11 @@ export function PropertyCard({ property, gate, isSelected = false }) {
     ? `/student/property/${property.id}?gate=${encodeURIComponent(gate)}`
     : `/student/property/${property.id}`;
 
+  const walkingMins = getKnownWalkingMinutes(gate, property) ?? property.walking_minutes;
+  const enrichedProperty = { ...property, walking_minutes: walkingMins };
+
   return (
-    <Link to={detailPath} className="block group cursor-pointer">
+    <Link to={detailPath} state={{ property: enrichedProperty }} className="block group cursor-pointer">
       <Card
         shadow="none"
         className={`w-full rounded-2xl border bg-white/95 overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
@@ -96,7 +100,7 @@ export function PropertyCard({ property, gate, isSelected = false }) {
             </span>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <WalkingTimeBadge minutes={property.walking_minutes} />
+            <WalkingTimeBadge minutes={walkingMins} />
             {property.available_rooms != null && (
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                 <BedDouble size={12} className="text-slate-400" />

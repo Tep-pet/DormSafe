@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useParams, useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Modal,
   ModalContent,
@@ -53,6 +53,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 import { DEFAULT_GATE, CAMPUS_GATES } from '../../constants/campusGates';
 import { ROUTES } from '../../constants/routes';
+import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
 
 function sortRooms(rooms = []) {
   return [...rooms].sort((a, b) => {
@@ -69,17 +70,35 @@ function sortRooms(rooms = []) {
 export function PropertyDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const gate = searchParams.get('gate') || DEFAULT_GATE;
   const { accessToken, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [property, setProperty] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cachedProperty = proximityService.getCachedProperty(id, gate);
+  const passedProperty = location.state?.property || cachedProperty;
+  const [property, setProperty] = useState(passedProperty || null);
+
+  const initialKnownMins = getKnownWalkingMinutes(gate, passedProperty);
+  const [liveWalkingMinutes, setLiveWalkingMinutes] = useState(
+    initialKnownMins || passedProperty?.walking_minutes || null
+  );
+  const [loading, setLoading] = useState(!passedProperty);
   const [error, setError] = useState(null);
 
+  const knownMinutes = getKnownWalkingMinutes(gate, property || passedProperty);
+  const effectiveWalkingMinutes = knownMinutes ?? liveWalkingMinutes ?? property?.walking_minutes;
+
+  const handleDurationChange = useCallback((liveMins) => {
+    if (liveMins) {
+      setLiveWalkingMinutes(liveMins);
+      setProperty((prev) => (prev ? { ...prev, walking_minutes: liveMins } : prev));
+    }
+  }, []);
+
   // Interaction State
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(Boolean(passedProperty?.is_saved));
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [reserveDates, setReserveDates] = useState({});
   const [reserving, setReserving] = useState(false);
@@ -105,21 +124,42 @@ export function PropertyDetailPage() {
   }, [property?.description]);
 
   useEffect(() => {
-    if (authLoading) return;
-    setLoading(true);
+    let isMounted = true;
+    if (!property) setLoading(true);
+
     proximityService
       .getPropertyDetail(id, gate, accessToken)
       .then((res) => {
+        if (!isMounted) return;
         const rooms = sortRooms(res.data?.rooms || []);
-        setProperty({ ...res.data, rooms });
+        setProperty((prev) => ({
+          ...(prev || {}),
+          ...res.data,
+          walking_minutes: res.data?.walking_minutes ?? prev?.walking_minutes,
+          rooms,
+        }));
+        if (res.data?.walking_minutes) {
+          setLiveWalkingMinutes((current) => current ?? res.data.walking_minutes);
+        }
         setSaved(Boolean(res.data?.is_saved));
         setSelectedRoomId((current) =>
           rooms.some((room) => room.id === current) ? current : rooms[0]?.id || ''
         );
       })
-      .catch((err) => setError(err.message || 'Failed to load property details'))
-      .finally(() => setLoading(false));
-  }, [id, gate, accessToken, authLoading]);
+      .catch((err) => {
+        if (!isMounted) return;
+        if (!passedProperty) {
+          setError(err.message || 'Failed to load property details');
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, gate, accessToken]);
 
   const activeGateLabel = CAMPUS_GATES[gate]?.label || 'Ateneo';
 
@@ -264,11 +304,11 @@ export function PropertyDetailPage() {
 
   return (
     <PageContainer
-      title={property ? property.name : 'Property Inspection'}
+      title={property ? property.name : 'Loading Housing Details...'}
       subtitle={property ? property.address : 'Loading verified housing details...'}
       headerAction={headerAction}
     >
-      {(loading || authLoading) ? (
+      {!property && loading ? (
         <PageSkeleton variant="detail" />
       ) : error || !property ? (
         <div className="rounded-2xl border border-rose-200/90 bg-rose-50/80 p-6 text-center shadow-2xs">
@@ -295,7 +335,7 @@ export function PropertyDetailPage() {
               <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-2xs">
                 {PROPERTY_TYPE_LABELS[property.type] || property.type}
               </span>
-              <WalkingTimeBadge minutes={property.walking_minutes} />
+              <WalkingTimeBadge minutes={effectiveWalkingMinutes} />
             </div>
 
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -649,7 +689,7 @@ export function PropertyDetailPage() {
                     <MapPin size={16} className="text-ateneo-blue" />
                     <h3 className="text-base font-semibold text-slate-900">Campus Route</h3>
                   </div>
-                  <WalkingTimeBadge minutes={property.walking_minutes} />
+                  <WalkingTimeBadge minutes={effectiveWalkingMinutes} />
                 </CardHeader>
 
                 <CardBody className="p-4 sm:p-5 space-y-3">
@@ -660,7 +700,8 @@ export function PropertyDetailPage() {
                     <PropertyLocationMap
                       property={property}
                       gateId={gate}
-                      walkingMinutes={property.walking_minutes}
+                      walkingMinutes={effectiveWalkingMinutes}
+                      onDurationChange={handleDurationChange}
                     />
                   </div>
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100">
@@ -671,7 +712,16 @@ export function PropertyDetailPage() {
                       size="sm"
                       variant="flat"
                       color="primary"
-                      onPress={() => navigate(`/navigate/${property.id}`, { state: { property } })}
+                      onPress={() =>
+                        navigate(`/navigate/${property.id}`, {
+                          state: {
+                            property: {
+                              ...property,
+                              walking_minutes: effectiveWalkingMinutes,
+                            },
+                          },
+                        })
+                      }
                       startContent={<Compass size={14} className="text-ateneo-blue" />}
                       className="font-bold text-xs bg-blue-50 text-ateneo-blue border border-blue-200/60 hover:bg-blue-100"
                     >

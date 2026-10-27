@@ -37,3 +37,4 @@ Thumbs.db
 *_backup.json
 inspect_*.mjs
 
+.vercel

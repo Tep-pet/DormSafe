@@ -10,8 +10,8 @@ import {
 import { MapPin, Navigation } from 'lucide-react';
 
 export const ADDU_LANDMARKS = [
-  { id: 'jacinto_gate', name: 'Ateneo Main Gate (E. Jacinto St.)', lat: 7.07223, lng: 125.61282, desc: 'Finster & Bellarmine entrance' },
-  { id: 'roxas_gate', name: 'Ateneo Roxas Gate', lat: 7.07065, lng: 125.61435, desc: 'Martin Hall & Arrupe entrance' },
+  { id: 'jacinto_gate', name: 'Ateneo Main Gate (E. Jacinto St.)', lat: 7.07200, lng: 125.61410, desc: 'Finster & Bellarmine entrance' },
+  { id: 'roxas_gate', name: 'Ateneo Roxas Gate', lat: 7.07180, lng: 125.61230, desc: 'Martin Hall & Arrupe entrance' },
   { id: 'martin_hall', name: 'Martin Hall Gate', lat: 7.07150, lng: 125.61350, desc: 'Pedestrian access to sports gym' },
   { id: 'finster_hall', name: 'Finster Gate (C.M. Recto Ave)', lat: 7.07270, lng: 125.61390, desc: 'North side pedestrian gate' },
   { id: 'community_center', name: 'Community Center (Bapa Benny)', lat: 7.07110, lng: 125.61220, desc: 'Jacinto Extension side' },

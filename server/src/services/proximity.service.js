@@ -23,7 +23,7 @@ const SEARCH_SELECT = `
   id, name, type, address, latitude, longitude, is_verified, status,
   contact_name, contact_phone, description, owner_id,
   profiles:owner_id ( id, email, full_name ),
-  rooms ( id, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
+  rooms ( id, label, price, capacity, is_available, room_images ( id, storage_path, is_primary ) ),
   house_rules ( id, rule )
 `;
 
@@ -66,7 +66,11 @@ async function fetchApprovedPropertiesNearGate({ gate, propertyType, minPrice, m
 }
 
 function enrichProperty(property, walkingMinutes) {
-  const rooms = property.rooms || [];
+  const rawRooms = property.rooms || [];
+  const rooms = rawRooms.map((r) => {
+    const { room_images, ...rest } = r;
+    return { ...rest, images: mapRoomImages({ room_images }) };
+  });
   const availableRoomsList = rooms.filter((r) => r.is_available === true);
   const availableRooms = availableRoomsList.length;
   const availablePrices = availableRoomsList.map((r) => r.price).filter((p) => p != null);
@@ -90,6 +94,8 @@ function enrichProperty(property, walkingMinutes) {
     status_label: availableRooms > 0 ? 'available' : 'occupied',
     walking_minutes: walkingMinutes,
     primary_image: getPropertyPrimaryImageUrl(property),
+    images: flattenRoomImages(property),
+    rooms,
   };
 }
 
@@ -157,21 +163,21 @@ export async function getPropertyById(id, gate, studentId = null) {
     throw err;
   }
 
-  const walkingMinutes = await getWalkingDurationMinutes(campusGate, {
-    lat: data.latitude,
-    lng: data.longitude,
-  });
+  // Parallelize independent queries
+  const [walkingMinutes, enrichedRooms, reviews, favIds] = await Promise.all([
+    getWalkingDurationMinutes(campusGate, {
+      lat: data.latitude,
+      lng: data.longitude,
+    }),
+    enrichRoomsWithStayInfo(data.rooms || [], studentId),
+    getApprovedReviews(id),
+    studentId ? getFavoriteIds(studentId) : Promise.resolve([]),
+  ]);
 
-  const rooms = (await enrichRoomsWithStayInfo(data.rooms || [], studentId)).map((room) => {
+  const rooms = enrichedRooms.map((room) => {
     const { room_images, ...rest } = room;
     return { ...rest, images: mapRoomImages({ room_images }) };
   });
-  const reviews = await getApprovedReviews(id);
-  let is_saved = false;
-  if (studentId) {
-    const favIds = await getFavoriteIds(studentId);
-    is_saved = favIds.includes(id);
-  }
 
   return {
     ...data,
@@ -181,6 +187,6 @@ export async function getPropertyById(id, gate, studentId = null) {
     walking_minutes: walkingMinutes,
     images: flattenRoomImages(data),
     reviews,
-    is_saved,
+    is_saved: favIds.includes(id),
   };
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES, SEARCH_RADIUS_KM } from '../../constants/campusGates';
-import { getAccuratePinpoint, calculateStraightLineDistance } from '../../utils/propertyCoordinates';
+import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
 import { formatPrice } from '../../utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import { Navigation, Footprints, Car, X, Crosshair, MapPin, Compass } from 'lucide-react';
@@ -294,11 +294,15 @@ export function LeafletCampusMap({
 
     setLoadingRoute(true);
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
+
     try {
       const profile = travelMode === 'driving' ? 'driving' : 'foot';
       const osrmUrl = `https://router.project-osrm.org/route/v1/${profile}/${startLng},${startLat};${destPinpoint.lng},${destPinpoint.lat}?overview=full&geometries=geojson`;
 
-      const res = await fetch(osrmUrl);
+      const res = await fetch(osrmUrl, { signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
 
       if (data?.routes?.[0]) {
@@ -322,9 +326,10 @@ export function LeafletCampusMap({
         // Auto zoom bounds to fit route nicely
         map.fitBounds(polyline.getBounds(), { padding: [45, 45], maxZoom: 17 });
 
+        const knownMins = getKnownWalkingMinutes(gateId, activeDorm);
         setRouteInfo({
           distanceMeters: Math.round(route.distance),
-          durationMinutes: Math.max(1, Math.round(route.duration / 60)),
+          durationMinutes: travelMode === 'walking' && knownMins ? knownMins : Math.max(1, Math.round(route.duration / 60)),
         });
         return;
       }
@@ -358,10 +363,11 @@ export function LeafletCampusMap({
         destPinpoint.lat,
         destPinpoint.lng
       );
+      const knownMins = getKnownWalkingMinutes(gateId, activeDorm);
 
       setRouteInfo({
         distanceMeters: estimate.distanceMeters,
-        durationMinutes: estimate.durationMinutes,
+        durationMinutes: travelMode === 'walking' && knownMins ? knownMins : estimate.durationMinutes,
       });
     } finally {
       setLoadingRoute(false);
@@ -554,7 +560,16 @@ export function LeafletCampusMap({
                 {activeDorm && (
                   <button
                     type="button"
-                    onClick={() => navigate(`/navigate/${activeDorm.id || activeDorm._id}`)}
+                    onClick={() =>
+                      navigate(`/navigate/${activeDorm.id || activeDorm._id}`, {
+                        state: {
+                          property: {
+                            ...activeDorm,
+                            walking_minutes: routeInfo?.durationMinutes || activeDorm.walking_minutes,
+                          },
+                        },
+                      })
+                    }
                     className="px-2.5 py-1 rounded-lg bg-ateneo-blue text-white hover:bg-blue-800 transition flex items-center gap-1.5 shadow-xs"
                     title="Start Live In-App Navigation"
                   >

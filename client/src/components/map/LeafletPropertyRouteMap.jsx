@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES } from '../../constants/campusGates';
-import { getAccuratePinpoint, calculateStraightLineDistance } from '../../utils/propertyCoordinates';
+import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
 import { WalkingTimeBadge } from './WalkingTimeBadge';
 import { Footprints, Car, MapPin, Navigation } from 'lucide-react';
 
@@ -18,15 +18,21 @@ L.Icon.Default.mergeOptions({
  * 100% Free, Accurate Route Map from Ateneo de Davao University to Property Pinpoint
  * Powered by Leaflet.js and OpenStreetMap.
  */
-export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingMinutes }) {
+export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingMinutes, onDurationChange }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const gateMarkerRef = useRef(null);
   const propMarkerRef = useRef(null);
   const routePolylineRef = useRef(null);
 
+  const onDurationChangeRef = useRef(onDurationChange);
+  useEffect(() => {
+    onDurationChangeRef.current = onDurationChange;
+  }, [onDurationChange]);
+
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
   const pinpoint = getAccuratePinpoint(property);
+  const knownMinutes = getKnownWalkingMinutes(gateId, property);
 
   const [travelMode, setTravelMode] = useState('walking');
   const [routeStats, setRouteStats] = useState(null);
@@ -34,10 +40,19 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
 
   // Initial distance estimate
   const initialEstimate = calculateStraightLineDistance(gate.lat, gate.lng, pinpoint.lat, pinpoint.lng);
+  const resolvedInitialMins = knownMinutes || walkingMinutes || initialEstimate.durationMinutes;
+
   const [durations, setDurations] = useState({
-    walking: walkingMinutes || initialEstimate.durationMinutes,
+    walking: resolvedInitialMins,
     driving: Math.max(1, Math.round(initialEstimate.distanceMeters / 333)),
   });
+
+  useEffect(() => {
+    const mins = knownMinutes || walkingMinutes;
+    if (mins) {
+      setDurations((prev) => ({ ...prev, walking: mins }));
+    }
+  }, [walkingMinutes, knownMinutes]);
 
   // 1. Initialize Leaflet Map (runs once on container mount)
   useEffect(() => {
@@ -168,8 +183,12 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     const profile = travelMode === 'driving' ? 'driving' : 'foot';
     const osrmUrl = `https://router.project-osrm.org/route/v1/${profile}/${gate.lng},${gate.lat};${pinpoint.lng},${pinpoint.lat}?overview=full&geometries=geojson`;
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
+
     try {
-      const res = await fetch(osrmUrl);
+      const res = await fetch(osrmUrl, { signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
 
       if (data?.routes?.[0]) {
@@ -194,15 +213,19 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         map.fitBounds(polyline.getBounds(), { padding: [48, 48], maxZoom: 17 });
 
         const dist = Math.round(route.distance);
-        const mins = Math.max(1, Math.round(route.duration / 60));
+        const rawMins = Math.max(1, Math.round(route.duration / 60));
+        const walkMins = knownMinutes || rawMins;
 
-        setRouteStats({ distance: dist, duration: mins });
+        setRouteStats({ distance: dist, duration: travelMode === 'walking' ? walkMins : rawMins });
         setDurations((prev) => ({
           ...prev,
-          [travelMode]: mins,
+          [travelMode]: travelMode === 'walking' ? walkMins : rawMins,
           ...(travelMode === 'walking' && !prev.driving ? { driving: Math.max(1, Math.round(dist / 333)) } : {}),
-          ...(travelMode === 'driving' && !prev.walking ? { walking: Math.max(1, Math.round(dist / 80)) } : {}),
+          ...(travelMode === 'driving' && !prev.walking ? { walking: walkMins } : {}),
         }));
+        if (onDurationChangeRef.current && travelMode === 'walking') {
+          onDurationChangeRef.current(walkMins);
+        }
         return;
       }
       throw new Error('No OSRM route returned');
@@ -235,22 +258,26 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         pinpoint.lat,
         pinpoint.lng
       );
+      const fallbackMins = knownMinutes || estimate.durationMinutes;
 
       setRouteStats({
         distance: estimate.distanceMeters,
-        duration: estimate.durationMinutes,
+        duration: fallbackMins,
       });
+      if (onDurationChangeRef.current && travelMode === 'walking') {
+        onDurationChangeRef.current(fallbackMins);
+      }
     } finally {
       setIsRouting(false);
       map.invalidateSize();
     }
-  }, [gate, pinpoint, travelMode]);
+  }, [gate.lat, gate.lng, pinpoint.lat, pinpoint.lng, travelMode, knownMinutes]);
 
   useEffect(() => {
     drawRoute();
   }, [drawRoute]);
 
-  const displayMinutes = routeStats?.duration || walkingMinutes;
+  const displayMinutes = travelMode === 'walking' ? (knownMinutes || routeStats?.duration || walkingMinutes) : (routeStats?.duration || durations.driving);
   const displayDistance = routeStats?.distance
     ? routeStats.distance >= 1000
       ? `${(routeStats.distance / 1000).toFixed(1)} km`

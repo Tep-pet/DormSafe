@@ -1,4 +1,4 @@
-export const IMAGE_MIN_BYTES = 50 * 1024;
+export const IMAGE_MIN_BYTES = 1;
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -28,7 +28,7 @@ export function validateImageFile(file, label = 'Image') {
     throw err;
   }
   if (file.size < IMAGE_MIN_BYTES) {
-    const err = new Error(`${label} must be at least 50 KB`);
+    const err = new Error(`${label} is empty`);
     err.status = 400;
     throw err;
   }
