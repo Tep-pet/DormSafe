@@ -58,39 +58,30 @@ export const authService = {
     const cleanEmail = email.trim();
     const redirectTo = `${window.location.origin}/reset-password`;
 
-    let backendError = null;
-    let backendSuccess = false;
-
-    // 1. Trigger backend with branded Gmail SMTP service
+    // 1. Primary: Trigger backend with branded Gmail SMTP service
     try {
       const res = await apiClient.post('/api/auth/forgot-password', { email: cleanEmail });
       if (res?.data?.success || res?.success) {
-        backendSuccess = true;
+        return { sent: true };
+      }
+      if (res?.data?.message) {
+        throw new Error(res.data.message);
       }
     } catch (err) {
-      backendError = err?.response?.data?.message || err?.message || 'Failed to dispatch reset email';
+      const errMsg = err?.response?.data?.message || err?.message;
+      if (errMsg && !errMsg.includes('Network Error') && !errMsg.includes('Failed to fetch')) {
+        throw new Error(errMsg);
+      }
     }
 
-    // 2. Also trigger Supabase client reset as secondary channel
-    let sbSuccess = false;
+    // 2. Secondary fallback only if backend server is unreachable
     try {
       const { error: sbErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo });
-      if (!sbErr) {
-        sbSuccess = true;
-      }
-    } catch {
-      // ignore
-    }
-
-    if (backendSuccess || sbSuccess) {
+      if (sbErr) throw sbErr;
       return { sent: true };
+    } catch (sbErr) {
+      throw new Error(sbErr.message || 'Unable to send password reset email.');
     }
-
-    if (backendError) {
-      throw new Error(backendError);
-    }
-
-    throw new Error('Unable to send password reset email. Please verify your email address.');
   },
 
   async updatePassword(newPassword) {
