@@ -31,6 +31,35 @@ class GeolocationEngineManager {
   }
 
   /**
+   * One-shot high-accuracy geolocation fix for instant student location detection.
+   */
+  getCurrentPosition(options = {}) {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        return reject(new Error('Geolocation is not supported by your browser.'));
+      }
+      const opts = {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 10000,
+        ...options,
+      };
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          const loc = { lat: latitude, lng: longitude, accuracy };
+          this.lastKnownPosition = loc;
+          resolve(loc);
+        },
+        (err) => {
+          reject(err);
+        },
+        opts
+      );
+    });
+  }
+
+  /**
    * Start high-accuracy GPS tracking and device compass listening
    */
   startTracking({ onLocation, onBearing, onError }) {

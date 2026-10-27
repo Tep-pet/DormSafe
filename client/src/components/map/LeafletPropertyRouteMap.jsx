@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES } from '../../constants/campusGates';
-import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
+import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes, getKnownDrivingMinutes } from '../../utils/propertyCoordinates';
 import { WalkingTimeBadge } from './WalkingTimeBadge';
 import { Footprints, Car, MapPin, Navigation } from 'lucide-react';
 
@@ -33,6 +33,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
   const pinpoint = getAccuratePinpoint(property);
   const knownMinutes = getKnownWalkingMinutes(gateId, property);
+  const knownDriveMinutes = getKnownDrivingMinutes(gateId, property);
 
   const [travelMode, setTravelMode] = useState('walking');
   const [routeStats, setRouteStats] = useState(null);
@@ -44,15 +45,19 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
 
   const [durations, setDurations] = useState({
     walking: resolvedInitialMins,
-    driving: Math.max(1, Math.round(initialEstimate.distanceMeters / 333)),
+    driving: knownDriveMinutes || initialEstimate.drivingMinutes || 2,
   });
 
   useEffect(() => {
     const mins = knownMinutes || walkingMinutes;
     if (mins) {
-      setDurations((prev) => ({ ...prev, walking: mins }));
+      setDurations((prev) => ({
+        ...prev,
+        walking: mins,
+        driving: knownDriveMinutes || prev.driving,
+      }));
     }
-  }, [walkingMinutes, knownMinutes]);
+  }, [walkingMinutes, knownMinutes, knownDriveMinutes]);
 
   // 1. Initialize Leaflet Map (runs once on container mount)
   useEffect(() => {
@@ -215,14 +220,13 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         const dist = Math.round(route.distance);
         const rawMins = Math.max(1, Math.round(route.duration / 60));
         const walkMins = knownMinutes || rawMins;
+        const driveMins = knownDriveMinutes || Math.max(1, Math.round(dist / 220));
 
-        setRouteStats({ distance: dist, duration: travelMode === 'walking' ? walkMins : rawMins });
-        setDurations((prev) => ({
-          ...prev,
-          [travelMode]: travelMode === 'walking' ? walkMins : rawMins,
-          ...(travelMode === 'walking' && !prev.driving ? { driving: Math.max(1, Math.round(dist / 333)) } : {}),
-          ...(travelMode === 'driving' && !prev.walking ? { walking: walkMins } : {}),
-        }));
+        setRouteStats({ distance: dist, duration: travelMode === 'walking' ? walkMins : driveMins });
+        setDurations({
+          walking: walkMins,
+          driving: driveMins,
+        });
         if (onDurationChangeRef.current && travelMode === 'walking') {
           onDurationChangeRef.current(walkMins);
         }

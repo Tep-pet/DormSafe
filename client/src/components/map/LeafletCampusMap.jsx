@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES, SEARCH_RADIUS_KM } from '../../constants/campusGates';
-import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
+import { getAccuratePinpoint, calculateStraightLineDistance, getKnownWalkingMinutes, getKnownDrivingMinutes } from '../../utils/propertyCoordinates';
 import { formatPrice } from '../../utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import { Navigation, Footprints, Car, X, Crosshair, MapPin, Compass } from 'lucide-react';
@@ -327,9 +327,14 @@ export function LeafletCampusMap({
         map.fitBounds(polyline.getBounds(), { padding: [45, 45], maxZoom: 17 });
 
         const knownMins = getKnownWalkingMinutes(gateId, activeDorm);
+        const knownDriveMins = getKnownDrivingMinutes(gateId, activeDorm);
+        const dist = Math.round(route.distance);
         setRouteInfo({
-          distanceMeters: Math.round(route.distance),
-          durationMinutes: travelMode === 'walking' && knownMins ? knownMins : Math.max(1, Math.round(route.duration / 60)),
+          distanceMeters: dist,
+          durationMinutes:
+            travelMode === 'driving'
+              ? (knownDriveMins || Math.max(1, Math.round(dist / 220)))
+              : (knownMins || Math.max(1, Math.round(dist / 82))),
         });
         return;
       }

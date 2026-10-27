@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import {
   Footprints,
+  Car,
   Phone,
   Navigation,
   ChevronUp,
   ChevronDown,
   CheckCircle2,
   MapPin,
+  Crosshair,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { formatDistance, formatDuration } from '../../services/map/GeoUtils.js';
@@ -16,24 +19,40 @@ export function TrackingBottomSheet({
   routeStats,
   isArrived,
   originName,
+  originType = 'gps',
+  travelMode = 'walking',
+  onTravelModeChange,
   onRecenter,
   onSelectManualOrigin,
   onStopTracking,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const isGpsOrigin =
+    originType === 'gps' ||
+    originName?.toLowerCase().includes('live location') ||
+    originName?.toLowerCase().includes('current') ||
+    originName?.toLowerCase().includes('gps');
+
+  const walkingMinutes = routeStats?.walkingMinutes ?? (travelMode === 'walking' ? routeStats?.durationMinutes : Math.max(1, Math.round((routeStats?.distanceMeters || 400) / 82)));
+  const drivingMinutes = routeStats?.drivingMinutes ?? (travelMode === 'driving' ? routeStats?.durationMinutes : Math.max(1, Math.round((routeStats?.distanceMeters || 400) / 220)));
+
+  const activeDuration = travelMode === 'driving' ? drivingMinutes : walkingMinutes;
+
   return (
     <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-auto transition-transform duration-300">
-      <div className="mx-auto max-w-lg bg-white/95 backdrop-blur-xl border-t sm:border border-slate-200/90 sm:rounded-t-3xl shadow-2xl overflow-hidden pb-safe">
+      <div className="mx-auto max-w-lg bg-white/98 backdrop-blur-xl border-t sm:border border-slate-200/90 sm:rounded-t-3xl shadow-2xl overflow-hidden pb-safe">
         {/* Drag handle / collapse toggle */}
         <button
+          type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
           className="w-full flex items-center justify-center pt-2.5 pb-1 focus:outline-hidden text-slate-400 hover:text-slate-600 transition"
+          aria-label="Expand route details"
         >
           <div className="w-10 h-1 rounded-full bg-slate-300/80 mb-1" />
         </button>
 
-        <div className="px-5 pb-5 pt-1 space-y-4">
+        <div className="px-5 pb-5 pt-1 space-y-3.5">
           {/* Arrival Celebration Banner */}
           {isArrived && (
             <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-500 text-white shadow-lg animate-bounce">
@@ -45,12 +64,53 @@ export function TrackingBottomSheet({
             </div>
           )}
 
+          {/* Travel Mode Toggle: Walking vs Driving */}
+          <div className="flex items-center justify-between gap-2 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => onTravelModeChange && onTravelModeChange('walking')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all ${
+                travelMode === 'walking'
+                  ? 'bg-white text-ateneo-blue shadow-sm border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Footprints size={15} />
+              <span>Walking</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${travelMode === 'walking' ? 'bg-blue-100 text-ateneo-blue font-extrabold' : 'text-slate-400'}`}>
+                {walkingMinutes} min
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onTravelModeChange && onTravelModeChange('driving')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all ${
+                travelMode === 'driving'
+                  ? 'bg-white text-sky-700 shadow-sm border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Car size={15} />
+              <span>Car / Drive</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${travelMode === 'driving' ? 'bg-sky-100 text-sky-800 font-extrabold' : 'text-slate-400'}`}>
+                {drivingMinutes} min
+              </span>
+            </button>
+          </div>
+
           {/* Core Route Metrics & Destination Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-ateneo-blue">
-                  Walking Route
+                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                  travelMode === 'driving' ? 'bg-sky-100 text-sky-800' : 'bg-blue-100 text-ateneo-blue'
+                }`}>
+                  {travelMode === 'driving' ? 'Driving Route' : 'Walking Route'}
+                </span>
+                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                  <Sparkles size={11} className="text-amber-500" />
+                  <span>Google Maps Speed</span>
                 </span>
               </div>
               <h3 className="text-base font-bold text-slate-900 truncate mt-1">
@@ -64,9 +124,9 @@ export function TrackingBottomSheet({
 
             {/* Live Distance & ETA Pills */}
             <div className="flex flex-col items-end shrink-0">
-              <div className="flex items-center gap-1 text-ateneo-blue font-extrabold text-xl leading-none">
-                <Footprints size={18} />
-                <span>{formatDuration(routeStats?.durationMinutes)}</span>
+              <div className="flex items-center gap-1.5 text-ateneo-blue font-black text-2xl leading-none">
+                {travelMode === 'driving' ? <Car size={22} className="text-sky-700" /> : <Footprints size={22} className="text-ateneo-blue" />}
+                <span>{formatDuration(activeDuration)}</span>
               </div>
               <span className="text-xs font-semibold text-slate-500 mt-1">
                 {formatDistance(routeStats?.distanceMeters)} remaining
@@ -74,18 +134,39 @@ export function TrackingBottomSheet({
             </div>
           </div>
 
-          {/* Origin Indicator */}
-          {originName && (
-            <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-              <span className="truncate">From: <strong>{originName}</strong></span>
-              <button
-                onClick={onSelectManualOrigin}
-                className="text-ateneo-blue font-bold hover:underline shrink-0 ml-2"
-              >
-                Change Origin
-              </button>
+          {/* Dynamic Origin Indicator with Starting Point Switcher */}
+          <div className="flex items-center justify-between text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+            <div className="min-w-0 flex items-center gap-2">
+              {isGpsOrigin ? (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shrink-0 animate-pulse">
+                  <Crosshair size={11} />
+                </span>
+              ) : (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ateneo-blue text-white text-[9px] font-bold shrink-0">
+                  AdDU
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase font-bold text-slate-400 leading-tight">Starting Point</p>
+                <p className="font-bold text-slate-800 truncate">
+                  {isGpsOrigin ? 'Live GPS: From Your Current Location' : `From ${originName}`}
+                </p>
+                {isGpsOrigin && (
+                  <p className="text-[10px] text-blue-600 font-semibold mt-0.5">
+                    ● Real-time dynamic GPS adjustment
+                  </p>
+                )}
+              </div>
             </div>
-          )}
+
+            <button
+              type="button"
+              onClick={onSelectManualOrigin}
+              className="text-xs font-bold text-ateneo-blue hover:text-blue-800 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs shrink-0 ml-2 active:scale-95 transition"
+            >
+              Change Starting Point
+            </button>
+          </div>
 
           {/* Expanded Drawer Details */}
           {isExpanded && (
@@ -120,7 +201,7 @@ export function TrackingBottomSheet({
             <Button
               variant="flat"
               color="primary"
-              className="flex-1 font-bold text-xs h-11 rounded-2xl bg-blue-50 text-ateneo-blue border border-blue-100 active:scale-95 transition"
+              className="flex-1 font-bold text-xs h-11 rounded-2xl bg-blue-50 text-ateneo-blue border border-blue-200/80 active:scale-95 transition"
               onPress={onRecenter}
               startContent={<Navigation size={14} />}
             >

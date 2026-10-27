@@ -19,6 +19,13 @@ const FALLBACK_GATE_DATA = {
       lng: 125.6123,
       note: 'Roxas Ave entrance, west side of AdDU Jacinto campus (OSM bounds)',
     },
+    claveria: {
+      id: 'claveria',
+      label: 'Claveria Campus Gate',
+      lat: 7.0694,
+      lng: 125.6129,
+      note: 'C.M. Recto Ave / Claveria entrance, south side of AdDU Jacinto campus (OSM bounds)',
+    },
   },
   defaultGate: 'jacinto',
 };

@@ -107,6 +107,7 @@ export function MapLibreTracker({
   userLocation,
   userBearing,
   isCompassMode,
+  travelMode = 'walking',
   recenterTrigger,
   onRouteStats,
   onArrival,
@@ -257,7 +258,7 @@ export function MapLibreTracker({
       map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
     }
 
-    // Update position in RouteService to get exact street-level walking paths
+    // Update position in RouteService to get exact street-level walking/driving paths
     RouteService.updateStudentPosition(
       { lat, lng },
       { lat: destLat, lng: destLng },
@@ -266,6 +267,8 @@ export function MapLibreTracker({
           onRouteStats({
             distanceMeters: routeResult.distanceMeters,
             durationMinutes: routeResult.durationMinutes,
+            walkingMinutes: routeResult.walkingMinutes,
+            drivingMinutes: routeResult.drivingMinutes,
             isFallback: routeResult.isFallback,
           });
         }
@@ -273,9 +276,15 @@ export function MapLibreTracker({
       },
       () => {
         if (onArrival) onArrival();
-      }
+      },
+      travelMode
     );
-  }, [userLocation, destLat, destLng, onRouteStats, onArrival]);
+
+    // Update line color based on travel mode
+    if (map.getLayer('walking-route-line')) {
+      map.setPaintProperty('walking-route-line', 'line-color', travelMode === 'driving' ? '#0284c7' : '#0052cc');
+    }
+  }, [userLocation, destLat, destLng, travelMode, onRouteStats, onArrival]);
 
   // 4. Handle Manual Recenter Trigger
   useEffect(() => {

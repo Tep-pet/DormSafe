@@ -1,16 +1,19 @@
 import { IRouteAdapter } from './IRouteAdapter.js';
+import { getDynamicGoogleMapsTimes } from '../../../utils/propertyCoordinates.js';
 
 /**
- * High-speed, zero-key pedestrian routing adapter powered by Project OSRM.
- * Returns accurate street-level walking paths for Davao City.
+ * High-speed routing adapter powered by Project OSRM with Google Maps Davao City calibration.
+ * Supports both pedestrian ('foot') and vehicular ('driving') routes.
  */
 export class OSRMRouteAdapter extends IRouteAdapter {
-  async getWalkingRoute(origin, destination) {
+  async getWalkingRoute(origin, destination, mode = 'foot') {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 7000);
 
+    const profile = mode === 'driving' ? 'driving' : 'foot';
+
     try {
-      const url = `https://router.project-osrm.org/route/v1/foot/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+      const url = `https://router.project-osrm.org/route/v1/${profile}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
       const res = await fetch(url, { signal: controller.signal });
 
       if (!res.ok) {
@@ -21,19 +24,24 @@ export class OSRMRouteAdapter extends IRouteAdapter {
       const route = data?.routes?.[0];
 
       if (!route || !route.geometry?.coordinates || route.geometry.coordinates.length === 0) {
-        throw new Error('No walking route returned by OSRM');
+        throw new Error(`No ${profile} route returned by OSRM`);
       }
 
       // GeoJSON [lng, lat] -> convert to [lat, lng] for internal representation
       const coordinates = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
       const distanceMeters = Math.round(route.distance || 0);
-      const durationMinutes = Math.max(1, Math.round((route.duration || 0) / 60));
+
+      // Calibrate duration according to Google Maps Davao City benchmark speeds
+      const { walkingMinutes, drivingMinutes } = getDynamicGoogleMapsTimes(distanceMeters);
+      const durationMinutes = mode === 'driving' ? drivingMinutes : walkingMinutes;
 
       return {
         coordinates,
         distanceMeters,
         durationMinutes,
-        provider: 'OSRM Walking Route',
+        walkingMinutes,
+        drivingMinutes,
+        provider: mode === 'driving' ? 'OSRM Driving Route (Google Maps Calibrated)' : 'OSRM Walking Route (Google Maps Calibrated)',
         isFallback: false,
       };
     } finally {
