@@ -51,3 +51,14 @@ export async function resubmitVerification(req, res, next) {
     next(err);
   }
 }
+
+export async function forgotPassword(req, res, next) {
+  try {
+    const { email } = req.body;
+    const clientOrigin = req.headers.origin || req.headers.referer;
+    const result = await authService.requestPasswordReset(email, clientOrigin);
+    return success(res, result, 'If an account exists with this email, password reset instructions have been sent.');
+  } catch (err) {
+    next(err);
+  }
+}

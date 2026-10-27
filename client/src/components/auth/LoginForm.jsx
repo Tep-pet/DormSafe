@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { ROLE_HOME } from '../../constants/routes';
@@ -82,6 +82,15 @@ export function LoginForm() {
             </button>
           }
         />
+
+        <div className="flex justify-end pt-0.5">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-semibold text-ateneo-blue hover:text-blue-700 hover:underline transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       {error && (

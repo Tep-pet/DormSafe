@@ -53,4 +53,34 @@ export const authService = {
     if (error) throw error;
     return data;
   },
+
+  async forgotPassword(email) {
+    const cleanEmail = email.trim();
+    const redirectTo = `${window.location.origin}/reset-password`;
+    let sent = false;
+
+    // 1. Trigger backend with branded Gmail SMTP service
+    try {
+      await apiClient.post('/api/auth/forgot-password', { email: cleanEmail });
+      sent = true;
+    } catch (err) {
+      console.warn('[authService] Backend forgot-password error, falling back:', err.message);
+    }
+
+    // 2. Also ensure Supabase reset is triggered
+    try {
+      await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo });
+      sent = true;
+    } catch (sbErr) {
+      console.warn('[authService] Supabase reset note:', sbErr.message);
+    }
+
+    return { sent };
+  },
+
+  async updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return data;
+  },
 };

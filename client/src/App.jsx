@@ -10,6 +10,8 @@ import { VerifiedRoute } from './routes/VerifiedRoute';
 import { HomeRedirect } from './routes/HomeRedirect';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { AccountVerificationPage } from './pages/auth/AccountVerificationPage';
 import { SearchPage } from './pages/student/SearchPage';
 import { MyStayPage } from './pages/student/MyStayPage';
@@ -49,6 +51,8 @@ export default function App() {
               <Route element={<GuestRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
               </Route>
 
               <Route element={<ProtectedRoute />}>
