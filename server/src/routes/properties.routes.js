@@ -17,6 +17,11 @@ router.post(
   upload.array('images', 8),
   propertyController.uploadRoomPhotos
 );
+router.get(
+  '/locations/suggest',
+  requireRole('owner', 'admin', 'student'),
+  propertyController.suggestLocations
+);
 router.get('/:id', requireRole('owner', 'admin'), propertyController.getOne);
 router.patch('/:id', requireRole('owner'), propertyController.update);
 router.patch('/rooms/:roomId/availability', requireRole('owner'), propertyController.updateAvailability);

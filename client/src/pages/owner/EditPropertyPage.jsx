@@ -21,6 +21,7 @@ import {
 import { OwnerLayout } from '../../components/layout/OwnerLayout';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+import { AddressAutocomplete } from '../../components/common/AddressAutocomplete';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -41,6 +42,8 @@ export function EditPropertyPage() {
     name: '',
     description: '',
     address: '',
+    latitude: null,
+    longitude: null,
     contact_name: '',
     contact_phone: '',
     contact_email: '',
@@ -59,6 +62,8 @@ export function EditPropertyPage() {
           name: p.name || '',
           description: p.description || '',
           address: p.address || '',
+          latitude: p.latitude || null,
+          longitude: p.longitude || null,
           contact_name: p.contact_name || resolved.contactName || '',
           contact_phone: p.contact_phone || resolved.contactPhone || '',
           contact_email: p.contact_email || resolved.contactEmail || '',
@@ -123,6 +128,8 @@ export function EditPropertyPage() {
           name: form.name.trim(),
           description: form.description.trim(),
           address: form.address.trim(),
+          latitude: form.latitude,
+          longitude: form.longitude,
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
           contact_email: form.contact_email.trim() || null,
@@ -230,11 +237,19 @@ export function EditPropertyPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <Input
+                <AddressAutocomplete
                   id="address"
                   label="Complete Campus Address"
+                  placeholder="Type street name (e.g. Jacinto, Roxas, Matina)..."
                   value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  onChange={(addressVal, coords) => {
+                    setForm((f) => ({
+                      ...f,
+                      address: addressVal,
+                      latitude: coords?.latitude ?? f.latitude,
+                      longitude: coords?.longitude ?? f.longitude,
+                    }));
+                  }}
                   required
                 />
               </div>

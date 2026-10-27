@@ -79,3 +79,13 @@ export async function update(req, res, next) {
     next(err);
   }
 }
+
+export async function suggestLocations(req, res, next) {
+  try {
+    const query = req.query.q || '';
+    const suggestions = await propertyService.suggestPropertyLocations(query);
+    return success(res, suggestions, 'Location suggestions retrieved');
+  } catch (err) {
+    next(err);
+  }
+}

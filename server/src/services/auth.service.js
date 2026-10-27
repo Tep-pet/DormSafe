@@ -71,8 +71,17 @@ export async function requestPasswordReset(email, clientOrigin) {
     });
 
     if (error) {
-      console.warn(`[Password Reset] Generate link failed for ${cleanEmail}:`, error.message);
-      return { sent: true };
+      console.warn(`[Password Reset] Generate link notice for ${cleanEmail}:`, error.message);
+      if (error.code === 'user_not_found' || /not found/i.test(error.message)) {
+        return {
+          sent: false,
+          error: 'No registered DormSafe account found with this email address. Please check your email spelling or create a new account.',
+        };
+      }
+      return {
+        sent: false,
+        error: error.message || 'Unable to generate password reset link. Please try again later.',
+      };
     }
 
     const resetLink = data?.properties?.action_link;
@@ -108,11 +117,19 @@ export async function requestPasswordReset(email, clientOrigin) {
         </div>
       `;
 
-      await sendAccountEmail(cleanEmail, subject, text, html);
+      const mailRes = await sendAccountEmail(cleanEmail, subject, text, html);
+      if (mailRes && mailRes.sent === false) {
+        console.warn(`[Password Reset] SMTP delivery failed for ${cleanEmail}:`, mailRes.reason || mailRes.error);
+        return {
+          sent: false,
+          error: mailRes.error || 'Failed to dispatch email. Please check that your email address can receive mail.',
+        };
+      }
     }
+
+    return { sent: true };
   } catch (err) {
     console.error('[Password Reset] Error generating reset link:', err.message);
+    return { sent: false, error: err.message || 'An unexpected error occurred while requesting password reset.' };
   }
-
-  return { sent: true };
 }

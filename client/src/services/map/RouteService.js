@@ -27,14 +27,13 @@ class RouteServiceManager {
   }
 
   /**
-   * Request initial route (walking or driving)
+   * Request initial walking route
    */
-  async fetchRoute(origin, destination, travelMode = 'walking') {
+  async fetchRoute(origin, destination) {
     const now = Date.now();
-    const osrmMode = travelMode === 'driving' ? 'driving' : 'foot';
     try {
-      // 1. Try Project OSRM (100% free, zero-key, full street sidewalks or roads)
-      this.currentRoute = await this.osrmAdapter.getWalkingRoute(origin, destination, osrmMode);
+      // 1. Try Project OSRM (100% free, zero-key, full street sidewalks)
+      this.currentRoute = await this.osrmAdapter.getWalkingRoute(origin, destination);
     } catch (osrmErr) {
       console.warn('OSRM routing error, trying secondary:', osrmErr.message);
       try {
@@ -45,7 +44,7 @@ class RouteServiceManager {
           throw new Error('ORS key not provided');
         }
       } catch (orsErr) {
-        console.warn('Secondary routing unavailable, using direct path:', orsErr.message);
+        console.warn('Secondary routing unavailable, using direct walking line:', orsErr.message);
         // 3. Fallback to straight line connecting student to accommodation
         this.currentRoute = await this.fallbackAdapter.getWalkingRoute(origin, destination);
       }
@@ -59,7 +58,7 @@ class RouteServiceManager {
   /**
    * Handle incoming real-time GPS coordinate from GeolocationEngine
    */
-  async updateStudentPosition(currentPos, destinationPos, onRouteUpdated, onArrivalTriggered, travelMode = 'walking') {
+  async updateStudentPosition(currentPos, destinationPos, onRouteUpdated, onArrivalTriggered) {
     // 1. Arrival Detection (< 20 meters)
     const distToDestination = calculateHaversineMeters(
       currentPos.lat,
@@ -75,7 +74,7 @@ class RouteServiceManager {
 
     // 2. If no route yet, fetch initial route
     if (!this.currentRoute) {
-      const route = await this.fetchRoute(currentPos, destinationPos, travelMode);
+      const route = await this.fetchRoute(currentPos, destinationPos);
       if (onRouteUpdated) onRouteUpdated(route);
       return;
     }
@@ -98,7 +97,7 @@ class RouteServiceManager {
         this.consecutiveOffRouteFixes >= 2 &&
         timeSinceLastFetch > MapConfig.THRESHOLDS.RE_ROUTE_THROTTLE_MS
       ) {
-        const updatedRoute = await this.fetchRoute(currentPos, destinationPos, travelMode);
+        const updatedRoute = await this.fetchRoute(currentPos, destinationPos);
         if (onRouteUpdated) onRouteUpdated(updatedRoute);
         return;
       }

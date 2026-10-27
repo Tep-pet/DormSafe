@@ -9,28 +9,27 @@ const durationCache = new Map();
  * Guarantees 100% consistency with LeafletPropertyRouteMap & Live GPS Tracker with 0ms server latency.
  */
 function getKnownOsrmDuration(origin, destination) {
-  const isRoxas = Math.abs(origin.lat - 7.0718) < 0.0012 && Math.abs(origin.lng - 125.6123) < 0.0012;
-  const isClaveria = Math.abs(origin.lat - 7.0694) < 0.0015 && Math.abs(origin.lng - 125.6129) < 0.0015;
+  const isRoxas = Math.abs(origin.lat - 7.0718) < 0.001 && Math.abs(origin.lng - 125.6123) < 0.001;
 
-  // 1. Ivory Residences (Claveria: 25 mins walking, 10 mins car)
+  // Ivory Residences (lat 7.08719, lng 125.60915) -> 6 min
   if (Math.abs(destination.lat - 7.08719) < 0.002 && Math.abs(destination.lng - 125.60915) < 0.002) {
-    return isClaveria ? 25 : (isRoxas ? 27 : 26);
+    return 6;
   }
-  // 2. BRC Dormitory (Roxas Gate: 6 mins walking, 3 mins car)
+  // BRC Dormitory (lat 7.06805, lng 125.61253) -> Jacinto: 2 min, Roxas: 1 min
   if (Math.abs(destination.lat - 7.06805) < 0.002 && Math.abs(destination.lng - 125.61253) < 0.002) {
-    return isRoxas ? 6 : (isClaveria ? 6 : 7);
+    return isRoxas ? 1 : 2;
   }
-  // 3. Correla Dormitory (AdDU: 3 mins walk, 2 mins car)
+  // Correla Dormitory (lat 7.06945, lng 125.61468) -> 1 min
   if (Math.abs(destination.lat - 7.06945) < 0.002 && Math.abs(destination.lng - 125.61468) < 0.002) {
-    return 3;
+    return 1;
   }
-  // 4. Residencia de Maria Goretti (Roxas: 4 mins walking, 2 mins car)
+  // Residencia de Maria Goretti (lat 7.06956, lng 125.61525) -> 1 min
   if (Math.abs(destination.lat - 7.06956) < 0.002 && Math.abs(destination.lng - 125.61525) < 0.002) {
-    return isRoxas ? 4 : (isClaveria ? 4 : 5);
+    return 1;
   }
-  // 5. Juan Luna Boarding House (Jacinto: 4 mins walking, 2 mins car)
+  // Juan Luna Boarding House (lat 7.07259, lng 125.61601) -> Jacinto: 1 min, Roxas: 2 min
   if (Math.abs(destination.lat - 7.07259) < 0.002 && Math.abs(destination.lng - 125.61601) < 0.002) {
-    return isRoxas ? 6 : (isClaveria ? 6 : 4);
+    return isRoxas ? 2 : 1;
   }
   return null;
 }

@@ -416,3 +416,144 @@ function enrichProperty(p) {
 function enrichProperties(list) {
   return list.map(enrichProperty);
 }
+
+const CAMPUS_GATES = [
+  { name: 'Jacinto Campus', latitude: 7.0718, longitude: 125.6131 },
+  { name: 'Matina Campus', latitude: 7.0543, longitude: 125.5991 },
+];
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export async function suggestPropertyLocations(query) {
+  if (!query || typeof query !== 'string' || query.trim().length < 2) {
+    return [];
+  }
+
+  const cleanQ = query.trim();
+  const suggestions = [];
+  const seenAddresses = new Set();
+
+  // 1. Search existing properties in database
+  try {
+    const { data: dbProps } = await supabaseAdmin
+      .from('properties')
+      .select('name, address, latitude, longitude')
+      .or(`address.ilike.%${cleanQ}%,name.ilike.%${cleanQ}%`)
+      .limit(4);
+
+    if (dbProps && dbProps.length > 0) {
+      for (const prop of dbProps) {
+        if (!prop.address || seenAddresses.has(prop.address.toLowerCase())) continue;
+        seenAddresses.add(prop.address.toLowerCase());
+
+        let minDistance = null;
+        let nearestCampus = null;
+        if (prop.latitude && prop.longitude) {
+          for (const gate of CAMPUS_GATES) {
+            const d = haversineDistance(prop.latitude, prop.longitude, gate.latitude, gate.longitude);
+            if (minDistance === null || d < minDistance) {
+              minDistance = d;
+              nearestCampus = gate.name;
+            }
+          }
+        }
+
+        const parts = prop.address.split(',');
+        const primary = (prop.name || parts[0] || '').trim();
+        const secondary = (parts.length > 1 ? parts.slice(1).join(', ') : prop.address).trim();
+
+        suggestions.push({
+          id: `db-${prop.address}`,
+          label: prop.address,
+          primary,
+          secondary,
+          latitude: prop.latitude ? Number(prop.latitude) : null,
+          longitude: prop.longitude ? Number(prop.longitude) : null,
+          isCampusZone: minDistance !== null ? minDistance <= 2.0 : true,
+          distanceKm: minDistance !== null ? Number(minDistance.toFixed(2)) : null,
+          nearestCampus,
+          source: 'database',
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[suggestPropertyLocations] Database search note:', err.message);
+  }
+
+  // 2. Search Photon geocoding API with Davao City bias
+  try {
+    const photonQuery = cleanQ.toLowerCase().includes('davao') ? cleanQ : `${cleanQ} Davao City`;
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(photonQuery)}&lat=7.07&lon=125.61&limit=6`;
+    const response = await fetch(photonUrl, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'DormSafe/1.0 (Ateneo de Davao student housing)',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      for (const feature of data.features || []) {
+        const props = feature.properties || {};
+        const [lon, lat] = feature.geometry?.coordinates || [];
+        if (!lat || !lon) continue;
+
+        // Skip locations clearly outside Davao Region (bounds check)
+        if (lat < 6.95 || lat > 7.35 || lon < 125.35 || lon > 125.75) continue;
+
+        const street = props.street || props.name || '';
+        const district = props.district || props.suburb || props.city || 'Davao City';
+        const formattedAddress = [props.name, props.street, district, 'Davao City']
+          .filter(Boolean)
+          .filter((val, idx, arr) => arr.indexOf(val) === idx)
+          .join(', ');
+
+        if (seenAddresses.has(formattedAddress.toLowerCase())) continue;
+        seenAddresses.add(formattedAddress.toLowerCase());
+
+        let minDistance = null;
+        let nearestCampus = null;
+        for (const gate of CAMPUS_GATES) {
+          const d = haversineDistance(lat, lon, gate.latitude, gate.longitude);
+          if (minDistance === null || d < minDistance) {
+            minDistance = d;
+            nearestCampus = gate.name;
+          }
+        }
+
+        const primary = (props.name || street || cleanQ).trim();
+        const secondary = [district, 'Davao City', 'Philippines'].filter(Boolean).join(', ');
+
+        suggestions.push({
+          id: `geo-${lat.toFixed(5)}-${lon.toFixed(5)}`,
+          label: formattedAddress,
+          primary,
+          secondary,
+          latitude: Number(lat),
+          longitude: Number(lon),
+          isCampusZone: minDistance <= 2.5,
+          distanceKm: Number(minDistance.toFixed(2)),
+          nearestCampus,
+          source: 'geocoding',
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[suggestPropertyLocations] Geocoding API notice:', err.message);
+  }
+
+  return suggestions.slice(0, 7);
+}
+

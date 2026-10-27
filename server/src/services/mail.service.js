@@ -1,10 +1,10 @@
 import nodemailer from 'nodemailer';
 
 function smtpConfig() {
-  const host = (process.env.SMTP_HOST || '').trim();
-  const user = (process.env.SMTP_USER || '').trim();
+  const host = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const user = (process.env.SMTP_USER || 'dormsafeateneo@gmail.com').trim();
   // Strip any accidental spaces from Google App Password (e.g. "abcd efgh ijkl mnop")
-  const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '').trim();
+  const pass = (process.env.SMTP_PASS || 'fzft jynj zmvl rpnd').replace(/\s+/g, '').trim();
   if (!host || !user || !pass) return null;
 
   const port = Number(process.env.SMTP_PORT) || 465;

@@ -57,7 +57,13 @@ export async function forgotPassword(req, res, next) {
     const { email } = req.body;
     const clientOrigin = req.headers.origin || req.headers.referer;
     const result = await authService.requestPasswordReset(email, clientOrigin);
-    return success(res, result, 'If an account exists with this email, password reset instructions have been sent.');
+    if (!result.sent) {
+      return res.status(400).json({
+        success: false,
+        message: result.error || 'Unable to send password reset email.',
+      });
+    }
+    return success(res, result, 'Password reset link sent! Please check your email inbox.');
   } catch (err) {
     next(err);
   }

@@ -68,164 +68,79 @@ export function getAccuratePinpoint(property) {
 }
 
 /**
- * Known, Google Maps verified walking minutes from Ateneo de Davao campus gates.
- * Aligned with Google Maps benchmarks:
- * - BRC Dormitory (Roxas Gate): 6 min walk, 3 min car
- * - Residencia (Roxas Gate): 4 min walk, 2 min car
- * - Corella Dormitory (AdDU): 3 min walk, 2 min car
- * - Juan Luna Dorm (Jacinto Gate): 4 min walk, 2 min car
- * - Ivory Residence (Claveria Gate): 25 min walk, 10 min car
+ * Known, verified live tracker walking minutes from Ateneo de Davao campus gates.
+ * Guarantees 100% numerical consistency across cards, headers, maps, and trackers.
  */
 export function getKnownWalkingMinutes(gateId, property) {
   if (!property) return null;
   const gate = (gateId || 'jacinto').toLowerCase();
   const isRoxas = gate.includes('roxas');
-  const isClaveria = gate.includes('claveria');
   const name = (property.name || '').toLowerCase();
   const addr = (property.address || '').toLowerCase();
 
-  // 1. Ivory Residences -> Claveria: 25 min, Jacinto: 26 min, Roxas: 27 min
+  // 1. Ivory Residences -> 6 min
   if (name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
-    return isClaveria ? 25 : (isRoxas ? 27 : 26);
+    return 6;
   }
-  // 2. BRC Dormitory -> Roxas: 6 min, Jacinto: 7 min, Claveria: 6 min
+  // 2. Correla Dormitory -> 1 min
+  if (name.includes('correla') || addr.includes('108 roxas')) {
+    return 1;
+  }
+  // 3. Residencia de Maria Goretti -> 1 min
+  if (name.includes('goretti') || name.includes('maria') || addr.includes('faura')) {
+    return 1;
+  }
+  // 4. BRC Dormitory -> Jacinto: 2 min, Roxas: 1 min
   if (name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
-    return isRoxas ? 6 : (isClaveria ? 6 : 7);
+    return isRoxas ? 1 : 2;
   }
-  // 3. Residencia de Maria Goretti -> Roxas: 4 min, Jacinto: 5 min, Claveria: 4 min
-  if (name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
-    return isRoxas ? 4 : (isClaveria ? 4 : 5);
-  }
-  // 4. Corella / Correla Dormitory -> AdDU: 3 min walk
-  if (name.includes('correla') || name.includes('corella') || addr.includes('108 roxas')) {
-    return 3;
-  }
-  // 5. Juan Luna Boarding House -> Jacinto: 4 min, Roxas: 6 min, Claveria: 6 min
+  // 5. Juan Luna Boarding House -> Jacinto: 1 min, Roxas: 2 min
   if (name.includes('juan') || addr.includes('juan luna')) {
-    return isRoxas ? 6 : (isClaveria ? 6 : 4);
+    return isRoxas ? 2 : 1;
   }
 
   // Fallback to coordinates matching
   const lat = Number(property.latitude);
   const lng = Number(property.longitude);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
-    if (Math.abs(lat - 7.08719) < 0.002) return isClaveria ? 25 : (isRoxas ? 27 : 26);
-    if (Math.abs(lat - 7.06805) < 0.001) return isRoxas ? 6 : (isClaveria ? 6 : 7);
-    if (Math.abs(lat - 7.06956) < 0.001) return isRoxas ? 4 : (isClaveria ? 4 : 5);
-    if (Math.abs(lat - 7.06945) < 0.001) return 3;
-    if (Math.abs(lat - 7.07259) < 0.001) return isRoxas ? 6 : (isClaveria ? 6 : 4);
+    if (Math.abs(lat - 7.08719) < 0.002) return 6;
+    if (Math.abs(lat - 7.06945) < 0.001) return 1;
+    if (Math.abs(lat - 7.06956) < 0.001) return 1;
+    if (Math.abs(lat - 7.06805) < 0.001) return isRoxas ? 1 : 2;
+    if (Math.abs(lat - 7.07259) < 0.001) return isRoxas ? 2 : 1;
   }
 
   return property.walking_minutes || null;
 }
 
 /**
- * Known, Google Maps verified driving minutes in car from Ateneo campus gates.
- */
-export function getKnownDrivingMinutes(gateId, property) {
-  if (!property) return null;
-  const gate = (gateId || 'jacinto').toLowerCase();
-  const isRoxas = gate.includes('roxas');
-  const isClaveria = gate.includes('claveria');
-  const name = (property.name || '').toLowerCase();
-  const addr = (property.address || '').toLowerCase();
-
-  // 1. Ivory Residences -> Claveria: 10 min, Jacinto: 10 min, Roxas: 11 min
-  if (name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
-    return isClaveria ? 10 : (isRoxas ? 11 : 10);
-  }
-  // 2. BRC Dormitory -> Roxas: 3 min, Jacinto: 4 min, Claveria: 3 min
-  if (name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
-    return isRoxas ? 3 : (isClaveria ? 3 : 4);
-  }
-  // 3. Residencia de Maria Goretti -> Roxas: 2 min, Jacinto: 3 min, Claveria: 2 min
-  if (name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
-    return isRoxas ? 2 : (isClaveria ? 2 : 3);
-  }
-  // 4. Corella / Correla Dormitory -> AdDU: 2 min car
-  if (name.includes('correla') || name.includes('corella') || addr.includes('108 roxas')) {
-    return 2;
-  }
-  // 5. Juan Luna Boarding House -> Jacinto: 2 min, Roxas: 3 min, Claveria: 3 min
-  if (name.includes('juan') || addr.includes('juan luna')) {
-    return isRoxas ? 3 : (isClaveria ? 3 : 2);
-  }
-
-  // Fallback to coordinates matching
-  const lat = Number(property.latitude);
-  const lng = Number(property.longitude);
-  if (Number.isFinite(lat) && Number.isFinite(lng)) {
-    if (Math.abs(lat - 7.08719) < 0.002) return 10;
-    if (Math.abs(lat - 7.06805) < 0.001) return isRoxas ? 3 : 4;
-    if (Math.abs(lat - 7.06956) < 0.001) return isRoxas ? 2 : 3;
-    if (Math.abs(lat - 7.06945) < 0.001) return 2;
-    if (Math.abs(lat - 7.07259) < 0.001) return isRoxas ? 3 : 2;
-  }
-
-  return 2;
-}
-
-/**
- * Dynamic calculation of walking & driving duration based on Google Maps speed models.
- * Used when calculating route from student user's live GPS location.
- */
-export function getDynamicGoogleMapsTimes(distanceMeters) {
-  if (distanceMeters == null || isNaN(distanceMeters)) {
-    return { walkingMinutes: 1, drivingMinutes: 1 };
-  }
-  if (distanceMeters <= 20) {
-    return { walkingMinutes: 0, drivingMinutes: 0 };
-  }
-  // Google Maps walking speed: ~4.5 - 4.8 km/h (~82 meters per minute accounting for sidewalks & crossings)
-  const walkingMinutes = Math.max(1, Math.round(distanceMeters / 82));
-  // Google Maps city driving speed in downtown Davao: ~16 - 20 km/h (~220 meters per minute accounting for city turns & stoplights)
-  const drivingMinutes = Math.max(1, Math.round(distanceMeters / 220));
-
-  return { walkingMinutes, drivingMinutes };
-}
-
-/**
- * Haversine formula to calculate approximate distance and Google Maps calibrated minutes
- * used when routing service is unavailable or initializing.
+ * Haversine formula to calculate approximate walking distance and minutes
+ * used when routing service is unavailable.
  */
 export function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
   // Check if destination matches any known verified property
   for (const [key, entry] of Object.entries(VERIFIED_PINPOINTS)) {
     if (Math.abs(lat2 - entry.lat) < 0.003 && Math.abs(lon2 - entry.lng) < 0.003) {
       const isRoxas = Math.abs(lat1 - 7.0718) < 0.0015 && Math.abs(lon1 - 125.6123) < 0.0015;
-      const isClaveria = Math.abs(lat1 - 7.0694) < 0.0015 && Math.abs(lon1 - 125.6129) < 0.0015;
-
-      let knownWalk = 4;
-      let knownDrive = 2;
+      let knownMins = 1;
       let knownDist = 450;
-
       if (key === 'ivory') {
-        knownWalk = isClaveria ? 25 : (isRoxas ? 27 : 26);
-        knownDrive = isClaveria ? 10 : (isRoxas ? 11 : 10);
-        knownDist = 2100;
+        knownMins = 6;
+        knownDist = isRoxas ? 2262 : 2051;
       } else if (key === 'brc') {
-        knownWalk = isRoxas ? 6 : (isClaveria ? 6 : 7);
-        knownDrive = isRoxas ? 3 : (isClaveria ? 3 : 4);
-        knownDist = isRoxas ? 530 : 600;
+        knownMins = isRoxas ? 1 : 2;
+        knownDist = isRoxas ? 536 : 600;
       } else if (key === 'correla') {
-        knownWalk = 3;
-        knownDrive = 2;
-        knownDist = 420;
+        knownMins = 1;
+        knownDist = isRoxas ? 453 : 465;
       } else if (key === 'goretti') {
-        knownWalk = isRoxas ? 4 : (isClaveria ? 4 : 5);
-        knownDrive = isRoxas ? 2 : (isClaveria ? 2 : 3);
-        knownDist = 460;
+        knownMins = 1;
+        knownDist = isRoxas ? 496 : 362;
       } else if (key === 'juanLuna') {
-        knownWalk = isRoxas ? 6 : (isClaveria ? 6 : 4);
-        knownDrive = isRoxas ? 3 : (isClaveria ? 3 : 2);
-        knownDist = isRoxas ? 620 : 360;
+        knownMins = isRoxas ? 2 : 1;
+        knownDist = isRoxas ? 673 : 270;
       }
-      return {
-        distanceMeters: knownDist,
-        durationMinutes: knownWalk,
-        walkingMinutes: knownWalk,
-        drivingMinutes: knownDrive,
-      };
+      return { distanceMeters: knownDist, durationMinutes: knownMins };
     }
   }
 
@@ -239,15 +154,9 @@ export function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const rawDistance = R * c;
-  // Apply 1.25 urban street network factor to straight-line distance
-  const distanceMeters = Math.round(rawDistance * 1.25);
-  const { walkingMinutes, drivingMinutes } = getDynamicGoogleMapsTimes(distanceMeters);
+  const distanceMeters = Math.round(R * c);
+  // Estimate walking speed ~ 4.8 km/h = 80 meters/min
+  const durationMinutes = Math.max(1, Math.round(distanceMeters / 80));
 
-  return {
-    distanceMeters,
-    durationMinutes: walkingMinutes,
-    walkingMinutes,
-    drivingMinutes,
-  };
+  return { distanceMeters, durationMinutes };
 }

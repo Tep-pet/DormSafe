@@ -18,6 +18,7 @@ import {
 import { OwnerLayout } from '../../components/layout/OwnerLayout';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+import { AddressAutocomplete } from '../../components/common/AddressAutocomplete';
 import { PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 import { RoomPhotoUploader } from '../../components/property/RoomPhotoUploader';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,6 +38,8 @@ export function AddPropertyPage() {
     name: '',
     type: PROPERTY_TYPES.BOARDING_HOUSE,
     address: '',
+    latitude: null,
+    longitude: null,
     description: '',
     contact_name: user?.full_name || '',
     contact_phone: '',
@@ -72,6 +75,8 @@ export function AddPropertyPage() {
           name: form.name.trim(),
           type: form.type,
           address: form.address.trim(),
+          latitude: form.latitude,
+          longitude: form.longitude,
           description: form.description.trim(),
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
@@ -192,17 +197,21 @@ export function AddPropertyPage() {
             </div>
 
             <div>
-              <Input
+              <AddressAutocomplete
                 id="address"
                 label="Complete Campus Address"
-                placeholder="e.g. 123 Jacinto St, Poblacion District, Davao City"
+                placeholder="Type street name (e.g. Jacinto, Roxas, Matina)..."
                 value={form.address}
-                onChange={update('address')}
+                onChange={(addressVal, coords) => {
+                  setForm((f) => ({
+                    ...f,
+                    address: addressVal,
+                    latitude: coords?.latitude ?? f.latitude,
+                    longitude: coords?.longitude ?? f.longitude,
+                  }));
+                }}
                 required
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Include street and landmark so students can locate it on the map.
-              </p>
             </div>
 
             <div className="sm:col-span-2">
