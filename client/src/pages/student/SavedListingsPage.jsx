@@ -32,7 +32,7 @@ import { ROUTES } from '../../constants/routes';
 import { DEFAULT_GATE, CAMPUS_GATES } from '../../constants/campusGates';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
-import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
+import { getKnownWalkingMinutes, getPreferredCampusGate } from '../../utils/propertyCoordinates';
 
 export function SavedListingsPage() {
   const { accessToken } = useAuth();
@@ -252,7 +252,7 @@ export function SavedListingsPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400">Walking Time:</span>
-                          <WalkingTimeBadge minutes={getKnownWalkingMinutes(gate, p) ?? p.walking_minutes} />
+                          <WalkingTimeBadge minutes={getKnownWalkingMinutes(gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p), p) ?? p.walking_minutes} />
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400">Available:</span>
@@ -265,8 +265,8 @@ export function SavedListingsPage() {
 
                     <div className="pt-3 border-t border-slate-100">
                       <Link
-                        to={`/student/property/${p.id}?gate=${gate}`}
-                        state={{ property: { ...p, walking_minutes: getKnownWalkingMinutes(gate, p) ?? p.walking_minutes } }}
+                        to={`/student/property/${p.id}?gate=${gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p)}`}
+                        state={{ property: { ...p, walking_minutes: getKnownWalkingMinutes(gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p), p) ?? p.walking_minutes } }}
                         className="block"
                       >
                         <Button size="sm" variant="primary" radius="full" className="w-full text-xs">
@@ -352,8 +352,8 @@ export function SavedListingsPage() {
                     {/* Card Body */}
                     <CardBody className="p-4 pb-2 text-left space-y-1">
                       <Link
-                        to={`/student/property/${p.id}?gate=${gate}`}
-                        state={{ property: { ...p, walking_minutes: getKnownWalkingMinutes(gate, p) ?? p.walking_minutes } }}
+                        to={`/student/property/${p.id}?gate=${gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p)}`}
+                        state={{ property: { ...p, walking_minutes: getKnownWalkingMinutes(gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p), p) ?? p.walking_minutes } }}
                         className="font-bold text-sm sm:text-base text-slate-900 hover:text-ateneo-blue transition line-clamp-1"
                       >
                         {p.name}
@@ -374,7 +374,7 @@ export function SavedListingsPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <WalkingTimeBadge minutes={getKnownWalkingMinutes(gate, p) ?? p.walking_minutes} />
+                        <WalkingTimeBadge minutes={getKnownWalkingMinutes(gate && gate !== 'jacinto' ? gate : getPreferredCampusGate(p), p) ?? p.walking_minutes} />
                         <button
                           type="button"
                           onClick={() => removeFavorite(p.id, p.name)}

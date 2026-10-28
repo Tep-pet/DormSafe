@@ -33,7 +33,7 @@ const DEFAULT_OWNER_PASSWORD = process.env.SEED_OWNER_PASSWORD || 'Owner123!';
 /** One owner account per property (Places/ place1–place6 + place4) */
 const PROPERTIES = [
   {
-    ownerEmail: 'fmppacatang@addu.edu.ph',
+    ownerEmail: 'jerlyugapay@gmail.com',
     ownerName: 'Jerly Ugapay',
     contact_name: 'Jerly Ugapay',
     contact_phone: '09922506670',

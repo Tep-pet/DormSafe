@@ -8,6 +8,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.get('/address-suggestions', propertyController.suggestAddresses);
 router.get('/dashboard/stats', requireRole('owner'), propertyController.dashboardStats);
 router.get('/mine', requireRole('owner'), propertyController.listMine);
 router.post('/', requireRole('owner'), propertyController.create);
@@ -16,11 +17,6 @@ router.post(
   requireRole('owner'),
   upload.array('images', 8),
   propertyController.uploadRoomPhotos
-);
-router.get(
-  '/locations/suggest',
-  requireRole('owner', 'admin', 'student'),
-  propertyController.suggestLocations
 );
 router.get('/:id', requireRole('owner', 'admin'), propertyController.getOne);
 router.patch('/:id', requireRole('owner'), propertyController.update);

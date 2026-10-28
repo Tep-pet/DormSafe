@@ -75,8 +75,8 @@ export function AddPropertyPage() {
           name: form.name.trim(),
           type: form.type,
           address: form.address.trim(),
-          latitude: form.latitude,
-          longitude: form.longitude,
+          latitude: form.latitude || undefined,
+          longitude: form.longitude || undefined,
           description: form.description.trim(),
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
@@ -200,14 +200,15 @@ export function AddPropertyPage() {
               <AddressAutocomplete
                 id="address"
                 label="Complete Campus Address"
-                placeholder="Type street name (e.g. Jacinto, Roxas, Matina)..."
+                placeholder="e.g. 123 Jacinto St, Poblacion District, Davao City"
                 value={form.address}
-                onChange={(addressVal, coords) => {
+                onChange={update('address')}
+                onSelectLocation={({ address, latitude, longitude }) => {
                   setForm((f) => ({
                     ...f,
-                    address: addressVal,
-                    latitude: coords?.latitude ?? f.latitude,
-                    longitude: coords?.longitude ?? f.longitude,
+                    address,
+                    latitude,
+                    longitude,
                   }));
                 }}
                 required

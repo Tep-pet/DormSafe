@@ -62,8 +62,8 @@ export function EditPropertyPage() {
           name: p.name || '',
           description: p.description || '',
           address: p.address || '',
-          latitude: p.latitude || null,
-          longitude: p.longitude || null,
+          latitude: p.latitude ?? null,
+          longitude: p.longitude ?? null,
           contact_name: p.contact_name || resolved.contactName || '',
           contact_phone: p.contact_phone || resolved.contactPhone || '',
           contact_email: p.contact_email || resolved.contactEmail || '',
@@ -128,8 +128,8 @@ export function EditPropertyPage() {
           name: form.name.trim(),
           description: form.description.trim(),
           address: form.address.trim(),
-          latitude: form.latitude,
-          longitude: form.longitude,
+          latitude: form.latitude ?? undefined,
+          longitude: form.longitude ?? undefined,
           contact_name: form.contact_name.trim() || null,
           contact_phone: form.contact_phone.trim() || null,
           contact_email: form.contact_email.trim() || null,
@@ -240,14 +240,14 @@ export function EditPropertyPage() {
                 <AddressAutocomplete
                   id="address"
                   label="Complete Campus Address"
-                  placeholder="Type street name (e.g. Jacinto, Roxas, Matina)..."
                   value={form.address}
-                  onChange={(addressVal, coords) => {
-                    setForm((f) => ({
-                      ...f,
-                      address: addressVal,
-                      latitude: coords?.latitude ?? f.latitude,
-                      longitude: coords?.longitude ?? f.longitude,
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  onSelectLocation={({ address, latitude, longitude }) => {
+                    setForm((prev) => ({
+                      ...prev,
+                      address,
+                      latitude,
+                      longitude,
                     }));
                   }}
                   required

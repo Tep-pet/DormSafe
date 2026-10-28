@@ -22,6 +22,7 @@ router.post(
 );
 
 router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password-with-code', authController.resetPasswordWithCode);
 
 router.get('/verification/status', authMiddleware, authController.getVerificationStatus);
 

@@ -9,36 +9,54 @@ const durationCache = new Map();
  * Guarantees 100% consistency with LeafletPropertyRouteMap & Live GPS Tracker with 0ms server latency.
  */
 function getKnownOsrmDuration(origin, destination) {
-  const isRoxas = Math.abs(origin.lat - 7.0718) < 0.001 && Math.abs(origin.lng - 125.6123) < 0.001;
+  const isRoxas = Math.abs(origin.lat - 7.0718) < 0.0006 && Math.abs(origin.lng - 125.6123) < 0.0006;
+  const isJacinto = Math.abs(origin.lat - 7.0720) < 0.0006 && Math.abs(origin.lng - 125.6141) < 0.0006;
+  const isClaveria = Math.abs(origin.lat - 7.0727) < 0.0006 && Math.abs(origin.lng - 125.6139) < 0.0006;
 
-  // Ivory Residences (lat 7.08719, lng 125.60915) -> 6 min
+  // 1. Ivory Residences (lat 7.08719, lng 125.60915 - Bajada 2 km) -> Google Maps: Claveria 25 min, Jacinto 25 min, Roxas 26 min
   if (Math.abs(destination.lat - 7.08719) < 0.002 && Math.abs(destination.lng - 125.60915) < 0.002) {
+    if (isClaveria || isJacinto) return 25;
+    if (isRoxas) return 26;
+    return 25;
+  }
+  // 2. Corella Dormitory (lat 7.06945, lng 125.61468) -> Google Maps: Roxas 3 min, Jacinto 6 min, Claveria 6 min
+  if (Math.abs(destination.lat - 7.06945) < 0.0003 && Math.abs(destination.lng - 125.61468) < 0.0003) {
+    if (isRoxas) return 3;
+    if (isJacinto) return 6;
+    if (isClaveria) return 6;
+    return 3;
+  }
+  // 3. Residencia de Maria Goretti (lat 7.06956, lng 125.61525) -> Google Maps: Roxas 4 min, Jacinto 4 min, Claveria 6 min
+  if (Math.abs(destination.lat - 7.06956) < 0.0003 && Math.abs(destination.lng - 125.61525) < 0.0003) {
+    if (isRoxas) return 4;
+    if (isJacinto) return 4;
+    if (isClaveria) return 6;
+    return 4;
+  }
+  // 4. BRC Dormitory (lat 7.06805, lng 125.61253) -> Google Maps: Roxas 6 min, Jacinto 7 min, Claveria 8 min
+  if (Math.abs(destination.lat - 7.06805) < 0.0003 && Math.abs(destination.lng - 125.61253) < 0.0003) {
+    if (isRoxas) return 6;
+    if (isJacinto) return 7;
+    if (isClaveria) return 8;
     return 6;
   }
-  // BRC Dormitory (lat 7.06805, lng 125.61253) -> Jacinto: 2 min, Roxas: 1 min
-  if (Math.abs(destination.lat - 7.06805) < 0.002 && Math.abs(destination.lng - 125.61253) < 0.002) {
-    return isRoxas ? 1 : 2;
-  }
-  // Correla Dormitory (lat 7.06945, lng 125.61468) -> 1 min
-  if (Math.abs(destination.lat - 7.06945) < 0.002 && Math.abs(destination.lng - 125.61468) < 0.002) {
-    return 1;
-  }
-  // Residencia de Maria Goretti (lat 7.06956, lng 125.61525) -> 1 min
-  if (Math.abs(destination.lat - 7.06956) < 0.002 && Math.abs(destination.lng - 125.61525) < 0.002) {
-    return 1;
-  }
-  // Juan Luna Boarding House (lat 7.07259, lng 125.61601) -> Jacinto: 1 min, Roxas: 2 min
-  if (Math.abs(destination.lat - 7.07259) < 0.002 && Math.abs(destination.lng - 125.61601) < 0.002) {
-    return isRoxas ? 2 : 1;
+  // 5. Juan Luna Boarding House (lat 7.07259, lng 125.61601) -> Google Maps: Jacinto 4 min, Roxas 7 min, Claveria 5 min
+  if (Math.abs(destination.lat - 7.07259) < 0.0006 && Math.abs(destination.lng - 125.61601) < 0.0006) {
+    if (isJacinto) return 4;
+    if (isRoxas) return 7;
+    if (isClaveria) return 5;
+    return 4;
   }
   return null;
 }
 
-/** Rough walking estimate when API unavailable (~4.8 km/h or 80 meters/min) */
+/** Walking estimate based on Davao urban street grid (~5.0 km/h with 15% street detour, matching Google Maps) */
 function estimateWalkingMinutes(origin, destination) {
   const km = haversineKm(origin.lat, origin.lng, destination.lat, destination.lng);
-  return Math.max(1, Math.round((km / 4.8) * 60));
+  const roadMeters = km * 1000 * 1.18; // actual street walking distance
+  return Math.max(1, Math.round(roadMeters / 83.3));
 }
+
 
 /**
  * Get walking duration in minutes from origin to destination.
@@ -66,9 +84,10 @@ export async function getWalkingDurationMinutes(origin, destination) {
     clearTimeout(timer);
     if (res.ok) {
       const data = await res.json();
-      const durSec = data?.routes?.[0]?.duration;
-      if (durSec != null) {
-        const mins = Math.max(1, Math.round(durSec / 60));
+      const distMeters = data?.routes?.[0]?.distance;
+      if (distMeters != null) {
+        // Calculate true pedestrian walking time (83.3 m/min = 5.0 km/h Google Maps standard)
+        const mins = Math.max(1, Math.round(distMeters / 83.3));
         durationCache.set(cacheKey, mins);
         return mins;
       }

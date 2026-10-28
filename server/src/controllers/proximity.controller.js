@@ -1,4 +1,5 @@
 import { searchNearbyProperties, getPropertyById } from '../services/proximity.service.js';
+import { getRoadRoute } from '../services/roadRouting.service.js';
 import { success } from '../utils/apiResponse.js';
 
 export async function search(req, res, next) {
@@ -22,3 +23,14 @@ export async function getDetail(req, res, next) {
     next(err);
   }
 }
+
+export async function getRoute(req, res, next) {
+  try {
+    const { originLat, originLng, destLat, destLng, mode = 'walk' } = req.query;
+    const route = await getRoadRoute({ originLat, originLng, destLat, destLng, mode });
+    return success(res, route, 'Route calculated');
+  } catch (err) {
+    next(err);
+  }
+}
+

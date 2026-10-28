@@ -57,31 +57,49 @@ export const authService = {
   async forgotPassword(email) {
     const cleanEmail = email.trim();
     const redirectTo = `${window.location.origin}/reset-password`;
+    let backendError = null;
 
-    // 1. Primary: Trigger backend with branded Gmail SMTP service
+    // 1. Trigger backend with branded Gmail SMTP service
     try {
       const res = await apiClient.post('/api/auth/forgot-password', { email: cleanEmail });
-      if (res?.data?.success || res?.success) {
-        return { sent: true };
-      }
-      if (res?.data?.message) {
-        throw new Error(res.data.message);
-      }
+      return { sent: true, data: res.data || res };
     } catch (err) {
-      const errMsg = err?.response?.data?.message || err?.message;
-      if (errMsg && !errMsg.includes('Network Error') && !errMsg.includes('Failed to fetch')) {
-        throw new Error(errMsg);
-      }
+      backendError = err;
+      console.warn('[authService] Backend forgot-password error, falling back to Supabase:', err.message);
     }
 
-    // 2. Secondary fallback only if backend server is unreachable
+    // 2. Fallback to Supabase direct reset if backend is offline/unreachable
     try {
-      const { error: sbErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo });
-      if (sbErr) throw sbErr;
-      return { sent: true };
+      const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo });
+      if (error) throw error;
+      return { sent: true, data };
     } catch (sbErr) {
-      throw new Error(sbErr.message || 'Unable to send password reset email.');
+      console.warn('[authService] Supabase reset error:', sbErr.message);
+      throw new Error(
+        backendError?.message || sbErr.message || 'Unable to send reset email. Please verify your address.'
+      );
     }
+  },
+
+  async verifyRecoveryOtp({ email, token, token_hash }) {
+    if (token_hash) {
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash,
+        type: 'recovery',
+      });
+      if (error) throw error;
+      return data;
+    }
+    if (email && token) {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: token.trim(),
+        type: 'recovery',
+      });
+      if (error) throw error;
+      return data;
+    }
+    throw new Error('Missing verification token or recovery code');
   },
 
   async updatePassword(newPassword) {
@@ -89,4 +107,15 @@ export const authService = {
     if (error) throw error;
     return data;
   },
+
+  /** Reset password directly via verified OTP code and new password */
+  async resetPasswordWithCode({ email, code, newPassword }) {
+    const res = await apiClient.post('/api/auth/reset-password-with-code', {
+      email: email.trim().toLowerCase(),
+      code: code.trim(),
+      newPassword,
+    });
+    return res.data || res;
+  },
 };
+

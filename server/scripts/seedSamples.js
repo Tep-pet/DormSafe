@@ -39,20 +39,20 @@ const DEFAULT_STUDENT_PASSWORD = process.env.SEED_STUDENT_PASSWORD || 'Student12
 const STUDENTS_CONFIG = [
   {
     name: 'Stephanie Palima',
-    email: 'stephanie.palima@addu.edu.ph',
-    altEmails: [],
+    email: 'sgpalima@addu.edu.ph',
+    altEmails: ['stephanie.palima@addu.edu.ph'],
     contact: '0917-234-5678',
   },
   {
     name: 'Samantha Aguirre',
-    email: 'samantha.aguirre@addu.edu.ph',
-    altEmails: [],
+    email: 'lssaguirre@addu.edu.ph',
+    altEmails: ['samantha.aguirre@addu.edu.ph'],
     contact: '0928-876-5432',
   },
   {
     name: 'Franshiska Pacatang',
-    email: 'franshiska.pacatang@addu.edu.ph',
-    altEmails: [],
+    email: 'fmppacatang@addu.edu.ph',
+    altEmails: ['franshiska.pacatang@addu.edu.ph'],
     contact: '0939-555-4321',
   },
   {
@@ -75,6 +75,24 @@ async function getOrCreateStudent(config) {
 
   const usersList = list?.users || [];
   let primaryUser = usersList.find((u) => u.email?.toLowerCase() === config.email.toLowerCase());
+
+  // If primary user with config.email not found, check altEmails
+  if (!primaryUser && config.altEmails?.length) {
+    for (const altEmail of config.altEmails) {
+      const altUser = usersList.find((u) => u.email?.toLowerCase() === altEmail.toLowerCase());
+      if (altUser) {
+        await supabase.auth.admin.updateUserById(altUser.id, {
+          email: config.email,
+          email_confirm: true,
+          password: DEFAULT_STUDENT_PASSWORD,
+          user_metadata: { full_name: config.name, role: 'student' },
+        });
+        primaryUser = { ...altUser, email: config.email };
+        console.log(`  ↻ Migrated student login email: ${altEmail} -> ${config.email}`);
+        break;
+      }
+    }
+  }
 
   // Create primary account if it doesn't exist yet
   if (!primaryUser) {
@@ -422,7 +440,7 @@ async function main() {
       student_email: rachel.email,
       owner_id: juanLuna.owner_id,
       owner_name: owner.full_name || 'Jerly Ugapay',
-      owner_email: owner.email || 'fmppacatang@addu.edu.ph',
+      owner_email: owner.email || 'jerlyugapay@gmail.com',
       move_in_date: '2026-11-01',
       move_out_date: '2027-04-30',
       note: 'Good day Ate Jerly! Inquiring for 2nd semester accommodation. Moving in right after midterms.',

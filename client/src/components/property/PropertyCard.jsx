@@ -5,16 +5,16 @@ import { MapPin, ImageOff, BedDouble } from 'lucide-react';
 import { WalkingTimeBadge } from '../map/WalkingTimeBadge';
 import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
-import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
+import { getKnownWalkingMinutes, getPreferredCampusGate } from '../../utils/propertyCoordinates';
 
 export function PropertyCard({ property, gate, isSelected = false }) {
   const minPrice = property.min_price;
   const imageUrl = property.primary_image || null;
-  const detailPath = gate
-    ? `/student/property/${property.id}?gate=${encodeURIComponent(gate)}`
-    : `/student/property/${property.id}`;
+  const preferredGate = getPreferredCampusGate(property);
+  const activeGate = gate && gate !== 'jacinto' ? gate : preferredGate;
+  const detailPath = `/student/property/${property.id}?gate=${encodeURIComponent(activeGate)}`;
 
-  const walkingMins = getKnownWalkingMinutes(gate, property) ?? property.walking_minutes;
+  const walkingMins = getKnownWalkingMinutes(activeGate, property) ?? property.walking_minutes;
   const enrichedProperty = { ...property, walking_minutes: walkingMins };
 
   return (

@@ -21,7 +21,7 @@ const supabase = createClient(
 
 async function run() {
   const propertyId = '1965b0c6-b3d0-4549-9b28-8e84d5e92936';
-  const ownerId = 'a12a011b-7536-4f59-93c1-789c4aa45a64'; // Jerly Ugapay (fmppacatang@addu.edu.ph)
+  const ownerId = 'a12a011b-7536-4f59-93c1-789c4aa45a64'; // Jerly Ugapay (jerlyugapay@gmail.com)
 
   // 1. Update property name to Juan Luna Boarding House
   const { error: updateError } = await supabase

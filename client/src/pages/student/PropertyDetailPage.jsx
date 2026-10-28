@@ -53,7 +53,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
 import { DEFAULT_GATE, CAMPUS_GATES } from '../../constants/campusGates';
 import { ROUTES } from '../../constants/routes';
-import { getKnownWalkingMinutes } from '../../utils/propertyCoordinates';
+import { getKnownWalkingMinutes, getPreferredCampusGate } from '../../utils/propertyCoordinates';
 
 function sortRooms(rooms = []) {
   return [...rooms].sort((a, b) => {
@@ -71,23 +71,36 @@ export function PropertyDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const gate = searchParams.get('gate') || DEFAULT_GATE;
+  const explicitGate = searchParams.get('gate');
+
   const { accessToken, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const cachedProperty = proximityService.getCachedProperty(id, gate);
+  const cachedProperty = proximityService.getCachedProperty(id, explicitGate || DEFAULT_GATE);
   const passedProperty = location.state?.property || cachedProperty;
   const [property, setProperty] = useState(passedProperty || null);
 
-  const initialKnownMins = getKnownWalkingMinutes(gate, passedProperty);
+  const preferredGate = getPreferredCampusGate(passedProperty || property);
+  const [selectedGate, setSelectedGate] = useState(explicitGate || preferredGate);
+
+  // Sync selectedGate if property finishes loading and no explicit gate was in URL
+  useEffect(() => {
+    if (!explicitGate && property) {
+      setSelectedGate(getPreferredCampusGate(property));
+    }
+  }, [property, explicitGate]);
+
+  const gate = selectedGate;
+
+  const initialKnownMins = getKnownWalkingMinutes(selectedGate, passedProperty);
   const [liveWalkingMinutes, setLiveWalkingMinutes] = useState(
     initialKnownMins || passedProperty?.walking_minutes || null
   );
   const [loading, setLoading] = useState(!passedProperty);
   const [error, setError] = useState(null);
 
-  const knownMinutes = getKnownWalkingMinutes(gate, property || passedProperty);
+  const knownMinutes = getKnownWalkingMinutes(selectedGate, property || passedProperty);
   const effectiveWalkingMinutes = knownMinutes ?? liveWalkingMinutes ?? property?.walking_minutes;
 
   const handleDurationChange = useCallback((liveMins) => {
@@ -693,13 +706,49 @@ export function PropertyDetailPage() {
                 </CardHeader>
 
                 <CardBody className="p-4 sm:p-5 space-y-3">
+                  {/* Ateneo Campus Gate Switcher Tabs */}
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Select Ateneo Campus Starting Gate
+                    </span>
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+                      {[
+                        { id: 'roxas', label: 'Roxas Gate' },
+                        { id: 'jacinto', label: 'Jacinto Gate' },
+                        { id: 'finster', label: 'Claveria Gate' },
+                      ].map((g) => {
+                        const isSel = selectedGate === g.id || (g.id === 'finster' && selectedGate === 'claveria');
+                        const mins = getKnownWalkingMinutes(g.id, property);
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => setSelectedGate(g.id)}
+                            className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                              isSel
+                                ? 'bg-white text-ateneo-blue shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <span>{g.label}</span>
+                            {mins != null && (
+                              <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-blue-50 text-ateneo-blue">
+                                {mins}m
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <p className="text-xs text-slate-600">
                     Walking navigation path from <span className="font-semibold text-slate-800">{activeGateLabel}</span>.
                   </p>
                   <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100 shadow-2xs">
                     <PropertyLocationMap
                       property={property}
-                      gateId={gate}
+                      gateId={selectedGate}
                       walkingMinutes={effectiveWalkingMinutes}
                       onDurationChange={handleDurationChange}
                     />
@@ -719,6 +768,7 @@ export function PropertyDetailPage() {
                               ...property,
                               walking_minutes: effectiveWalkingMinutes,
                             },
+                            initialGate: selectedGate,
                           },
                         })
                       }

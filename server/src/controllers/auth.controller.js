@@ -57,14 +57,19 @@ export async function forgotPassword(req, res, next) {
     const { email } = req.body;
     const clientOrigin = req.headers.origin || req.headers.referer;
     const result = await authService.requestPasswordReset(email, clientOrigin);
-    if (!result.sent) {
-      return res.status(400).json({
-        success: false,
-        message: result.error || 'Unable to send password reset email.',
-      });
-    }
-    return success(res, result, 'Password reset link sent! Please check your email inbox.');
+    return success(res, result, 'Verification code sent. Please check your email.');
   } catch (err) {
     next(err);
   }
 }
+
+export async function resetPasswordWithCode(req, res, next) {
+  try {
+    const { email, code, newPassword } = req.body;
+    const result = await authService.resetPasswordWithCode({ email, code, newPassword });
+    return success(res, result, 'Password updated successfully. You can now sign in.');
+  } catch (err) {
+    next(err);
+  }
+}
+

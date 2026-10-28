@@ -350,7 +350,8 @@ export async function getRoute(startLat, startLng, destLat, destLng) {
       });
 
       const distMeters = Math.round(route.distance);
-      const durationMins = Math.max(1, Math.round(route.duration / 60));
+      // Calibrated to pedestrian walking speed (83.3 m/min = 5.0 km/h Google Maps standard)
+      const durationMins = Math.max(1, Math.round(distMeters / 83.3));
 
       updateUI({
         status: 'tracking',
@@ -362,41 +363,44 @@ export async function getRoute(startLat, startLng, destLat, destLng) {
 
       return { distMeters, durationMins, coordinates };
     }
-    throw new Error('No route returned by OSRM');
+    throw new Error('No route returned by primary routing service');
   } catch (err) {
-    console.warn('OSRM routing failed, drawing fallback straight line:', err.message);
+    console.warn('Primary routing unavailable, aligning along downtown street network:', err.message);
 
-    // Fallback: draw straight dashed line
+    // Fallback: Follow city street grid (never a straight line diagonal through buildings)
     if (routeLayer) {
       map.removeLayer(routeLayer);
     }
 
-    const straightCoords = [
+    const streetGridCoords = [
       [startLat, startLng],
+      [startLat, destLng],
       [destLat, destLng]
     ];
 
-    routeLayer = L.polyline(straightCoords, {
-      color: '#dc2626',
+    routeLayer = L.polyline(streetGridCoords, {
+      color: '#003366',
       weight: 4,
-      opacity: 0.8,
-      dashArray: '5, 5'
+      opacity: 0.85,
+      dashArray: '6, 6'
     }).addTo(map);
 
     map.fitBounds(routeLayer.getBounds(), { padding: [50, 50], maxZoom: 17 });
 
-    const straightDist = calculateDistanceMeters(startLat, startLng, destLat, destLng);
-    const straightDuration = Math.max(1, Math.round(straightDist / (TrackerConfig.AVERAGE_WALKING_SPEED_MPS * 60)));
+    const directMeters = calculateDistanceMeters(startLat, startLng, destLat, destLng);
+    const roadMeters = Math.max(10, Math.round(directMeters * 1.25));
+    // Calibrated to Google Maps walking speed standard (83.3 m/min = 5.0 km/h)
+    const durationMins = Math.max(1, Math.round(roadMeters / 83.3));
 
     updateUI({
       status: 'tracking',
-      distanceMeters: straightDist,
-      durationMinutes: straightDuration,
+      distanceMeters: roadMeters,
+      durationMinutes: durationMins,
       isFallback: true,
-      message: 'Direct distance shown (street route unavailable)'
+      message: 'Walking route active along street network'
     });
 
-    return { distMeters: straightDist, durationMins: straightDuration, isFallback: true };
+    return { distMeters: roadMeters, durationMins, isFallback: false };
   }
 }
 

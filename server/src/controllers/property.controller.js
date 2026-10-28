@@ -80,11 +80,11 @@ export async function update(req, res, next) {
   }
 }
 
-export async function suggestLocations(req, res, next) {
+export async function suggestAddresses(req, res, next) {
   try {
     const query = req.query.q || '';
-    const suggestions = await propertyService.suggestPropertyLocations(query);
-    return success(res, suggestions, 'Location suggestions retrieved');
+    const suggestions = await propertyService.getAddressSuggestions(query);
+    return success(res, suggestions);
   } catch (err) {
     next(err);
   }

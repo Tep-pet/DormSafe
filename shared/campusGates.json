@@ -4,16 +4,51 @@
     "jacinto": {
       "id": "jacinto",
       "label": "Jacinto Campus Gate",
-      "lat": 7.072,
+      "lat": 7.0720,
       "lng": 125.6141,
-      "note": "E. Jacinto St entrance, east side of AdDU Jacinto campus (OSM bounds)"
+      "note": "E. Jacinto St entrance, east side of AdDU Jacinto campus"
     },
     "roxas": {
       "id": "roxas",
       "label": "Roxas Campus Gate",
       "lat": 7.0718,
       "lng": 125.6123,
-      "note": "Roxas Ave entrance, west side of AdDU Jacinto campus (OSM bounds)"
+      "note": "Roxas Ave entrance, west side of AdDU Jacinto campus"
+    },
+    "finster": {
+      "id": "finster",
+      "label": "Ateneo Finster Gate (Claveria)",
+      "lat": 7.0727,
+      "lng": 125.6139,
+      "note": "North pedestrian gate along C.M. Recto Ave (Claveria)"
+    },
+    "claveria": {
+      "id": "claveria",
+      "label": "Ateneo Finster Gate (Claveria)",
+      "lat": 7.0727,
+      "lng": 125.6139,
+      "note": "North pedestrian gate along C.M. Recto Ave (Claveria)"
+    },
+    "martin_hall": {
+      "id": "martin_hall",
+      "label": "Ateneo Martin Hall Gate",
+      "lat": 7.0715,
+      "lng": 125.6135,
+      "note": "Pedestrian access to university sports gym & arena"
+    },
+    "community_center": {
+      "id": "community_center",
+      "label": "Ateneo Community Center Gate",
+      "lat": 7.0711,
+      "lng": 125.6122,
+      "note": "Southwest entrance by Bapa Benny Community Center"
+    },
+    "dotterweich": {
+      "id": "dotterweich",
+      "label": "Ateneo Dotterweich Gate",
+      "lat": 7.0708,
+      "lng": 125.6126,
+      "note": "South pedestrian gate near Canisius Hall"
     }
   },
   "defaultGate": "jacinto"

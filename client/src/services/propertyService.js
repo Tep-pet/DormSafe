@@ -29,8 +29,7 @@ export const propertyService = {
   updateProperty(id, data, token) {
     return apiClient.patch(`/api/properties/${id}`, data, token);
   },
-  suggestLocations(query, token) {
-    if (!query || query.trim().length < 2) return Promise.resolve({ data: [] });
-    return apiClient.get(`/api/properties/locations/suggest?q=${encodeURIComponent(query.trim())}`, token);
+  getAddressSuggestions(query, token) {
+    return apiClient.get(`/api/properties/address-suggestions?q=${encodeURIComponent(query)}`, token);
   },
 };

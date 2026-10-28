@@ -107,6 +107,7 @@ export function MapLibreTracker({
   userLocation,
   userBearing,
   isCompassMode,
+  travelMode = 'walk',
   recenterTrigger,
   onRouteStats,
   onArrival,
@@ -135,6 +136,22 @@ export function MapLibreTracker({
       map.once('styledata', () => {
         ensureRouteOnMap(map, coordinates);
       });
+    }
+
+    // Fit map bounds to the road route
+    try {
+      const bounds = new maplibregl.LngLatBounds();
+      coordinates.forEach((c) => {
+        const pair = toLngLatPair(c);
+        if (pair && Number.isFinite(pair[0]) && Number.isFinite(pair[1])) {
+          bounds.extend(pair);
+        }
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
+      }
+    } catch {
+      // safe ignore
     }
   };
 
@@ -242,12 +259,6 @@ export function MapLibreTracker({
       userMarkerRef.current.setLngLat([lng, lat]);
     }
 
-    // Immediately render direct connecting line so user location and place are always visually connected
-    renderPolyline([
-      [lat, lng],
-      [destLat, destLng],
-    ]);
-
     // Fit bounds smoothly on coordinate updates
     if (!hasFittedBoundsRef.current) {
       hasFittedBoundsRef.current = true;
@@ -257,15 +268,20 @@ export function MapLibreTracker({
       map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
     }
 
-    // Update position in RouteService to get exact street-level walking paths
+    // Update position in RouteService to get exact street-level road paths
     RouteService.updateStudentPosition(
       { lat, lng },
       { lat: destLat, lng: destLng },
+      travelMode,
       (routeResult) => {
         if (onRouteStats) {
           onRouteStats({
             distanceMeters: routeResult.distanceMeters,
             durationMinutes: routeResult.durationMinutes,
+            formattedDistance: routeResult.formattedDistance,
+            formattedDuration: routeResult.formattedDuration,
+            summary: routeResult.summary,
+            mode: routeResult.mode,
             isFallback: routeResult.isFallback,
           });
         }
@@ -273,9 +289,10 @@ export function MapLibreTracker({
       },
       () => {
         if (onArrival) onArrival();
-      }
+      },
+      property
     );
-  }, [userLocation, destLat, destLng, onRouteStats, onArrival]);
+  }, [userLocation, destLat, destLng, travelMode, onRouteStats, onArrival, property]);
 
   // 4. Handle Manual Recenter Trigger
   useEffect(() => {

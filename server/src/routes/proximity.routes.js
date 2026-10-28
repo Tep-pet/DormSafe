@@ -20,4 +20,10 @@ router.get(
   proximityController.getDetail
 );
 
+router.get(
+  '/route',
+  proximityController.getRoute
+);
+
 export default router;
+

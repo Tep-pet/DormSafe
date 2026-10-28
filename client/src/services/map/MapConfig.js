@@ -17,11 +17,11 @@ export const MapConfig = {
 
   // Navigation Logic Thresholds
   THRESHOLDS: {
-    RE_ROUTE_METERS: 50,       // Only request re-route if student deviates > 50m
-    RE_ROUTE_THROTTLE_MS: 20000, // 20s minimum between routing API requests
-    ARRIVAL_METERS: 20,         // "You've arrived" within 20m of accommodation
-    WALKING_SPEED_MPS: 1.33,    // ~4.8 km/h pedestrian velocity
-    ACCURACY_REJECT_METERS: 250, // Allow laptop/tablet Wi-Fi location (reject only >250m)
+    RE_ROUTE_METERS: 35,         // Recalculate route when student moves meaningful distance (30-50m)
+    RE_ROUTE_THROTTLE_MS: 8000,  // Throttled to 8s to prevent API spamming
+    ARRIVAL_METERS: 20,          // "You've arrived" within 20m of accommodation
+    WALKING_SPEED_MPS: 1.33,     // ~5.0 km/h pedestrian velocity (Google Maps standard)
+    ACCURACY_REJECT_METERS: 50,  // Reject GPS readings with poor accuracy (> 50m)
   },
 
   // Campus Bounding Box (Ateneo de Davao Jacinto + 2km perimeter)
