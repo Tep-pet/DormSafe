@@ -229,11 +229,30 @@ export function SearchPage() {
 
             {/* Error State Banner */}
             {error && (
-              <div className="rounded-2xl border border-rose-200/90 bg-rose-50/80 p-4 text-xs font-medium text-rose-700 flex items-start gap-2.5 shadow-2xs">
-                <AlertTriangle size={16} className="shrink-0 text-rose-500 mt-0.5" />
-                <div>
-                  <p className="font-semibold">Unable to fetch nearby properties</p>
-                  <p className="mt-0.5 text-rose-600">{error}</p>
+              <div className="rounded-2xl border border-rose-200/90 bg-rose-50/80 p-4 text-xs font-medium text-rose-700 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle size={16} className="shrink-0 text-rose-500 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-rose-800">Unable to fetch nearby properties</p>
+                    <p className="mt-0.5 text-rose-600">
+                      {/invalid or expired token|session expired/i.test(error)
+                        ? 'Your session has expired. Please sign in again to browse verified properties.'
+                        : error}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/invalid or expired token|session expired/i.test(error) ? (
+                    <Link to="/login">
+                      <Button size="sm" variant="primary" radius="full" className="text-xs">
+                        Sign In Again
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button size="sm" variant="secondary" radius="full" onClick={refetch} className="text-xs">
+                      Retry
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

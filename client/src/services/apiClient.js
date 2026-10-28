@@ -26,16 +26,49 @@ function getUrlCandidates(path) {
 }
 
 /**
+ * Safely decodes a JWT without external libraries to check expiration.
+ */
+function isTokenExpired(token) {
+  if (!token || typeof token !== 'string') return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.exp) return false;
+    // Consider expired if less than 20 seconds remaining
+    return payload.exp * 1000 <= Date.now() + 20000;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve fresh access token from Supabase session if not passed or stale
  */
 async function resolveToken(token) {
-  if (token) return token;
+  // 1. If explicitly passed token is still fresh, use it
+  if (token && !isTokenExpired(token)) {
+    return token;
+  }
+
+  // 2. Otherwise get fresh session from Supabase
   try {
     const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token || null;
-  } catch {
-    return null;
+    const sessionToken = data?.session?.access_token;
+    if (sessionToken && !isTokenExpired(sessionToken)) {
+      return sessionToken;
+    }
+
+    // Proactively refresh if session token is expired or close to expiry
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError && refreshData?.session?.access_token) {
+      return refreshData.session.access_token;
+    }
+  } catch (err) {
+    console.warn('[apiClient] Error resolving fresh auth token:', err);
   }
+
+  return token || null;
 }
 
 /**
@@ -91,14 +124,19 @@ async function request(path, { method = 'GET', body, token, formData } = {}) {
       // Handle 401: attempt token refresh once
       if (response.status === 401 && attempt === 0) {
         try {
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          if (refreshData?.session?.access_token) {
+          const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+          if (!refreshErr && refreshData?.session?.access_token) {
             activeToken = refreshData.session.access_token;
             continue; // retry with refreshed token
           }
         } catch {
           // ignore refresh error and throw standard response error below
         }
+      }
+
+      if (response.status === 401) {
+        // If token refresh failed, sign out to prevent zombie auth state
+        supabase.auth.signOut().catch(() => {});
       }
 
       if (!response.ok) {
