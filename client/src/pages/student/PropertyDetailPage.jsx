@@ -706,41 +706,6 @@ export function PropertyDetailPage() {
                 </CardHeader>
 
                 <CardBody className="p-4 sm:p-5 space-y-3">
-                  {/* Ateneo Campus Gate Switcher Tabs */}
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      Select Ateneo Campus Starting Gate
-                    </span>
-                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto">
-                      {[
-                        { id: 'roxas', label: 'Roxas Gate' },
-                        { id: 'jacinto', label: 'Jacinto Gate' },
-                        { id: 'finster', label: 'Claveria Gate' },
-                      ].map((g) => {
-                        const isSel = selectedGate === g.id || (g.id === 'finster' && selectedGate === 'claveria');
-                        const mins = getKnownWalkingMinutes(g.id, property);
-                        return (
-                          <button
-                            key={g.id}
-                            type="button"
-                            onClick={() => setSelectedGate(g.id)}
-                            className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                              isSel
-                                ? 'bg-white text-ateneo-blue shadow-xs'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <span>{g.label}</span>
-                            {mins != null && (
-                              <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-blue-50 text-ateneo-blue">
-                                {mins}m
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
 
                   <p className="text-xs text-slate-600">
                     Walking navigation path from <span className="font-semibold text-slate-800">{activeGateLabel}</span>.
