@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Footprints,
   Car,
-  Phone,
   Navigation,
-  ChevronUp,
-  ChevronDown,
   CheckCircle2,
   MapPin,
   Compass,
@@ -24,19 +21,15 @@ export function TrackingBottomSheet({
   onSelectManualOrigin,
   onStopTracking,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const isWalk = travelMode === 'walk';
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-auto transition-transform duration-300">
       <div className="mx-auto max-w-lg bg-white/95 backdrop-blur-xl border-t sm:border border-slate-200/90 sm:rounded-t-3xl shadow-2xl overflow-hidden pb-safe">
-        {/* Drag handle / collapse toggle */}
-        <button
-          onClick={() => setIsExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-center pt-2.5 pb-1 focus:outline-hidden text-slate-400 hover:text-slate-600 transition"
-        >
+        {/* Top visual handle */}
+        <div className="w-full flex items-center justify-center pt-2.5 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-300/80 mb-1" />
-        </button>
+        </div>
 
         <div className="px-5 pb-5 pt-1 space-y-3.5">
           {/* Arrival Celebration Banner */}
@@ -203,34 +196,6 @@ export function TrackingBottomSheet({
               End Navigation
             </Button>
           </div>
-
-          {/* Expanded Drawer Details */}
-          {isExpanded && (
-            <div className="pt-2 border-t border-slate-100 space-y-3 text-xs text-slate-600 animate-fadeIn">
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Property Type</span>
-                  <p className="font-semibold capitalize text-slate-800">{property?.type || 'Dormitory'}</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Starting Price</span>
-                  <p className="font-semibold text-slate-800">
-                    {property?.price ? `₱${property.price.toLocaleString()}/mo` : 'Inquire for Rates'}
-                  </p>
-                </div>
-              </div>
-
-              {property?.contact_phone && (
-                <a
-                  href={`tel:${property.contact_phone}`}
-                  className="flex items-center justify-center gap-2 w-full p-2.5 rounded-xl bg-slate-100 text-slate-800 font-semibold hover:bg-slate-200 transition"
-                >
-                  <Phone size={14} />
-                  <span>Call Landlord ({property.contact_phone})</span>
-                </a>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
