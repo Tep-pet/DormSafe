@@ -26,12 +26,14 @@ export function LiveNavigationPage() {
   const location = useLocation();
   const { accessToken } = useAuth();
 
-  // If passed directly via router state, use it immediately (zero loading screen)
-  const passedProperty = location.state?.property;
+  // If passed directly via router state or matching benchmark catalog by UUID/name, use it immediately (zero loading screen)
+  const knownBenchmark = getKnownBenchmarkProperty(id);
+  const passedProperty = location.state?.property || knownBenchmark;
 
   // Determine default starting gate (Roxas Gate is the primary reference gate)
+  const preferredGate = getPreferredCampusGate(passedProperty);
   const queryGate = new URLSearchParams(location.search).get('gate');
-  const resolvedGateId = queryGate || location.state?.initialGate || 'roxas';
+  const resolvedGateId = queryGate || location.state?.initialGate || preferredGate || 'roxas';
   const defaultGate = ADDU_GATES.find((g) => g.id === resolvedGateId) || ADDU_GATES.find((g) => g.id === 'roxas') || ADDU_GATES[0];
 
   const [property, setProperty] = useState(passedProperty || null);
@@ -40,7 +42,7 @@ export function LiveNavigationPage() {
 
   // Permission & Modals
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [showLandmarkModal, setShowLandmarkModal] = useState(!queryGate);
+  const [showLandmarkModal, setShowLandmarkModal] = useState(!queryGate && !location.state?.initialGate);
 
   // GPS Detection State: 'detecting' | 'detected' | 'unavailable'
   const [gpsStatus, setGpsStatus] = useState('detecting');
@@ -75,13 +77,14 @@ export function LiveNavigationPage() {
   const wakeLockRef = useRef(null);
 
   // Recalculates route and duration using Google Directions & verified road network (never straight lines)
-  const recalculateRouteForLocation = useCallback(async (originCoords, mode, currentName) => {
-    if (!originCoords || !property) return;
-    const destLat = Number(property.latitude || 7.072);
-    const destLng = Number(property.longitude || 125.614);
+  const recalculateRouteForLocation = useCallback(async (originCoords, mode, currentName, overrideProperty = null) => {
+    const targetProp = overrideProperty || property || getKnownBenchmarkProperty(id);
+    if (!originCoords || !targetProp) return;
+    const destLat = Number(targetProp.latitude || 7.06956);
+    const destLng = Number(targetProp.longitude || 125.61525);
 
     try {
-      const route = await RouteService.fetchRoute(originCoords, { lat: destLat, lng: destLng }, mode, property);
+      const route = await RouteService.fetchRoute(originCoords, { lat: destLat, lng: destLng }, mode, targetProp);
       if (route) {
         setRouteStats({
           distanceMeters: route.distanceMeters,
@@ -99,7 +102,7 @@ export function LiveNavigationPage() {
     } catch (err) {
       console.warn('[LiveNavigationPage] Route calculation notice:', err.message);
     }
-  }, [property]);
+  }, [property, id]);
 
   // Request browser geolocation with enableHighAccuracy: true
   const requestGeolocation = useCallback(() => {
@@ -153,7 +156,7 @@ export function LiveNavigationPage() {
     if (benchmarkProp) {
       setProperty(benchmarkProp);
       setLoading(false);
-      recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name);
+      recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, benchmarkProp);
       return;
     }
 
@@ -161,17 +164,17 @@ export function LiveNavigationPage() {
     const safetyTimer = setTimeout(() => {
       if (isMounted) {
         console.info('[LiveNavigationPage] Using local fallback catalog accommodation');
-        const fallbackProp = {
-          id: id || 'corella',
-          name: 'Corella Dormitory',
-          address: '108 Roxas Avenue, Davao City, Philippines, 8000',
-          latitude: 7.06945,
-          longitude: 125.61468,
+        const fallbackProp = getKnownBenchmarkProperty(id) || {
+          id: id || 'residencia',
+          name: 'Residencia de Maria Goretti',
+          address: '32 Padre Faura St, Poblacion District, Davao City, Davao del Sur',
+          latitude: 7.0695629,
+          longitude: 125.6152546,
           is_verified: true,
         };
         setProperty(fallbackProp);
         setLoading(false);
-        recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name);
+        recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, fallbackProp);
       }
     }, 1500);
 
@@ -182,23 +185,23 @@ export function LiveNavigationPage() {
         clearTimeout(safetyTimer);
         if (isMounted) {
           setProperty(data);
-          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name);
+          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, data);
         }
       } catch (err) {
         clearTimeout(safetyTimer);
         console.warn('API fetch failed, falling back to local listing catalog:', err);
-        const fallbackProp = {
-          id: id || 'corella',
-          name: 'Corella Dormitory',
-          address: '108 Roxas Avenue, Davao City, Philippines, 8000',
-          latitude: 7.06945,
-          longitude: 125.61468,
+        const fallbackProp = getKnownBenchmarkProperty(id) || {
+          id: id || 'residencia',
+          name: 'Residencia de Maria Goretti',
+          address: '32 Padre Faura St, Poblacion District, Davao City, Davao del Sur',
+          latitude: 7.0695629,
+          longitude: 125.6152546,
           is_verified: true,
         };
         if (isMounted) {
           setProperty(fallbackProp);
           setError(null);
-          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name);
+          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, fallbackProp);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -242,7 +245,8 @@ export function LiveNavigationPage() {
       setUserLocation(detectedGpsPos);
       setOriginName('My Current Location (Live GPS)');
       setRecenterCount((c) => c + 1);
-      recalculateRouteForLocation(detectedGpsPos, travelMode, 'My Current Location (Live GPS)');
+      const activeProp = property || getKnownBenchmarkProperty(id);
+      recalculateRouteForLocation(detectedGpsPos, travelMode, 'My Current Location (Live GPS)', activeProp);
     }
 
     // Fallback timer for devices without GPS fixes (3.5 seconds)
@@ -289,7 +293,8 @@ export function LiveNavigationPage() {
     RouteService.reset();
 
     // Recalculate route and duration from chosen gate using Google Directions & verified paths
-    recalculateRouteForLocation({ lat: landmark.lat, lng: landmark.lng }, travelMode, landmark.name);
+    const activeProp = property || getKnownBenchmarkProperty(id);
+    recalculateRouteForLocation({ lat: landmark.lat, lng: landmark.lng }, travelMode, landmark.name, activeProp);
   };
 
   const handleToggleMode = (newMode) => {
@@ -297,8 +302,9 @@ export function LiveNavigationPage() {
     setTravelMode(newMode);
     RouteService.reset();
 
+    const activeProp = property || getKnownBenchmarkProperty(id);
     if (userLocation) {
-      recalculateRouteForLocation(userLocation, newMode, originName);
+      recalculateRouteForLocation(userLocation, newMode, originName, activeProp);
     }
   };
 
@@ -399,7 +405,7 @@ export function LiveNavigationPage() {
 
       {/* MapLibre GL 3D Turn-By-Turn Road Tracking Canvas */}
       <MapLibreTracker
-        property={property}
+        property={property || knownBenchmark || getKnownBenchmarkProperty(id)}
         userLocation={userLocation}
         userBearing={userBearing}
         isCompassMode={isCompassMode}
@@ -411,7 +417,7 @@ export function LiveNavigationPage() {
 
       {/* Responsive Turn-By-Turn Bottom Sheet with Mode & ETA */}
       <TrackingBottomSheet
-        property={property}
+        property={property || knownBenchmark || getKnownBenchmarkProperty(id)}
         routeStats={routeStats}
         travelMode={travelMode}
         onToggleMode={handleToggleMode}

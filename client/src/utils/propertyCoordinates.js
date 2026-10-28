@@ -5,61 +5,88 @@
 
 export const VERIFIED_PINPOINTS = {
   juanLuna: {
+    id: '1965b0c6-b3d0-4549-9b28-8e84d5e92936',
+    ids: ['1965b0c6-b3d0-4549-9b28-8e84d5e92936', 'juanluna', 'juan-luna', 'juan_luna'],
     name: 'Juan Luna Boarding House',
+    address: 'Brgy 29-c 102-1 purok-2 Juan Luna Street, Davao City, Davao del Sur',
+    type: 'boarding_house',
     lat: 7.0725891,
     lng: 125.6160124,
-    matches: (name, addr) => name.includes('juan') || addr.includes('juan luna'),
+    matches: (name, addr, id) => id === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' || name.includes('juan') || addr.includes('juan luna'),
   },
   brc: {
+    id: 'baea8d0e-133d-4aee-aab0-2702ca0d06fe',
+    ids: ['baea8d0e-133d-4aee-aab0-2702ca0d06fe', 'brc', 'brc-dormitory'],
     name: 'BRC Dormitory',
+    address: 'Padre Gomez St & A Bonifacio St, Barangay 34-D, Davao City',
+    type: 'dormitory',
     lat: 7.0680548,
     lng: 125.6125343,
-    matches: (name, addr) => name.includes('brc') || addr.includes('gomez') || addr.includes('34-d'),
+    matches: (name, addr, id) => id === 'baea8d0e-133d-4aee-aab0-2702ca0d06fe' || name.includes('brc') || addr.includes('gomez') || addr.includes('34-d'),
   },
   corella: {
-    name: 'Correla Dormitory',
+    id: 'f5414846-4176-4e2b-9f50-bad4dbfe5914',
+    ids: ['f5414846-4176-4e2b-9f50-bad4dbfe5914', 'corella', 'correla'],
+    name: 'Corella Dormitory',
+    address: '108 Roxas Avenue, Davao City, Philippines, 8000',
+    type: 'dormitory',
     lat: 7.06945,
     lng: 125.61468,
-    matches: (name, addr) => name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
+    matches: (name, addr, id) => id === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' || name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
   },
   correla: {
-    name: 'Correla Dormitory',
+    id: 'f5414846-4176-4e2b-9f50-bad4dbfe5914',
+    ids: ['f5414846-4176-4e2b-9f50-bad4dbfe5914', 'corella', 'correla'],
+    name: 'Corella Dormitory',
+    address: '108 Roxas Avenue, Davao City, Philippines, 8000',
+    type: 'dormitory',
     lat: 7.06945,
     lng: 125.61468,
-    matches: (name, addr) => name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
+    matches: (name, addr, id) => id === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' || name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
   },
   residencia: {
+    id: 'db5ad051-c0c7-4eba-8942-8ab98ab22e63',
+    ids: ['db5ad051-c0c7-4eba-8942-8ab98ab22e63', 'residencia', 'goretti', 'maria-goretti'],
     name: 'Residencia de Maria Goretti',
+    address: '32 Padre Faura St, Poblacion District, Davao City, Davao del Sur',
+    type: 'dormitory',
     lat: 7.0695629,
     lng: 125.6152546,
-    matches: (name, addr) => name.includes('goretti') || name.includes('faura') || name.includes('maria') || name.includes('residencia'),
+    matches: (name, addr, id) => id === 'db5ad051-c0c7-4eba-8942-8ab98ab22e63' || name.includes('goretti') || name.includes('faura') || name.includes('maria') || name.includes('residencia'),
   },
   ivory: {
+    id: 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7',
+    ids: ['f448e1fe-bdbd-487f-ab6e-0c732330a3a7', '7d67143d-00a3-4007-b656-5073d6bbf8b2', 'ivory', 'ivory-residences'],
     name: 'Ivory Residences',
+    address: '3JP5+WVM, J.P. Laurel Ave, Poblacion District, Davao City, Davao del Sur',
+    type: 'dormitory',
     lat: 7.0871921,
     lng: 125.6091495,
-    matches: (name, addr) => name.includes('ivory') || addr.includes('laurel') || addr.includes('bajada'),
+    matches: (name, addr, id) => id === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' || id === '7d67143d-00a3-4007-b656-5073d6bbf8b2' || name.includes('ivory') || addr.includes('laurel') || addr.includes('bajada'),
   },
 };
 
 export function getKnownBenchmarkProperty(idOrName) {
   if (!idOrName) return null;
-  const s = String(idOrName).toLowerCase();
+  const s = String(idOrName).toLowerCase().trim();
   for (const [key, entry] of Object.entries(VERIFIED_PINPOINTS)) {
     const k = key.toLowerCase();
     const entryName = entry.name.toLowerCase();
+    const hasIdMatch = entry.ids?.some((i) => i.toLowerCase() === s);
     if (
+      hasIdMatch ||
       k === s ||
       k.includes(s) ||
       s.includes(k) ||
       entryName.includes(s) ||
       s.includes(entryName) ||
-      (entry.matches && entry.matches(s, s))
+      (entry.matches && entry.matches(s, s, s))
     ) {
       return {
-        id: key,
+        id: entry.id || key,
         name: entry.name,
-        address: entry.name + ', Davao City',
+        address: entry.address,
+        type: entry.type || 'dormitory',
         latitude: entry.lat,
         longitude: entry.lng,
         is_verified: true,
@@ -75,29 +102,33 @@ export function getKnownBenchmarkProperty(idOrName) {
  */
 export function getAccuratePinpoint(property) {
   if (!property) {
-    return { lat: 7.0725891, lng: 125.6160124 };
+    return { lat: 7.0695629, lng: 125.6152546 };
   }
 
-  const rawLat = Number(property.latitude);
-  const rawLng = Number(property.longitude);
-
-  // 1. Check known verified listings first for absolute pinpoint accuracy
+  const propId = String(property.id || '').toLowerCase();
   const name = (property.name || '').toLowerCase();
   const addr = (property.address || '').toLowerCase();
 
   for (const entry of Object.values(VERIFIED_PINPOINTS)) {
-    if (entry.matches(name, addr)) {
+    if (
+      entry.id?.toLowerCase() === propId ||
+      entry.ids?.some((i) => i.toLowerCase() === propId) ||
+      (entry.matches && entry.matches(name, addr, propId))
+    ) {
       return { lat: entry.lat, lng: entry.lng };
     }
   }
+
+  const rawLat = Number(property.latitude ?? property.lat);
+  const rawLng = Number(property.longitude ?? property.lng);
 
   // 2. Use property's stored coordinates if valid
   if (Number.isFinite(rawLat) && Number.isFinite(rawLng) && rawLat !== 0 && rawLng !== 0) {
     return { lat: rawLat, lng: rawLng };
   }
 
-  // Default fallback to Juan Luna St area near campus
-  return { lat: 7.0725891, lng: 125.6160124 };
+  // Default fallback to Residencia de Maria Goretti
+  return { lat: 7.0695629, lng: 125.6152546 };
 }
 
 /**
@@ -123,11 +154,12 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   const isDotterweich = gate.includes('dotterweich');
   const isWalk = mode === 'walk';
 
+  const propId = String(property.id || '').toLowerCase();
   const name = (property.name || '').toLowerCase();
   const addr = (property.address || '').toLowerCase();
 
   // 1. Corella Dormitory (Addu Roxas Gate: 3 min walk, 2 min car; Jacinto Gate: 6 min walk, 4 min car)
-  if (name.includes('corella') || name.includes('correla') || addr.includes('108 roxas')) {
+  if (propId === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' || name.includes('corella') || name.includes('correla') || addr.includes('108 roxas')) {
     if (isRoxas) return isWalk ? 3 : 2;
     if (isJacinto) return isWalk ? 6 : 4;
     if (isClaveria) return isWalk ? 6 : 3;
@@ -138,7 +170,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   }
 
   // 2. BRC Dormitory (Roxas Gate: 6 min walk, 3 min in car; Jacinto Gate: 7 min walk, 3 min in car)
-  if (name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
+  if (propId === 'baea8d0e-133d-4aee-aab0-2702ca0d06fe' || name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
     if (isRoxas) return isWalk ? 6 : 3;
     if (isJacinto) return isWalk ? 7 : 3;
     if (isClaveria) return isWalk ? 8 : 3;
@@ -149,7 +181,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   }
 
   // 3. Residencia de Maria Goretti (Roxas Gate: 6 min walk, 2 min car; Jacinto Gate: 4 min walk, 2 min car)
-  if (name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
+  if (propId === 'db5ad051-c0c7-4eba-8942-8ab98ab22e63' || name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
     if (isRoxas) return isWalk ? 6 : 2;
     if (isJacinto) return isWalk ? 4 : 2;
     if (isClaveria) return isWalk ? 6 : 3;
@@ -160,7 +192,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   }
 
   // 4. Juan Luna Dorm (Jacinto Gate: 4 min walk, 2 min car; Roxas Gate: 4 min walk, 2 min car)
-  if (name.includes('juan') || addr.includes('juan luna')) {
+  if (propId === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' || name.includes('juan') || addr.includes('juan luna')) {
     if (isJacinto) return isWalk ? 4 : 2;
     if (isRoxas) return isWalk ? 4 : 2;
     if (isClaveria) return isWalk ? 5 : 2;
@@ -171,7 +203,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   }
 
   // 5. Ivory Residence (Claveria Gate: 25 min walk, 10 min car; Jacinto Gate: 25 min walk, 10 min car; Roxas Gate: 26 min walk, 10 min car)
-  if (name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
+  if (propId === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' || propId === '7d67143d-00a3-4007-b656-5073d6bbf8b2' || name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
     if (isClaveria) return isWalk ? 25 : 10;
     if (isJacinto) return isWalk ? 25 : 10;
     if (isRoxas) return isWalk ? 26 : 10;
@@ -228,15 +260,16 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
  */
 export function getPreferredCampusGate(property) {
   if (!property) return 'roxas';
+  const propId = String(property.id || '').toLowerCase();
   const name = (property.name || '').toLowerCase();
   const addr = (property.address || '').toLowerCase();
   const lat = Number(property.latitude ?? property.lat);
   const lng = Number(property.longitude ?? property.lng);
 
-  if (name.includes('juan') || addr.includes('juan luna') || (Math.abs(lat - 7.07259) < 0.0006 && Math.abs(lng - 125.61601) < 0.0006)) {
+  if (propId === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' || name.includes('juan') || addr.includes('juan luna') || (Math.abs(lat - 7.07259) < 0.001 && Math.abs(lng - 125.61601) < 0.001)) {
     return 'jacinto';
   }
-  if (name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel') || (Math.abs(lat - 7.08719) < 0.002)) {
+  if (propId === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' || propId === '7d67143d-00a3-4007-b656-5073d6bbf8b2' || name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel') || (Math.abs(lat - 7.08719) < 0.003)) {
     return 'finster';
   }
   return 'roxas';
@@ -448,20 +481,21 @@ export const VERIFIED_ROAD_ROUTES = {
 export function getVerifiedRoadRoute(gateId, property, mode = 'walk') {
   if (!gateId || !property) return null;
   const gate = gateId.toLowerCase();
+  const propId = String(property.id || '').toLowerCase();
   const name = (property.name || '').toLowerCase();
   const addr = (property.address || '').toLowerCase();
   const isWalk = mode === 'walk';
 
   let dormKey = null;
-  if (name.includes('corella') || name.includes('correla') || addr.includes('108 roxas')) {
-    dormKey = 'corella';
-  } else if (name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
-    dormKey = 'brc';
-  } else if (name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
+  if (propId === 'db5ad051-c0c7-4eba-8942-8ab98ab22e63' || name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
     dormKey = 'residencia';
-  } else if (name.includes('juan') || addr.includes('juan luna')) {
+  } else if (propId === 'baea8d0e-133d-4aee-aab0-2702ca0d06fe' || name.includes('brc') || addr.includes('gomez') || addr.includes('34-d')) {
+    dormKey = 'brc';
+  } else if (propId === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' || name.includes('corella') || name.includes('correla') || addr.includes('108 roxas')) {
+    dormKey = 'corella';
+  } else if (propId === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' || name.includes('juan') || addr.includes('juan luna')) {
     dormKey = 'juanLuna';
-  } else if (name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
+  } else if (propId === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' || propId === '7d67143d-00a3-4007-b656-5073d6bbf8b2' || name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel')) {
     dormKey = 'ivory';
   }
 
@@ -470,11 +504,12 @@ export function getVerifiedRoadRoute(gateId, property, mode = 'walk') {
     const lat = Number(property.latitude ?? property.lat);
     const lng = Number(property.longitude ?? property.lng);
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      if (Math.abs(lat - 7.06945) < 0.0003 && Math.abs(lng - 125.61468) < 0.0003) dormKey = 'corella';
-      else if (Math.abs(lat - 7.06805) < 0.0003 && Math.abs(lng - 125.61253) < 0.0003) dormKey = 'brc';
-      else if (Math.abs(lat - 7.06956) < 0.0003 && Math.abs(lng - 125.61525) < 0.0003) dormKey = 'residencia';
-      else if (Math.abs(lat - 7.07259) < 0.0006 && Math.abs(lng - 125.61601) < 0.0006) dormKey = 'juanLuna';
-      else if (Math.abs(lat - 7.08719) < 0.002) dormKey = 'ivory';
+      if (Math.abs(lat - 7.06945) < 0.001 && Math.abs(lng - 125.61468) < 0.001) dormKey = 'corella';
+      else if (Math.abs(lat - 7.06805) < 0.001 && Math.abs(lng - 125.61253) < 0.001) dormKey = 'brc';
+      else if (Math.abs(lat - 7.06956) < 0.001 && Math.abs(lng - 125.61525) < 0.001) dormKey = 'residencia';
+      else if (Math.abs(lat - 7.07259) < 0.001 && Math.abs(lng - 125.61601) < 0.001) dormKey = 'juanLuna';
+      else if (Math.abs(lat - 7.08719) < 0.003) dormKey = 'ivory';
+      else dormKey = 'residencia';
     }
   }
 

@@ -202,7 +202,12 @@ export function MapLibreTracker({
     destEl.className = 'dest-pin-container';
     destEl.innerHTML = `
       <div class="dest-pin-badge">${property?.name || 'Destination'}</div>
-      <div class="dest-pin-icon">🏠</div>
+      <div class="dest-pin-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
     `;
 
     destMarkerRef.current = new maplibregl.Marker({ element: destEl, anchor: 'bottom' })

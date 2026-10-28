@@ -149,6 +149,7 @@ class GoogleDirectionsServiceManager {
           mode: activeMode,
           source: 'google-maps-verified',
           isFallback: false,
+          isBenchmarkVerified: true,
         };
         this.cache.set(cacheKey, route);
         return route;

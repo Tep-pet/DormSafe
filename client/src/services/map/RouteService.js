@@ -76,6 +76,7 @@ class RouteServiceManager {
           summary: verified.summary,
           mode,
           isFallback: false,
+          isBenchmarkVerified: true,
         };
         this.lastRequestTime = now;
         this.lastRequestPos = { ...origin };
@@ -165,7 +166,7 @@ class RouteServiceManager {
 
     // 2. If student is outside campus walking radius (> 1500m, e.g. testing remotely), maintain verified campus route
     if (distToDestination > 1500) {
-      if (!this.currentRoute || this.currentMode !== mode) {
+      if (!this.currentRoute || this.currentMode !== mode || !this.currentRoute.isBenchmarkVerified) {
         const route = await this.fetchRoute(currentPos, destinationPos, mode, property);
         if (onRouteUpdated) onRouteUpdated(route);
       } else {
