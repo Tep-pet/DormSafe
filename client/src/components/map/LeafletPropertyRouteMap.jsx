@@ -387,6 +387,10 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
     drawRoute();
   }, [drawRoute]);
 
+  const displayMinutes = travelMode === 'walking'
+    ? (knownMinutes || routeStats?.duration || durations.walking || walkingMinutes)
+    : (knownDriveMinutes || routeStats?.duration || durations.driving);
+
   const initialVerified = getVerifiedRoadRoute(gateId, property, travelMode === 'driving' ? 'drive' : 'walk');
   const fallbackDistance = initialVerified?.distanceMeters
     ? (initialVerified.distanceMeters >= 1000

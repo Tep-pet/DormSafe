@@ -43,6 +43,7 @@ import { Textarea } from '../../components/common/Input';
 import { WalkingTimeBadge } from '../../components/map/WalkingTimeBadge';
 import { InquireButton } from '../../components/property/InquireButton';
 import { PropertyLocationMap } from '../../components/map/PropertyLocationMap';
+import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { proximityService } from '../../services/proximityService';
 import { resolvePropertyContact } from '../../utils/parseContact';
@@ -710,12 +711,14 @@ export function PropertyDetailPage() {
                     Walking navigation path from <span className="font-semibold text-slate-800">{activeGateLabel}</span>.
                   </p>
                   <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100 shadow-2xs">
-                    <PropertyLocationMap
-                      property={property}
-                      gateId={selectedGate}
-                      walkingMinutes={effectiveWalkingMinutes}
-                      onDurationChange={handleDurationChange}
-                    />
+                    <ErrorBoundary>
+                      <PropertyLocationMap
+                        property={property}
+                        gateId={selectedGate}
+                        walkingMinutes={effectiveWalkingMinutes}
+                        onDurationChange={handleDurationChange}
+                      />
+                    </ErrorBoundary>
                   </div>
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                     <p className="text-[11px] text-slate-500">
