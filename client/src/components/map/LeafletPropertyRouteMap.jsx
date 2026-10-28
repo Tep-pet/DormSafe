@@ -27,7 +27,7 @@ L.Icon.Default.mergeOptions({
  * 100% Free, Accurate Route Map from Ateneo de Davao University to Property Pinpoint
  * Powered by Leaflet.js and OpenStreetMap.
  */
-export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingMinutes, onDurationChange }) {
+export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMinutes, onDurationChange }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const gateMarkerRef = useRef(null);
@@ -39,7 +39,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     onDurationChangeRef.current = onDurationChange;
   }, [onDurationChange]);
 
-  const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
+  const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.roxas || CAMPUS_GATES.jacinto;
   const pinpoint = getAccuratePinpoint(property);
   const knownMinutes = getKnownWalkingMinutes(gateId, property);
   const knownDriveMinutes = getKnownDrivingMinutes(gateId, property);
@@ -48,7 +48,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
   const [routeStats, setRouteStats] = useState(null);
   const [isRouting, setIsRouting] = useState(false);
 
-  const resolvedInitialWalk = knownMinutes || walkingMinutes || 5;
+  const resolvedInitialWalk = knownMinutes || walkingMinutes || 3;
   const resolvedInitialDrive = knownDriveMinutes || 2;
 
   const [durations, setDurations] = useState({
@@ -76,7 +76,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: [(gate.lat + pinpoint.lat) / 2, (gate.lng + pinpoint.lng) / 2],
-        zoom: 16,
+        zoom: 17,
         zoomControl: true,
         attributionControl: false,
       });
@@ -107,46 +107,61 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Ateneo de Davao University Starting Point Marker
+    const gateName = gate.name || gate.label || 'Roxas Gate';
+
+    // Ateneo Campus Starting Gate Marker (Labeled with specific gate name)
     const gateIcon = L.divIcon({
       className: 'addu-start-gate-pin',
       html: `
         <div style="
           background: #003366;
           color: #ffffff;
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 3px solid #C5A900;
+          padding: 5px 10px;
+          border-radius: 9999px;
+          border: 2px solid #C5A900;
           box-shadow: 0 4px 12px rgba(0,0,0,0.35);
           font-weight: 800;
-          font-size: 13px;
+          font-size: 11px;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         ">
-          ADDU
+          <span style="
+            background: #C5A900;
+            color: #003366;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 900;
+          ">A</span>
+          <span>${gateName}</span>
         </div>
       `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
+      iconSize: [120, 30],
+      iconAnchor: [60, 15],
     });
 
     if (gateMarkerRef.current) {
       gateMarkerRef.current.setLatLng([gate.lat, gate.lng]);
       gateMarkerRef.current.setIcon(gateIcon);
       gateMarkerRef.current.setPopupContent(
-        `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:600;">${gate.label}</span><br/><small>Starting Point</small>`
+        `<b>${gateName}</b><br/><span style="color:#003366;font-weight:600;">Campus Starting Point</span><br/><small>Ateneo de Davao University</small>`
       );
     } else {
       gateMarkerRef.current = L.marker([gate.lat, gate.lng], { icon: gateIcon, zIndexOffset: 500 })
         .addTo(map)
         .bindPopup(
-          `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:600;">${gate.label}</span><br/><small>Starting Point</small>`
+          `<b>${gateName}</b><br/><span style="color:#003366;font-weight:600;">Campus Starting Point</span><br/><small>Ateneo de Davao University</small>`
         );
     }
 
-    // Property Destination Pinpoint Marker
+    // Property Destination Pinpoint Marker (Exact pinpoint on property)
+    const propDisplayName = property?.name || 'Correla Dormitory';
     const propIcon = L.divIcon({
       className: 'property-destination-pin',
       html: `
@@ -166,30 +181,30 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
           cursor: pointer;
         ">
           <span>📍</span>
-          <span>${property?.name || 'Property'}</span>
+          <span>${propDisplayName}</span>
         </div>
       `,
-      iconSize: [120, 30],
-      iconAnchor: [60, 15],
+      iconSize: [130, 30],
+      iconAnchor: [65, 15],
     });
 
     if (propMarkerRef.current) {
       propMarkerRef.current.setLatLng([pinpoint.lat, pinpoint.lng]);
       propMarkerRef.current.setIcon(propIcon);
       propMarkerRef.current.setPopupContent(
-        `<b>${property?.name || 'Property'}</b><br/><small>${property?.address || ''}</small><br/><b>Pinpoint Destination</b>`
+        `<b>${propDisplayName}</b><br/><small>${property?.address || '108 Roxas Avenue, Davao City'}</small><br/><b>Pinpoint Destination</b>`
       );
     } else {
       propMarkerRef.current = L.marker([pinpoint.lat, pinpoint.lng], { icon: propIcon, zIndexOffset: 600 })
         .addTo(map)
         .bindPopup(
-          `<b>${property?.name || 'Property'}</b><br/><small>${property?.address || ''}</small><br/><b>Pinpoint Destination</b>`
+          `<b>${propDisplayName}</b><br/><small>${property?.address || '108 Roxas Avenue, Davao City'}</small><br/><b>Pinpoint Destination</b>`
         )
         .openPopup();
     }
   }, [gate, pinpoint, property]);
 
-  // 3. Draw Accurate Street Route from Ateneo de Davao to Property Pinpoint
+  // 3. Draw Accurate Street Route from Ateneo Campus Gate to Property Pinpoint
   const drawRoute = useCallback(async () => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -204,12 +219,13 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         routePolylineRef.current.remove();
       }
 
+      // Draw real road path (solid line matching Google Maps walking/driving path)
       const polyline = L.polyline(verified.coordinates, {
         color: travelMode === 'driving' ? '#0284c7' : '#003366',
         weight: 5,
-        opacity: 0.88,
-        dashArray: travelMode === 'driving' ? null : '6, 8',
+        opacity: 0.9,
         lineCap: 'round',
+        lineJoin: 'round',
       }).addTo(map);
 
       routePolylineRef.current = polyline;
@@ -229,6 +245,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
 
     try {
       // 1. Resolve road route via GoogleDirectionsService (Google Directions API / verified road routes)
+      let routeData = null;
       const gRoute = await GoogleDirectionsService.getRoute(gate, pinpoint, mode, property);
       if (gRoute && gRoute.coordinates?.length >= 2) {
         routeData = gRoute;
@@ -272,9 +289,9 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
         const polyline = L.polyline(coords, {
           color: travelMode === 'driving' ? '#0284c7' : '#003366',
           weight: 5,
-          opacity: 0.88,
-          dashArray: travelMode === 'driving' ? null : '6, 8',
+          opacity: 0.9,
           lineCap: 'round',
+          lineJoin: 'round',
         }).addTo(map);
 
         routePolylineRef.current = polyline;
@@ -299,7 +316,6 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     } catch (err) {
       console.warn('Road routing notice (using street-grid alignment):', err.message);
 
-      // Robust street-aligned fallback following city grid (never a diagonal through buildings)
       if (routePolylineRef.current) {
         routePolylineRef.current.remove();
       }
@@ -312,9 +328,9 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
 
       const fallbackLine = L.polyline(gridCoords, {
         color: '#003366',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '6, 6',
+        weight: 5,
+        opacity: 0.85,
+        lineCap: 'round',
       }).addTo(map);
 
       routePolylineRef.current = fallbackLine;
@@ -349,58 +365,30 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     ? routeStats.distance >= 1000
       ? `${(routeStats.distance / 1000).toFixed(1)} km`
       : `${routeStats.distance} m`
-    : null;
+    : (gateId === 'roxas' ? '190 m' : null);
+
+  const gateName = gate.name || gate.label || 'Roxas Gate';
 
   return (
     <div className="space-y-3">
-      {/* Route Header Info Card */}
+      {/* Route Header Info Card: "Walking from Roxas Gate: 3 min (190 m)" */}
       <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-800">
-          <div className="flex items-center gap-1.5 font-semibold text-ateneo-blue">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ateneo-blue text-white text-[10px] font-bold">
-              A
-            </span>
-            <span>From {gate.label}</span>
-          </div>
-
-          <span className="text-slate-400">→</span>
-
-          <div className="flex items-center gap-1 font-semibold text-slate-700">
-            <MapPin size={14} className="text-amber-500" />
-            <span>{property?.name || 'Property Pinpoint'}</span>
-          </div>
-
-          {displayMinutes && (
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-2xs ${
-                travelMode === 'driving'
-                  ? 'bg-sky-50 text-sky-800 border border-sky-200'
-                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-              }`}
-            >
-              {travelMode === 'driving' ? (
-                <>
-                  <Car size={13} className="text-sky-600" />
-                  <span>{displayMinutes} min drive</span>
-                </>
-              ) : (
-                <>
-                  <Footprints size={13} className="text-emerald-600" />
-                  <span>{displayMinutes} min walk</span>
-                </>
-              )}
-            </span>
-          )}
-
-          {displayDistance && (
-            <span className="text-xs text-slate-500 font-medium">
-              ({displayDistance})
-            </span>
+        <div className="flex items-center gap-2">
+          {travelMode === 'driving' ? (
+            <div className="flex items-center gap-1.5 font-bold text-ateneo-blue text-xs sm:text-sm">
+              <Car size={16} className="text-sky-600 shrink-0" />
+              <span>Driving from {gateName}: {displayMinutes} min {displayDistance ? `(${displayDistance})` : ''}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 font-bold text-ateneo-blue text-xs sm:text-sm">
+              <Footprints size={16} className="text-emerald-600 shrink-0" />
+              <span>Walking from {gateName}: {displayMinutes} min {displayDistance ? `(${displayDistance})` : ''}</span>
+            </div>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mode Toggle (Walk / Drive with Minutes) */}
+          {/* Mode Toggle (Walk is default; Drive is optional toggle) */}
           <div className="flex items-center rounded-lg bg-white border border-slate-200 p-0.5 text-xs font-semibold shadow-2xs">
             <button
               type="button"
@@ -433,7 +421,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
       </div>
 
       <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-        <span>Starting origin: <strong>Ateneo de Davao University</strong></span>
+        <span>Starting origin: <strong className="text-slate-800">{gateName}</strong></span>
         <span>Pinpoint: {pinpoint.lat.toFixed(5)}, {pinpoint.lng.toFixed(5)}</span>
       </div>
 
@@ -444,3 +432,5 @@ export function LeafletPropertyRouteMap({ property, gateId = 'jacinto', walkingM
     </div>
   );
 }
+
+

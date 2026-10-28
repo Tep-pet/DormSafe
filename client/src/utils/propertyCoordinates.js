@@ -17,7 +17,13 @@ export const VERIFIED_PINPOINTS = {
     matches: (name, addr) => name.includes('brc') || addr.includes('gomez') || addr.includes('34-d'),
   },
   corella: {
-    name: 'Corella Dormitory',
+    name: 'Correla Dormitory',
+    lat: 7.06945,
+    lng: 125.61468,
+    matches: (name, addr) => name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
+  },
+  correla: {
+    name: 'Correla Dormitory',
     lat: 7.06945,
     lng: 125.61468,
     matches: (name, addr) => name.includes('corella') || name.includes('correla') || addr.includes('roxas'),
@@ -242,18 +248,33 @@ export function getPreferredCampusGate(property) {
  * Coordinates are formatted as [lat, lng].
  */
 export const VERIFIED_ROAD_ROUTES = {
-  // --- CORELLA DORMITORY (108 M. Roxas Ave) ---
+  // --- CORELLA / CORRELA DORMITORY (108 M. Roxas Ave) ---
   'corella_roxas': {
-    distanceMeters: 300,
+    distanceMeters: 190,
     walkMins: 3,
     driveMins: 2,
     summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07180, 125.61230], // Roxas Gate
-      [7.07100, 125.61265], // M. Roxas Ave past Arrupe Hall
-      [7.07040, 125.61305], // M. Roxas Ave near Night Market
-      [7.06980, 125.61380], // M. Roxas Ave approaching Padre Gomez
-      [7.06945, 125.61468], // Corella Dormitory (108 Roxas Ave)
+      [7.07180, 125.61230], // Ateneo Roxas Gate
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave near RASI Computer
+      [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
+    ],
+  },
+  'correla_roxas': {
+    distanceMeters: 190,
+    walkMins: 3,
+    driveMins: 2,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07180, 125.61230], // Ateneo Roxas Gate
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave near RASI Computer
+      [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
     ],
   },
   'corella_jacinto': {

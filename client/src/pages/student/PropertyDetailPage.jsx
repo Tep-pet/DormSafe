@@ -77,19 +77,16 @@ export function PropertyDetailPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const cachedProperty = proximityService.getCachedProperty(id, explicitGate || DEFAULT_GATE);
-  const passedProperty = location.state?.property || cachedProperty;
-  const [property, setProperty] = useState(passedProperty || null);
-
   const preferredGate = getPreferredCampusGate(passedProperty || property);
-  const [selectedGate, setSelectedGate] = useState(explicitGate || preferredGate);
+  const cachedProperty = proximityService.getCachedProperty(id, preferredGate || DEFAULT_GATE);
+  const [selectedGate, setSelectedGate] = useState(preferredGate || DEFAULT_GATE);
 
-  // Sync selectedGate if property finishes loading and no explicit gate was in URL
+  // Sync selectedGate whenever property loads/changes
   useEffect(() => {
-    if (!explicitGate && property) {
+    if (property) {
       setSelectedGate(getPreferredCampusGate(property));
     }
-  }, [property, explicitGate]);
+  }, [property]);
 
   const gate = selectedGate;
 
