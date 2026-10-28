@@ -148,15 +148,15 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
     return isWalk ? 6 : 3;
   }
 
-  // 3. Residencia de Maria Goretti (Roxas Gate: 4 min walk, 2 min car; Jacinto Gate: 4 min walk, 2 min car)
+  // 3. Residencia de Maria Goretti (Roxas Gate: 6 min walk, 2 min car; Jacinto Gate: 4 min walk, 2 min car)
   if (name.includes('goretti') || name.includes('maria') || name.includes('residencia') || addr.includes('faura')) {
-    if (isRoxas) return isWalk ? 4 : 2;
+    if (isRoxas) return isWalk ? 6 : 2;
     if (isJacinto) return isWalk ? 4 : 2;
     if (isClaveria) return isWalk ? 6 : 3;
-    if (isMartinHall) return isWalk ? 3 : 2;
-    if (isCommunityCenter) return isWalk ? 4 : 2;
-    if (isDotterweich) return isWalk ? 4 : 2;
-    return isWalk ? 4 : 2;
+    if (isMartinHall) return isWalk ? 4 : 2;
+    if (isCommunityCenter) return isWalk ? 5 : 2;
+    if (isDotterweich) return isWalk ? 5 : 2;
+    return isWalk ? 6 : 2;
   }
 
   // 4. Juan Luna Dorm (Jacinto Gate: 4 min walk, 2 min car; Roxas Gate: 4 min walk, 2 min car)
@@ -198,10 +198,10 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
       return isWalk ? 3 : 2;
     }
     if (Math.abs(lat - 7.06956) < 0.0003 && Math.abs(lng - 125.61525) < 0.0003) {
-      if (isRoxas) return isWalk ? 4 : 2;
+      if (isRoxas) return isWalk ? 6 : 2;
       if (isJacinto) return isWalk ? 4 : 2;
       if (isClaveria) return isWalk ? 6 : 3;
-      return isWalk ? 4 : 2;
+      return isWalk ? 6 : 2;
     }
     if (Math.abs(lat - 7.06805) < 0.0003 && Math.abs(lng - 125.61253) < 0.0003) {
       if (isRoxas) return isWalk ? 6 : 3;
@@ -341,16 +341,19 @@ export const VERIFIED_ROAD_ROUTES = {
 
   // --- RESIDENCIA DE MARIA GORETTI (32 Padre Faura St) ---
   'residencia_roxas': {
-    distanceMeters: 490,
-    walkMins: 4,
+    distanceMeters: 400,
+    walkMins: 6,
     driveMins: 2,
-    summary: 'via M. Roxas Ave & Padre Faura St',
+    summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07180, 125.61230], // Roxas Gate
-      [7.07070, 125.61270], // M. Roxas Ave
-      [7.06990, 125.61330], // M. Roxas Ave
-      [7.06950, 125.61420], // Corner of Roxas & Padre Faura St
-      [7.06956, 125.61525], // Residencia de Maria Goretti (32 Padre Faura)
+      [7.07180, 125.61230], // Ateneo Roxas Gate
+      [7.07130, 125.61265], // M. Roxas Ave past 202 Peaklane
+      [7.07080, 125.61300], // M. Roxas Ave past Night Market
+      [7.07020, 125.61345], // M. Roxas Ave past Topserve
+      [7.06960, 125.61390], // M. Roxas Ave approaching Padre Faura
+      [7.06895, 125.61440], // Corner of M. Roxas Ave & Padre Faura St (Annipie / ALU Hotel)
+      [7.06925, 125.61480], // Padre Faura St heading northeast
+      [7.06956, 125.61525], // Residencia de Maria Goretti (32 Padre Faura St)
     ],
   },
   'residencia_jacinto': {
@@ -360,10 +363,10 @@ export const VERIFIED_ROAD_ROUTES = {
     summary: 'via Emilio Jacinto St & Padre Faura St',
     coordinates: [
       [7.07200, 125.61410], // Jacinto Gate
-      [7.07110, 125.61360], // Jacinto St past Martin Hall
-      [7.07030, 125.61320], // Jacinto St
-      [7.06940, 125.61280], // Corner of Jacinto St & Padre Faura St
-      [7.06956, 125.61525], // Residencia de Maria Goretti
+      [7.07110, 125.61460], // Emilio Jacinto St past Martin Hall
+      [7.07030, 125.61520], // Emilio Jacinto St
+      [7.06990, 125.61570], // Corner of Emilio Jacinto St & Padre Faura St
+      [7.06956, 125.61525], // Residencia de Maria Goretti (32 Padre Faura St)
     ],
   },
 

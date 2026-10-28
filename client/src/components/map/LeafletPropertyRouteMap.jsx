@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES } from '../../constants/campusGates';
@@ -33,6 +33,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
   const gateMarkerRef = useRef(null);
   const propMarkerRef = useRef(null);
   const routePolylineRef = useRef(null);
+  const lastFittedKeyRef = useRef('');
 
   const onDurationChangeRef = useRef(onDurationChange);
   useEffect(() => {
@@ -40,15 +41,17 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
   }, [onDurationChange]);
 
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.roxas || CAMPUS_GATES.jacinto;
-  const pinpoint = getAccuratePinpoint(property);
+  const pinpoint = useMemo(
+    () => getAccuratePinpoint(property),
+    [property?.id, property?.latitude, property?.longitude, property?.lat, property?.lng, property?.name]
+  );
   const knownMinutes = getKnownWalkingMinutes(gateId, property);
   const knownDriveMinutes = getKnownDrivingMinutes(gateId, property);
 
   const [travelMode, setTravelMode] = useState('walking');
   const [routeStats, setRouteStats] = useState(null);
-  const [isRouting, setIsRouting] = useState(false);
 
-  const resolvedInitialWalk = knownMinutes || walkingMinutes || 3;
+  const resolvedInitialWalk = knownMinutes || walkingMinutes || 6;
   const resolvedInitialDrive = knownDriveMinutes || 2;
 
   const [durations, setDurations] = useState({
@@ -59,13 +62,13 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
   useEffect(() => {
     const mins = knownMinutes || walkingMinutes;
     if (mins) {
-      setDurations((prev) => ({ ...prev, walking: mins }));
+      setDurations((prev) => (prev.walking === mins ? prev : { ...prev, walking: mins }));
     }
   }, [walkingMinutes, knownMinutes]);
 
   useEffect(() => {
     if (knownDriveMinutes) {
-      setDurations((prev) => ({ ...prev, driving: knownDriveMinutes }));
+      setDurations((prev) => (prev.driving === knownDriveMinutes ? prev : { ...prev, driving: knownDriveMinutes }));
     }
   }, [knownDriveMinutes]);
 
@@ -88,28 +91,43 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
 
       mapInstanceRef.current = map;
 
-      // Ensure tile sizes calculate correctly on load
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 200);
-    }
+      // Handle clean initial size calculation without tile flashing
+      const timer = setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize({ pan: false });
+        }
+      }, 150);
 
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
+      return () => {
+        clearTimeout(timer);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+      };
+    }
   }, []);
 
-  // 2. Update Gate & Property Pinpoint Markers whenever gate or property changes
+  // Handle container resizing smoothly without tile jitter
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ pan: false });
+      }
+    });
+    observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // 2. Update Gate & Property Pinpoint Markers whenever gate or property pinpoint changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     const gateName = gate.name || gate.label || 'Roxas Gate';
 
-    // Ateneo Campus Starting Gate Marker (Labeled with specific gate name)
+    // Ateneo Campus Starting Gate Marker
     const gateIcon = L.divIcon({
       className: 'addu-start-gate-pin',
       html: `
@@ -160,8 +178,8 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
         );
     }
 
-    // Property Destination Pinpoint Marker (Exact pinpoint on property)
-    const propDisplayName = property?.name || 'Correla Dormitory';
+    // Property Destination Pinpoint Marker (uses SVG pin without raw emojis)
+    const propDisplayName = property?.name || 'Residencia de Maria Goretti';
     const propIcon = L.divIcon({
       className: 'property-destination-pin',
       html: `
@@ -180,7 +198,7 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
           gap: 5px;
           cursor: pointer;
         ">
-          <span>📍</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C5A900" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           <span>${propDisplayName}</span>
         </div>
       `,
@@ -192,25 +210,33 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
       propMarkerRef.current.setLatLng([pinpoint.lat, pinpoint.lng]);
       propMarkerRef.current.setIcon(propIcon);
       propMarkerRef.current.setPopupContent(
-        `<b>${propDisplayName}</b><br/><small>${property?.address || '108 Roxas Avenue, Davao City'}</small><br/><b>Pinpoint Destination</b>`
+        `<b>${propDisplayName}</b><br/><small>${property?.address || '32 Padre Faura St, Davao City'}</small><br/><b>Pinpoint Destination</b>`
       );
     } else {
       propMarkerRef.current = L.marker([pinpoint.lat, pinpoint.lng], { icon: propIcon, zIndexOffset: 600 })
         .addTo(map)
         .bindPopup(
-          `<b>${propDisplayName}</b><br/><small>${property?.address || '108 Roxas Avenue, Davao City'}</small><br/><b>Pinpoint Destination</b>`
+          `<b>${propDisplayName}</b><br/><small>${property?.address || '32 Padre Faura St, Davao City'}</small><br/><b>Pinpoint Destination</b>`
         )
         .openPopup();
     }
-  }, [gate, pinpoint, property]);
+  }, [gate.lat, gate.lng, gate.name, gate.label, pinpoint.lat, pinpoint.lng, property?.name, property?.address]);
 
   // 3. Draw Accurate Street Route from Ateneo Campus Gate to Property Pinpoint
   const drawRoute = useCallback(async () => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    setIsRouting(true);
     const mode = travelMode === 'driving' ? 'drive' : 'walk';
+    const routeColor = travelMode === 'driving' ? '#0284c7' : '#1a73e8'; // Google Maps blue
+
+    const fitRouteIfChanged = (polyline) => {
+      const routeKey = `${gateId}_${travelMode}_${pinpoint.lat.toFixed(5)},${pinpoint.lng.toFixed(5)}`;
+      if (lastFittedKeyRef.current !== routeKey) {
+        lastFittedKeyRef.current = routeKey;
+        map.fitBounds(polyline.getBounds(), { padding: [40, 40], maxZoom: 17, animate: false });
+      }
+    };
 
     // 0. Instant Ground-Truth Verified Route from Ateneo Gates (zero latency, 100% road accuracy)
     const verified = getVerifiedRoadRoute(gateId, property, mode);
@@ -219,27 +245,32 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
         routePolylineRef.current.remove();
       }
 
-      // Draw real road path (solid line matching Google Maps walking/driving path)
+      // Draw real road path (Google Maps blue solid line)
       const polyline = L.polyline(verified.coordinates, {
-        color: travelMode === 'driving' ? '#0284c7' : '#003366',
-        weight: 5,
-        opacity: 0.9,
+        color: routeColor,
+        weight: 6,
+        opacity: 0.95,
         lineCap: 'round',
         lineJoin: 'round',
       }).addTo(map);
 
       routePolylineRef.current = polyline;
-      map.fitBounds(polyline.getBounds(), { padding: [48, 48], maxZoom: 17 });
+      fitRouteIfChanged(polyline);
 
-      setRouteStats({ distance: verified.distanceMeters, duration: verified.durationMinutes });
+      setRouteStats((prev) => {
+        if (prev?.distance === verified.distanceMeters && prev?.duration === verified.durationMinutes) {
+          return prev;
+        }
+        return { distance: verified.distanceMeters, duration: verified.durationMinutes };
+      });
       setDurations((prev) => ({
         ...prev,
         [travelMode]: verified.durationMinutes,
       }));
-      if (onDurationChangeRef.current && travelMode === 'walking') {
+
+      if (onDurationChangeRef.current && travelMode === 'walking' && walkingMinutes !== verified.durationMinutes) {
         onDurationChangeRef.current(verified.durationMinutes);
       }
-      setIsRouting(false);
       return;
     }
 
@@ -287,27 +318,28 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
         }
 
         const polyline = L.polyline(coords, {
-          color: travelMode === 'driving' ? '#0284c7' : '#003366',
-          weight: 5,
-          opacity: 0.9,
+          color: routeColor,
+          weight: 6,
+          opacity: 0.95,
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(map);
 
         routePolylineRef.current = polyline;
-
-        // Auto zoom and center to show the entire route from Ateneo to property
-        map.fitBounds(polyline.getBounds(), { padding: [48, 48], maxZoom: 17 });
+        fitRouteIfChanged(polyline);
 
         const dist = routeData.distanceMeters;
         const dur = getKnownTravelDuration(gateId, property, mode) || routeData.durationMinutes;
 
-        setRouteStats({ distance: dist, duration: dur });
+        setRouteStats((prev) => {
+          if (prev?.distance === dist && prev?.duration === dur) return prev;
+          return { distance: dist, duration: dur };
+        });
         setDurations((prev) => ({
           ...prev,
           [travelMode]: dur,
         }));
-        if (onDurationChangeRef.current && travelMode === 'walking') {
+        if (onDurationChangeRef.current && travelMode === 'walking' && walkingMinutes !== dur) {
           onDurationChangeRef.current(dur);
         }
         return;
@@ -327,45 +359,46 @@ export function LeafletPropertyRouteMap({ property, gateId = 'roxas', walkingMin
       ];
 
       const fallbackLine = L.polyline(gridCoords, {
-        color: '#003366',
-        weight: 5,
+        color: routeColor,
+        weight: 6,
         opacity: 0.85,
         lineCap: 'round',
       }).addTo(map);
 
       routePolylineRef.current = fallbackLine;
-      map.fitBounds(fallbackLine.getBounds(), { padding: [48, 48], maxZoom: 17 });
+      fitRouteIfChanged(fallbackLine);
 
       const dLatM = Math.abs(pinpoint.lat - gate.lat) * 111139;
       const dLngM = Math.abs(pinpoint.lng - gate.lng) * 111139 * Math.cos((gate.lat * Math.PI) / 180);
       const gridDist = Math.round(dLatM + dLngM);
       const fallbackMins = getKnownTravelDuration(gateId, property, mode) || (mode === 'drive' ? 2 : Math.max(1, Math.round(gridDist / 83.3)));
 
-      setRouteStats({
-        distance: gridDist,
-        duration: fallbackMins,
+      setRouteStats((prev) => {
+        if (prev?.distance === gridDist && prev?.duration === fallbackMins) return prev;
+        return { distance: gridDist, duration: fallbackMins };
       });
-      if (onDurationChangeRef.current && travelMode === 'walking') {
+      if (onDurationChangeRef.current && travelMode === 'walking' && walkingMinutes !== fallbackMins) {
         onDurationChangeRef.current(fallbackMins);
       }
-    } finally {
-      setIsRouting(false);
-      map.invalidateSize();
     }
-  }, [gate.lat, gate.lng, pinpoint.lat, pinpoint.lng, travelMode, gateId, property]);
+  }, [gateId, gate.lat, gate.lng, pinpoint.lat, pinpoint.lng, travelMode, property?.id, property?.name, walkingMinutes]);
 
   useEffect(() => {
     drawRoute();
   }, [drawRoute]);
 
-  const displayMinutes = travelMode === 'walking'
-    ? (knownMinutes || routeStats?.duration || durations.walking || walkingMinutes)
-    : (knownDriveMinutes || routeStats?.duration || durations.driving);
+  const initialVerified = getVerifiedRoadRoute(gateId, property, travelMode === 'driving' ? 'drive' : 'walk');
+  const fallbackDistance = initialVerified?.distanceMeters
+    ? (initialVerified.distanceMeters >= 1000
+        ? `${(initialVerified.distanceMeters / 1000).toFixed(1)} km`
+        : `${initialVerified.distanceMeters} m`)
+    : null;
+
   const displayDistance = routeStats?.distance
     ? routeStats.distance >= 1000
       ? `${(routeStats.distance / 1000).toFixed(1)} km`
       : `${routeStats.distance} m`
-    : (gateId === 'roxas' ? '190 m' : null);
+    : fallbackDistance;
 
   const gateName = gate.name || gate.label || 'Roxas Gate';
 

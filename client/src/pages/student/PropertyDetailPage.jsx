@@ -105,8 +105,7 @@ export function PropertyDetailPage() {
 
   const handleDurationChange = useCallback((liveMins) => {
     if (liveMins) {
-      setLiveWalkingMinutes(liveMins);
-      setProperty((prev) => (prev ? { ...prev, walking_minutes: liveMins } : prev));
+      setLiveWalkingMinutes((prev) => (prev === liveMins ? prev : liveMins));
     }
   }, []);
 
