@@ -30,7 +30,8 @@ export function LiveNavigationPage() {
   const passedProperty = location.state?.property;
 
   // Determine default starting gate (Roxas Gate is the primary reference gate)
-  const resolvedGateId = location.state?.initialGate || 'roxas';
+  const queryGate = new URLSearchParams(location.search).get('gate');
+  const resolvedGateId = queryGate || location.state?.initialGate || 'roxas';
   const defaultGate = ADDU_GATES.find((g) => g.id === resolvedGateId) || ADDU_GATES.find((g) => g.id === 'roxas') || ADDU_GATES[0];
 
   const [property, setProperty] = useState(passedProperty || null);
@@ -39,7 +40,7 @@ export function LiveNavigationPage() {
 
   // Permission & Modals
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [showLandmarkModal, setShowLandmarkModal] = useState(true);
+  const [showLandmarkModal, setShowLandmarkModal] = useState(!queryGate);
 
   // GPS Detection State: 'detecting' | 'detected' | 'unavailable'
   const [gpsStatus, setGpsStatus] = useState('detecting');

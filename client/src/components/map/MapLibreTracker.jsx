@@ -263,7 +263,10 @@ export function MapLibreTracker({
     if (!hasFittedBoundsRef.current) {
       hasFittedBoundsRef.current = true;
       const bounds = new maplibregl.LngLatBounds();
-      bounds.extend([lng, lat]);
+      const directDist = Math.hypot(lat - destLat, lng - destLng) * 111000;
+      if (directDist <= 1500) {
+        bounds.extend([lng, lat]);
+      }
       bounds.extend([destLng, destLat]);
       map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
     }
@@ -300,8 +303,19 @@ export function MapLibreTracker({
     if (!map || !userLocation) return;
 
     const bounds = new maplibregl.LngLatBounds();
-    bounds.extend([userLocation.lng, userLocation.lat]);
+    const directDist = Math.hypot(userLocation.lat - destLat, userLocation.lng - destLng) * 111000;
+    if (directDist <= 1500) {
+      bounds.extend([userLocation.lng, userLocation.lat]);
+    }
     bounds.extend([destLng, destLat]);
+    if (cachedCoordinatesRef.current?.length > 1) {
+      cachedCoordinatesRef.current.forEach((c) => {
+        const pair = toLngLatPair(c);
+        if (pair && Number.isFinite(pair[0]) && Number.isFinite(pair[1])) {
+          bounds.extend(pair);
+        }
+      });
+    }
     map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17.5 });
   }, [recenterTrigger, userLocation, destLat, destLng]);
 

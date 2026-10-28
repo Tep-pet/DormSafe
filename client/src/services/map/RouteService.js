@@ -5,7 +5,7 @@ import { FallbackRouteAdapter } from './adapters/FallbackRouteAdapter.js';
 import { calculateHaversineMeters, distanceToPolylineMeters } from './GeoUtils.js';
 import { MapConfig } from './MapConfig.js';
 import { apiClient } from '../apiClient.js';
-import { getVerifiedRoadRoute, getKnownTravelDuration } from '../../utils/propertyCoordinates.js';
+import { getVerifiedRoadRoute, getKnownTravelDuration, getPreferredCampusGate } from '../../utils/propertyCoordinates.js';
 import { ADDU_GATES } from '../../constants/campusGates.js';
 
 class RouteServiceManager {
@@ -57,13 +57,15 @@ class RouteServiceManager {
       console.warn('[RouteService] Google Directions resolution notice:', gErr.message);
     }
 
-    // 0. Check for verified Google Maps ground truth route from known Ateneo gates (0ms latency, 100% accuracy)
+    // 0. Check for verified Google Maps ground truth route from known Ateneo gates or if user is outside campus (> 1500m)
+    const directDist = calculateHaversineMeters(origin.lat, origin.lng, destination.lat, destination.lng);
     const matchedGate = ADDU_GATES.find(
       (g) => Math.abs(g.lat - origin.lat) < 0.0008 && Math.abs(g.lng - origin.lng) < 0.0008
     );
-    if (matchedGate) {
+    if (matchedGate || directDist > 1500) {
       const targetProp = property || { latitude: destination.lat, longitude: destination.lng };
-      const verified = getVerifiedRoadRoute(matchedGate.id, targetProp, mode);
+      const gateId = matchedGate ? matchedGate.id : getPreferredCampusGate(targetProp);
+      const verified = getVerifiedRoadRoute(gateId, targetProp, mode);
       if (verified) {
         this.currentRoute = {
           coordinates: verified.coordinates,
@@ -161,7 +163,18 @@ class RouteServiceManager {
       return;
     }
 
-    // 2. If no route yet, or if travel mode changed, fetch new route
+    // 2. If student is outside campus walking radius (> 1500m, e.g. testing remotely), maintain verified campus route
+    if (distToDestination > 1500) {
+      if (!this.currentRoute || this.currentMode !== mode) {
+        const route = await this.fetchRoute(currentPos, destinationPos, mode, property);
+        if (onRouteUpdated) onRouteUpdated(route);
+      } else {
+        if (onRouteUpdated) onRouteUpdated(this.currentRoute);
+      }
+      return;
+    }
+
+    // 3. If no route yet, or if travel mode changed, fetch new route
     if (!this.currentRoute || this.currentMode !== mode) {
       const route = await this.fetchRoute(currentPos, destinationPos, mode, property);
       if (onRouteUpdated) onRouteUpdated(route);

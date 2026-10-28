@@ -5,8 +5,9 @@
  * Never outputs a straight polyline between points.
  */
 
-import { getVerifiedRoadRoute, getKnownTravelDuration } from '../../utils/propertyCoordinates.js';
+import { getVerifiedRoadRoute, getKnownTravelDuration, getPreferredCampusGate } from '../../utils/propertyCoordinates.js';
 import { ADDU_GATES } from '../../constants/campusGates.js';
+import { calculateHaversineMeters } from './GeoUtils.js';
 
 /**
  * Standard Google Maps encoded polyline decoder.
@@ -126,13 +127,15 @@ class GoogleDirectionsServiceManager {
       return this.cache.get(cacheKey);
     }
 
-    // 1. Check for verified Google Maps ground-truth route from Ateneo gates
+    // 1. Check for verified Google Maps ground-truth route from Ateneo gates or if user is testing from outside campus (> 1500m)
+    const directDist = calculateHaversineMeters(oLat, oLng, dLat, dLng);
     const matchedGate = ADDU_GATES.find(
       (g) => Math.abs(g.lat - oLat) < 0.0008 && Math.abs(g.lng - oLng) < 0.0008
     );
-    if (matchedGate) {
+    if (matchedGate || directDist > 1500) {
       const targetProp = property || { latitude: dLat, longitude: dLng };
-      const verified = getVerifiedRoadRoute(matchedGate.id, targetProp, activeMode);
+      const gateId = matchedGate ? matchedGate.id : getPreferredCampusGate(targetProp);
+      const verified = getVerifiedRoadRoute(gateId, targetProp, activeMode);
       if (verified) {
         const route = {
           coordinates: verified.coordinates,
