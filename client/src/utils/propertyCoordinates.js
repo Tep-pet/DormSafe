@@ -150,7 +150,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   const isJacinto = gate.includes('jacinto');
   const isClaveria = gate.includes('claveria') || gate.includes('finster');
   const isMartinHall = gate.includes('martin');
-  const isCommunityCenter = gate.includes('community');
+  const isCommunityCenter = gate.includes('community') || gate.includes('ccfc');
   const isDotterweich = gate.includes('dotterweich');
   const isWalk = mode === 'walk';
 
@@ -358,6 +358,32 @@ export const VERIFIED_ROAD_ROUTES = {
       [7.06945, 125.61468], // Corella Dormitory
     ],
   },
+  'corella_ccfc': {
+    distanceMeters: 230,
+    walkMins: 3,
+    driveMins: 2,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07110, 125.61220], // Ateneo Roxas CCFC Gate
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory
+    ],
+  },
+  'correla_ccfc': {
+    distanceMeters: 230,
+    walkMins: 3,
+    driveMins: 2,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07110, 125.61220], // Ateneo Roxas CCFC Gate
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory
+    ],
+  },
 
   // --- BRC DORMITORY (Padre Gomez St & A. Bonifacio St) ---
   'brc_roxas': {
@@ -536,7 +562,7 @@ export function getVerifiedRoadRoute(gateId, property, mode = 'walk') {
   if (gate.includes('jacinto')) normGate = 'jacinto';
   else if (gate.includes('finster') || gate.includes('claveria')) normGate = 'finster';
   else if (gate.includes('martin')) normGate = 'jacinto';
-  else if (gate.includes('community') || gate.includes('dotterweich')) normGate = 'roxas';
+  else if (gate.includes('ccfc') || gate.includes('community') || gate.includes('dotterweich')) normGate = 'ccfc';
 
   // Look up specific route
   let routeDef = VERIFIED_ROAD_ROUTES[`${dormKey}_${normGate}`];

@@ -23,8 +23,9 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
   const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
+  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
+  const isCommunityCenter = isCCFC;
   const isMartinHall = Math.abs(oLat - 7.07150) < 0.0006 && Math.abs(oLng - 125.61350) < 0.0006;
-  const isCommunityCenter = Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isDotterweich = Math.abs(oLat - 7.07080) < 0.0006 && Math.abs(oLng - 125.61260) < 0.0006;
   const isWalk = mode === 'walk';
 
@@ -89,6 +90,8 @@ function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
   const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
+  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
+  const isCommunityCenter = isCCFC;
   const isWalk = mode === 'walk';
 
   // 1. Corella Dormitory
@@ -137,6 +140,20 @@ function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
           [125.61305, 7.07040], // M. Roxas Ave
           [125.61380, 7.06980], // M. Roxas Ave
           [125.61468, 7.06945], // Corella Dormitory (108 Roxas Ave)
+        ],
+      };
+    }
+    if (isCCFC || isCommunityCenter) {
+      return {
+        distanceMeters: 230,
+        durationMinutes: isWalk ? 3 : 2,
+        summary: 'via M. Roxas Ave',
+        coordinates: [
+          [125.61220, 7.07110], // Ateneo Roxas CCFC Gate
+          [125.61295, 7.07090], // M. Roxas Ave near Night Market
+          [125.61335, 7.07040], // M. Roxas Ave
+          [125.61375, 7.06990], // M. Roxas Ave
+          [125.61468, 7.06945], // Corella Dormitory
         ],
       };
     }

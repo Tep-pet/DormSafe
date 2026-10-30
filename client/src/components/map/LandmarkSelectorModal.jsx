@@ -150,12 +150,13 @@ export function LandmarkSelectorModal({
             </div>
 
             <div className="space-y-1.5">
-              {ADDU_GATES.filter((g) => g.id !== 'matina').map((gate) => {
+              {ADDU_GATES.map((gate) => {
                 const isSelected =
                   !isGpsSelected &&
                   currentOriginName &&
                   (currentOriginName.toLowerCase().includes(gate.id) ||
-                    (gate.id === 'finster' && currentOriginName.toLowerCase().includes('claveria')));
+                    (gate.id === 'claveria' && (currentOriginName.toLowerCase().includes('claveria') || currentOriginName.toLowerCase().includes('finster'))) ||
+                    (gate.id === 'ccfc' && (currentOriginName.toLowerCase().includes('ccfc') || currentOriginName.toLowerCase().includes('community'))));
 
                 return (
                   <button
@@ -182,21 +183,6 @@ export function LandmarkSelectorModal({
                           className={isSelected ? 'text-ateneo-blue' : 'text-slate-400 group-hover:text-ateneo-blue'}
                         />
                         <span className="truncate">{gate.name}</span>
-                        {gate.id === 'roxas' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
-                            Roxas
-                          </span>
-                        )}
-                        {gate.id === 'jacinto' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900">
-                            Main
-                          </span>
-                        )}
-                        {gate.id === 'finster' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900">
-                            Claveria
-                          </span>
-                        )}
                       </div>
 
                       <p className="text-[11px] text-slate-500 mt-1 truncate pl-5">
