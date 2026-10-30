@@ -20,10 +20,10 @@ function calculateGoogleMapsDriveMinutes(distanceMeters) {
  * Matches user-specified Google Maps benchmarks exactly.
  */
 function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
-  const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
+  const isRoxas = (Math.abs(oLat - 7.07180) < 0.0012 || Math.abs(oLat - 7.07175) < 0.0012) && (Math.abs(oLng - 125.61230) < 0.0012 || Math.abs(oLng - 125.61255) < 0.0012);
   const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
-  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
+  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0012 || Math.abs(oLat - 7.07105) < 0.0012) && (Math.abs(oLng - 125.61220) < 0.0012 || Math.abs(oLng - 125.61305) < 0.0012);
   const isCommunityCenter = isCCFC;
   const isMartinHall = Math.abs(oLat - 7.07150) < 0.0006 && Math.abs(oLng - 125.61350) < 0.0006;
   const isDotterweich = Math.abs(oLat - 7.07080) < 0.0006 && Math.abs(oLng - 125.61260) < 0.0006;
@@ -87,10 +87,10 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
  * Coordinates are formatted as [lng, lat] for GeoJSON standard.
  */
 export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
-  const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
+  const isRoxas = (Math.abs(oLat - 7.07180) < 0.0012 || Math.abs(oLat - 7.07175) < 0.0012) && (Math.abs(oLng - 125.61230) < 0.0012 || Math.abs(oLng - 125.61255) < 0.0012);
   const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
-  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
+  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0012 || Math.abs(oLat - 7.07105) < 0.0012) && (Math.abs(oLng - 125.61220) < 0.0012 || Math.abs(oLng - 125.61305) < 0.0012);
   const isCommunityCenter = isCCFC;
   const isWalk = mode === 'walk';
 
@@ -118,31 +118,35 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
     }
     if (isRoxas) {
       return {
-        distanceMeters: 300,
-        durationMinutes: isWalk ? 3 : 2,
+        distanceMeters: 350,
+        durationMinutes: isWalk ? 4 : 2,
         summary: 'via M. Roxas Ave',
         coordinates: [
-          [125.61230, 7.07180], // Roxas Gate
-          [125.61265, 7.07100], // M. Roxas Ave past Arrupe Hall
-          [125.61305, 7.07040], // M. Roxas Ave
-          [125.61380, 7.06980], // M. Roxas Ave
-          [125.61468, 7.06945], // Corella Dormitory
+          [125.61255, 7.07175], // Ateneo Roxas Gate (Northeast Sidewalk)
+          [125.61280, 7.07140], // M. Roxas Ave past Roxas Grounds
+          [125.61305, 7.07105], // M. Roxas Ave past Ateneo CCFC Gate
+          [125.61335, 7.07065], // M. Roxas Ave past Tree of Life / Night Market
+          [125.61380, 7.07010], // M. Roxas Ave past Chippens
+          [125.61415, 7.06970], // M. Roxas Ave approaching Correla Dormitory
+          [125.61468, 7.06945], // Correla Dormitory (108 Roxas Ave)
         ],
       };
     }
     if (isClaveria) {
       return {
-        distanceMeters: 470,
+        distanceMeters: 480,
         durationMinutes: isWalk ? 6 : 3,
         summary: 'via M. Roxas Ave',
         coordinates: [
-          [125.61220, 7.07260], // Finster / Claveria Gate
-          [125.61225, 7.07220], // M. Roxas Ave past Finster Hall
-          [125.61230, 7.07180], // M. Roxas Ave past Roxas Gate
-          [125.61265, 7.07100], // M. Roxas Ave past Arrupe Hall
-          [125.61305, 7.07040], // M. Roxas Ave
-          [125.61380, 7.06980], // M. Roxas Ave
-          [125.61468, 7.06945], // Corella Dormitory (108 Roxas Ave)
+          [125.61220, 7.07260], // Ateneo Claveria Gate
+          [125.61235, 7.07210], // C.M. Recto Ave turning onto M. Roxas Ave
+          [125.61255, 7.07175], // Ateneo Roxas Gate (Northeast Sidewalk)
+          [125.61280, 7.07140], // M. Roxas Ave past Roxas Grounds
+          [125.61305, 7.07105], // M. Roxas Ave past CCFC Gate
+          [125.61335, 7.07065], // M. Roxas Ave past Tree of Life
+          [125.61380, 7.07010], // M. Roxas Ave past Chippens
+          [125.61415, 7.06970], // M. Roxas Ave
+          [125.61468, 7.06945], // Correla Dormitory (108 Roxas Ave)
         ],
       };
     }
@@ -152,11 +156,11 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         durationMinutes: isWalk ? 3 : 2,
         summary: 'via M. Roxas Ave',
         coordinates: [
-          [125.61220, 7.07110], // Ateneo Roxas CCFC Gate
-          [125.61295, 7.07090], // M. Roxas Ave near Night Market
-          [125.61335, 7.07040], // M. Roxas Ave
-          [125.61375, 7.06990], // M. Roxas Ave
-          [125.61468, 7.06945], // Corella Dormitory
+          [125.61305, 7.07105], // Ateneo Roxas CCFC Gate
+          [125.61335, 7.07065], // M. Roxas Ave past Tree of Life / Night Market
+          [125.61380, 7.07010], // M. Roxas Ave past Chippens
+          [125.61415, 7.06970], // M. Roxas Ave
+          [125.61468, 7.06945], // Correla Dormitory (108 Roxas Ave)
         ],
       };
     }

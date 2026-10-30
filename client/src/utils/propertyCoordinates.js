@@ -283,30 +283,32 @@ export function getPreferredCampusGate(property) {
 export const VERIFIED_ROAD_ROUTES = {
   // --- CORELLA / CORRELA DORMITORY (108 M. Roxas Ave) ---
   'corella_roxas': {
-    distanceMeters: 190,
-    walkMins: 3,
+    distanceMeters: 350,
+    walkMins: 4,
     driveMins: 2,
     summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07180, 125.61230], // Ateneo Roxas Gate
-      [7.07140, 125.61260], // M. Roxas Ave past Community Center
-      [7.07090, 125.61295], // M. Roxas Ave near Night Market
-      [7.07040, 125.61335], // M. Roxas Ave
-      [7.06990, 125.61375], // M. Roxas Ave near RASI Computer
+      [7.07175, 125.61255], // Ateneo Roxas Gate (Northeast Sidewalk)
+      [7.07140, 125.61280], // M. Roxas Ave past Roxas Grounds
+      [7.07105, 125.61305], // M. Roxas Ave past Ateneo CCFC Gate
+      [7.07065, 125.61335], // M. Roxas Ave past Tree of Life / Night Market
+      [7.07010, 125.61380], // M. Roxas Ave past Chippens
+      [7.06970, 125.61415], // M. Roxas Ave approaching Correla Dormitory
       [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
     ],
   },
   'correla_roxas': {
-    distanceMeters: 190,
-    walkMins: 3,
+    distanceMeters: 350,
+    walkMins: 4,
     driveMins: 2,
     summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07180, 125.61230], // Ateneo Roxas Gate
-      [7.07140, 125.61260], // M. Roxas Ave past Community Center
-      [7.07090, 125.61295], // M. Roxas Ave near Night Market
-      [7.07040, 125.61335], // M. Roxas Ave
-      [7.06990, 125.61375], // M. Roxas Ave near RASI Computer
+      [7.07175, 125.61255], // Ateneo Roxas Gate (Northeast Sidewalk)
+      [7.07140, 125.61280], // M. Roxas Ave past Roxas Grounds
+      [7.07105, 125.61305], // M. Roxas Ave past Ateneo CCFC Gate
+      [7.07065, 125.61335], // M. Roxas Ave past Tree of Life / Night Market
+      [7.07010, 125.61380], // M. Roxas Ave past Chippens
+      [7.06970, 125.61415], // M. Roxas Ave approaching Correla Dormitory
       [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
     ],
   },
@@ -418,11 +420,11 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 2,
     summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07110, 125.61220], // Ateneo Roxas CCFC Gate
-      [7.07090, 125.61295], // M. Roxas Ave near Night Market
-      [7.07040, 125.61335], // M. Roxas Ave
-      [7.06990, 125.61375], // M. Roxas Ave
-      [7.06945, 125.61468], // Corella Dormitory
+      [7.07105, 125.61305], // Ateneo Roxas CCFC Gate
+      [7.07065, 125.61335], // M. Roxas Ave past Tree of Life / Night Market
+      [7.07010, 125.61380], // M. Roxas Ave past Chippens
+      [7.06970, 125.61415], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory (108 Roxas Ave)
     ],
   },
   'correla_ccfc': {
@@ -431,11 +433,11 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 2,
     summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07110, 125.61220], // Ateneo Roxas CCFC Gate
-      [7.07090, 125.61295], // M. Roxas Ave near Night Market
-      [7.07040, 125.61335], // M. Roxas Ave
-      [7.06990, 125.61375], // M. Roxas Ave
-      [7.06945, 125.61468], // Corella Dormitory
+      [7.07105, 125.61305], // Ateneo Roxas CCFC Gate
+      [7.07065, 125.61335], // M. Roxas Ave past Tree of Life / Night Market
+      [7.07010, 125.61380], // M. Roxas Ave past Chippens
+      [7.06970, 125.61415], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory (108 Roxas Ave)
     ],
   },
 
