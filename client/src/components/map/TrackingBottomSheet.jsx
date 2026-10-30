@@ -126,12 +126,11 @@ export function TrackingBottomSheet({
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 text-slate-600 hover:text-slate-900 active:scale-95 text-xs font-bold transition"
+              className="w-7 h-7 flex items-center justify-center rounded-xl bg-slate-100/90 hover:bg-slate-200/90 text-slate-600 hover:text-slate-900 active:scale-95 transition"
               title="Hide navigation panel"
               aria-label="Hide navigation panel"
             >
-              <span>Hide</span>
-              <ChevronLeft size={14} strokeWidth={2.5} />
+              <ChevronLeft size={16} strokeWidth={2.5} />
             </button>
           </div>
 
@@ -364,17 +363,6 @@ export function TrackingBottomSheet({
             </div>
           </div>
         </div>
-
-        {/* Outer Floating Arrow Tab (attached to right edge of the card) */}
-        <button
-          type="button"
-          onClick={() => setIsCollapsed(true)}
-          className="absolute -right-3.5 top-6 w-7 h-12 bg-white/95 backdrop-blur-md rounded-r-2xl border-y border-r border-slate-200/90 shadow-lg flex items-center justify-center text-slate-500 hover:text-ateneo-blue active:scale-95 transition"
-          title="Hide panel"
-          aria-label="Hide panel"
-        >
-          <ChevronLeft size={16} strokeWidth={2.5} />
-        </button>
       </div>
     </>
   );
