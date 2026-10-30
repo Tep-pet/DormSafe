@@ -76,30 +76,18 @@ export function TrackingBottomSheet({
   return (
     <>
       {/* ==================================================================== */}
-      {/* 1. UNHIDE / EXPAND BUTTON (Visible when panel is collapsed)          */}
+      {/* 1. UNHIDE / EXPAND ARROW TAB (Vertically Centered on Left Screen Edge) */}
       {/* ==================================================================== */}
       {isCollapsed && (
-        <div className="fixed top-16 left-3 sm:left-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-200">
-          <button
-            type="button"
-            onClick={() => setIsCollapsed(false)}
-            className="group flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white/95 text-slate-800 text-xs font-bold backdrop-blur-xl border border-slate-200/90 shadow-xl hover:bg-slate-50 hover:border-ateneo-blue/50 active:scale-95 transition-all"
-            title="Expand navigation details"
-            aria-label="Expand navigation panel"
-          >
-            <div className="w-6 h-6 rounded-xl bg-blue-50 text-ateneo-blue flex items-center justify-center group-hover:bg-ateneo-blue group-hover:text-white transition-colors">
-              <ChevronRight size={15} strokeWidth={2.5} />
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="font-extrabold text-slate-900 leading-tight">Show Route</span>
-              <span className="text-[10px] text-slate-500 font-medium">
-                {displayMinutes != null
-                  ? `${displayMinutes} min • ${originLabel}`
-                  : property?.name || 'Navigation'}
-              </span>
-            </div>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 w-9 h-16 bg-white/95 backdrop-blur-xl rounded-r-2xl border-y border-r border-slate-200/90 shadow-2xl flex items-center justify-center text-slate-600 hover:text-ateneo-blue active:scale-95 transition-all group pointer-events-auto animate-in fade-in slide-in-from-left duration-200"
+          title="Show Route"
+          aria-label="Show navigation panel"
+        >
+          <ChevronRight size={20} strokeWidth={2.5} className="text-ateneo-blue group-hover:translate-x-0.5 transition-transform" />
+        </button>
       )}
 
       {/* ==================================================================== */}
@@ -113,7 +101,7 @@ export function TrackingBottomSheet({
         }`}
       >
         <div className="relative bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden max-h-[calc(100vh-5rem)] flex flex-col">
-          {/* Header Bar with Live Indicator & Collapse Arrow Button */}
+          {/* Header Bar with Live Indicator */}
           <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-slate-100/90 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -121,17 +109,6 @@ export function TrackingBottomSheet({
                 Live Navigation
               </span>
             </div>
-
-            {/* Collapse / Hide Arrow Action Button */}
-            <button
-              type="button"
-              onClick={() => setIsCollapsed(true)}
-              className="w-7 h-7 flex items-center justify-center rounded-xl bg-slate-100/90 hover:bg-slate-200/90 text-slate-600 hover:text-slate-900 active:scale-95 transition"
-              title="Hide navigation panel"
-              aria-label="Hide navigation panel"
-            >
-              <ChevronLeft size={16} strokeWidth={2.5} />
-            </button>
           </div>
 
           {/* Scrollable Navigation Body */}
@@ -363,6 +340,17 @@ export function TrackingBottomSheet({
             </div>
           </div>
         </div>
+
+        {/* Centered Collapse Arrow Tab (attached to right edge of card) */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(true)}
+          className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-16 bg-white/95 backdrop-blur-md rounded-r-2xl border-y border-r border-slate-200/90 shadow-xl flex items-center justify-center text-slate-500 hover:text-ateneo-blue active:scale-95 transition-all group z-40"
+          title="Hide panel"
+          aria-label="Hide navigation panel"
+        >
+          <ChevronLeft size={18} strokeWidth={2.5} className="group-hover:-translate-x-0.5 transition-transform" />
+        </button>
       </div>
     </>
   );
