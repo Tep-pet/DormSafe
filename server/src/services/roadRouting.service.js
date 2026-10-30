@@ -21,7 +21,7 @@ function calculateGoogleMapsDriveMinutes(distanceMeters) {
  */
 function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
-  const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
+  const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
   const isCommunityCenter = isCCFC;
@@ -86,29 +86,32 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
  * Verified road coordinates for campus gate origins to verified dorm destinations.
  * Coordinates are formatted as [lng, lat] for GeoJSON standard.
  */
-function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
+export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
-  const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
+  const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isCCFC = (Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006) || Math.abs(oLat - 7.07110) < 0.0006;
   const isCommunityCenter = isCCFC;
   const isWalk = mode === 'walk';
 
   // 1. Corella Dormitory
-  if (Math.abs(dLat - 7.06945) < 0.0003 && Math.abs(dLng - 125.61468) < 0.0003) {
+  if (Math.abs(dLat - 7.06945) < 0.0010 && Math.abs(dLng - 125.61468) < 0.0010) {
     if (isJacinto) {
       return {
-        distanceMeters: 500,
+        distanceMeters: 510,
         durationMinutes: isWalk ? 6 : 4,
-        summary: 'via Emilio Jacinto St, Padre Zamora St & M. Roxas Ave',
+        summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
         coordinates: [
-          [125.61410, 7.07200], // Jacinto Gate
-          [125.61385, 7.07150], // Emilio Jacinto St past Finster Hall
-          [125.61360, 7.07110], // Corner of Jacinto St & Padre Zamora St
-          [125.61315, 7.07090], // Padre Zamora St
-          [125.61270, 7.07070], // Corner of Padre Zamora St & M. Roxas Ave
-          [125.61310, 7.07020], // M. Roxas Ave heading Southeast
-          [125.61380, 7.06980], // M. Roxas Ave
+          [125.61415, 7.07225], // Ateneo Jacinto Gate
+          [125.61395, 7.07170], // E. Jacinto St past PNB
+          [125.61375, 7.07125], // E. Jacinto St
+          [125.61365, 7.07105], // Corner of E. Jacinto St & Padre Zamora St
+          [125.61330, 7.07090], // Padre Zamora St heading southwest
+          [125.61290, 7.07075], // Padre Zamora St past Jubilee Hall
+          [125.61270, 7.07065], // Corner of Padre Zamora St & M. Roxas Ave (Tree of Life Memorial)
+          [125.61305, 7.07035], // M. Roxas Ave heading southeast past Night Market
+          [125.61350, 7.07000], // M. Roxas Ave past Padre Gomez St
+          [125.61400, 7.06970], // M. Roxas Ave
           [125.61468, 7.06945], // Corella Dormitory (108 Roxas Ave)
         ],
       };

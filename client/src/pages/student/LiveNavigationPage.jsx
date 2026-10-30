@@ -13,6 +13,7 @@ import {
   getKnownBenchmarkProperty,
   getAccuratePinpoint,
   getPreferredCampusGate,
+  getVerifiedRoadRoute,
 } from '../../utils/propertyCoordinates.js';
 import {
   calculateHaversineMeters,
@@ -247,6 +248,27 @@ export function LiveNavigationPage() {
         originMode === 'gps' && gps.position
           ? { lat: gps.position.lat, lng: gps.position.lng }
           : { lat: gate.lat, lng: gate.lng };
+
+      // Instant verified road route when originating from an ADDU campus gate
+      if (originMode === 'gate' && property) {
+        const verified = getVerifiedRoadRoute(gateId, property, travelMode);
+        if (verified) {
+          if (reqId === requestIdRef.current) {
+            setRoute({
+              status: 'ok',
+              data: {
+                ...verified,
+                provider: 'verified',
+              },
+              error: null,
+            });
+            setRouteFetchCount((c) => c + 1);
+            lastRouteFetchRef.current = { time: Date.now() };
+            offRouteCountRef.current = 0;
+            return;
+          }
+        }
+      }
 
       const data = await fetchRoute(activeOrigin, dest, travelMode);
       if (reqId === requestIdRef.current) {

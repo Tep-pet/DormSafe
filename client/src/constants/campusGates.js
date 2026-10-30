@@ -13,8 +13,8 @@ export const ADDU_GATE_COORDINATES = [
   {
     id: 'jacinto',
     name: 'Ateneo Jacinto Gate',
-    lat: 7.07200,
-    lng: 125.61410,
+    lat: 7.07225,
+    lng: 125.61415,
     address: 'E. Jacinto St, Poblacion District, Davao City',
   },
   {
@@ -46,8 +46,8 @@ export const ADDU_GATES = [
     label: 'Ateneo Jacinto Gate',
     name: 'Ateneo Jacinto Gate',
     address: 'E. Jacinto St, Poblacion District, Davao City',
-    lat: 7.07200,
-    lng: 125.61410,
+    lat: 7.07225,
+    lng: 125.61415,
     desc: 'Finster Hall & Bellarmine Hall entrance along E. Jacinto St',
     isPrimary: true,
   },

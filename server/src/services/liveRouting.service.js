@@ -1,3 +1,4 @@
+import { getVerifiedStreetRoute } from './roadRouting.service.js';
 /**
  * Live Routing Service for DormSafe
  * Multi-provider turn-by-turn routing with true provider durations.
@@ -66,6 +67,28 @@ export async function getLiveRoute({ originLat, originLng, destLat, destLng, mod
       return cached.data;
     }
     routeCache.delete(cacheKey);
+  }
+
+  // 0. Check for verified ground truth road route
+  const verifiedRoute = getVerifiedStreetRoute(oLat, oLng, dLat, dLng, activeMode);
+  if (verifiedRoute) {
+    const coordinates = verifiedRoute.coordinates.map(([a, b]) => (a > 50 ? [b, a] : [a, b]));
+    const result = {
+      mode: activeMode,
+      provider: 'verified',
+      trafficAware: false,
+      distanceMeters: verifiedRoute.distanceMeters,
+      durationSeconds: (verifiedRoute.durationMinutes || Math.max(1, Math.round(verifiedRoute.distanceMeters / 83.3))) * 60,
+      durationMinutes: verifiedRoute.durationMinutes,
+      formattedDistance: verifiedRoute.distanceMeters >= 1000
+        ? `${(verifiedRoute.distanceMeters / 1000).toFixed(1)} km`
+        : `${verifiedRoute.distanceMeters} m`,
+      formattedDuration: `${verifiedRoute.durationMinutes} min`,
+      summary: verifiedRoute.summary,
+      coordinates,
+    };
+    routeCache.set(cacheKey, { at: now, data: result });
+    return result;
   }
 
   // 1. Provider 1: Google Directions Web Service

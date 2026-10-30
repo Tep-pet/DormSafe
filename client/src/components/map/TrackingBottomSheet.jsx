@@ -287,7 +287,7 @@ export function TrackingBottomSheet({
               {/* Provider / Traffic / Accuracy Notes */}
               {route.status === 'ok' && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] text-slate-500">
-                  <span>{route.data?.provider ? `Via ${route.data.provider}` : 'Street Network'}</span>
+                  <span>{route.data?.provider === 'verified' ? 'Verified Campus Route' : route.data?.provider ? `Via ${route.data.provider}` : 'Street Network'}</span>
                   {!isWalk && (
                     <span>
                       {route.data?.trafficAware ? '• Live traffic' : '• Standard road speed'}

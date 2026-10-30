@@ -311,19 +311,73 @@ export const VERIFIED_ROAD_ROUTES = {
     ],
   },
   'corella_jacinto': {
-    distanceMeters: 500,
+    distanceMeters: 510,
     walkMins: 6,
     driveMins: 4,
-    summary: 'via Emilio Jacinto St, Padre Zamora St & M. Roxas Ave',
+    summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
     coordinates: [
-      [7.07200, 125.61410], // Jacinto Gate
-      [7.07150, 125.61385], // Emilio Jacinto St past Finster Hall
-      [7.07110, 125.61360], // Corner of Emilio Jacinto St & Padre Zamora St
-      [7.07090, 125.61315], // Padre Zamora St heading toward Roxas
-      [7.07070, 125.61270], // Corner of Padre Zamora St & M. Roxas Ave
-      [7.07020, 125.61310], // M. Roxas Ave heading Southeast
-      [7.06980, 125.61380], // M. Roxas Ave
-      [7.06945, 125.61468], // Corella Dormitory (108 Roxas Ave)
+      [7.07225, 125.61415], // Ateneo Jacinto Gate
+      [7.07170, 125.61395], // E. Jacinto St past PNB
+      [7.07125, 125.61375], // E. Jacinto St
+      [7.07105, 125.61365], // Corner of E. Jacinto St & Padre Zamora St
+      [7.07090, 125.61330], // Padre Zamora St heading southwest
+      [7.07075, 125.61290], // Padre Zamora St past Jubilee Hall
+      [7.07065, 125.61270], // Corner of Padre Zamora St & M. Roxas Ave (Tree of Life Memorial)
+      [7.07035, 125.61305], // M. Roxas Ave heading southeast past Night Market
+      [7.07000, 125.61350], // M. Roxas Ave past Padre Gomez St
+      [7.06970, 125.61400], // M. Roxas Ave
+      [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
+    ],
+  },
+  'correla_jacinto': {
+    distanceMeters: 510,
+    walkMins: 6,
+    driveMins: 4,
+    summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
+    coordinates: [
+      [7.07225, 125.61415], // Ateneo Jacinto Gate
+      [7.07170, 125.61395], // E. Jacinto St past PNB
+      [7.07125, 125.61375], // E. Jacinto St
+      [7.07105, 125.61365], // Corner of E. Jacinto St & Padre Zamora St
+      [7.07090, 125.61330], // Padre Zamora St heading southwest
+      [7.07075, 125.61290], // Padre Zamora St past Jubilee Hall
+      [7.07065, 125.61270], // Corner of Padre Zamora St & M. Roxas Ave (Tree of Life Memorial)
+      [7.07035, 125.61305], // M. Roxas Ave heading southeast past Night Market
+      [7.07000, 125.61350], // M. Roxas Ave past Padre Gomez St
+      [7.06970, 125.61400], // M. Roxas Ave
+      [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
+    ],
+  },
+  'corella_claveria': {
+    distanceMeters: 470,
+    walkMins: 6,
+    driveMins: 3,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07260, 125.61220], // Claveria Gate
+      [7.07220, 125.61225], // M. Roxas Ave past Finster Hall
+      [7.07180, 125.61230], // Roxas Gate
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory
+    ],
+  },
+  'correla_claveria': {
+    distanceMeters: 470,
+    walkMins: 6,
+    driveMins: 3,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07260, 125.61220], // Claveria Gate
+      [7.07220, 125.61225], // M. Roxas Ave past Finster Hall
+      [7.07180, 125.61230], // Roxas Gate
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory
     ],
   },
   'corella_finster': {
@@ -560,12 +614,18 @@ export function getVerifiedRoadRoute(gateId, property, mode = 'walk') {
 
   let normGate = 'roxas';
   if (gate.includes('jacinto')) normGate = 'jacinto';
-  else if (gate.includes('finster') || gate.includes('claveria')) normGate = 'finster';
+  else if (gate.includes('finster') || gate.includes('claveria')) normGate = 'claveria';
   else if (gate.includes('martin')) normGate = 'jacinto';
   else if (gate.includes('ccfc') || gate.includes('community') || gate.includes('dotterweich')) normGate = 'ccfc';
+  else if (gate.includes('roxas')) normGate = 'roxas';
 
   // Look up specific route
-  let routeDef = VERIFIED_ROAD_ROUTES[`${dormKey}_${normGate}`];
+  let routeDef =
+    VERIFIED_ROAD_ROUTES[`${dormKey}_${normGate}`] ||
+    (normGate === 'claveria' ? VERIFIED_ROAD_ROUTES[`${dormKey}_finster`] : null) ||
+    (normGate === 'finster' ? VERIFIED_ROAD_ROUTES[`${dormKey}_claveria`] : null) ||
+    VERIFIED_ROAD_ROUTES[`correla_${normGate}`] ||
+    VERIFIED_ROAD_ROUTES[`corella_${normGate}`];
   if (!routeDef && dormKey === 'ivory') routeDef = VERIFIED_ROAD_ROUTES['ivory_claveria'];
   if (!routeDef) routeDef = VERIFIED_ROAD_ROUTES[`${dormKey}_roxas`] || VERIFIED_ROAD_ROUTES[`${dormKey}_jacinto`];
 
