@@ -345,7 +345,12 @@ export function MapLibreTracker({
       }
 
       map.fitBounds(bounds, {
-        padding: { top: 90, bottom: 260, left: 40, right: 40 },
+        padding: {
+          top: 80,
+          bottom: 60,
+          left: typeof window !== 'undefined' && window.innerWidth >= 640 ? 410 : 40,
+          right: 40,
+        },
         maxZoom: 17,
         duration: 600,
       });
@@ -386,7 +391,12 @@ export function MapLibreTracker({
       }
 
       map.fitBounds(bounds, {
-        padding: { top: 90, bottom: 260, left: 40, right: 40 },
+        padding: {
+          top: 80,
+          bottom: 60,
+          left: typeof window !== 'undefined' && window.innerWidth >= 640 ? 410 : 40,
+          right: 40,
+        },
         maxZoom: 17,
         duration: 600,
       });
