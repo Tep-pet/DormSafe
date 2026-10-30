@@ -29,13 +29,13 @@ export function LandmarkSelectorModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      placement="bottom"
+      placement="center"
       classNames={{
-        base: 'bg-white rounded-t-3xl sm:rounded-3xl p-2 max-w-md mx-auto shadow-2xl border border-slate-100 max-h-[88vh] overflow-hidden flex flex-col',
+        base: 'bg-white rounded-3xl p-2 max-w-md mx-auto shadow-2xl border border-slate-100 max-h-[90vh] overflow-hidden flex flex-col',
       }}
     >
-      <ModalContent className="flex flex-col h-full">
-        <ModalHeader className="flex flex-col text-left px-5 pt-5 pb-2">
+      <ModalContent className="flex flex-col">
+        <ModalHeader className="flex flex-col text-left px-5 pt-4 pb-2">
           <div className="flex items-center gap-2 text-ateneo-blue font-bold text-base">
             <Navigation size={18} />
             <span>Choose Starting Location</span>
@@ -45,7 +45,7 @@ export function LandmarkSelectorModal({
           </p>
         </ModalHeader>
 
-        <ModalBody className="overflow-y-auto px-4 py-2 space-y-3 flex-1">
+        <ModalBody className="overflow-y-auto px-4 py-2 space-y-3">
           {/* Permission Denied or GPS Error Banner */}
           {gpsErrorMessage && (
             <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs flex flex-col gap-1.5">
@@ -208,7 +208,7 @@ export function LandmarkSelectorModal({
           </div>
         </ModalBody>
 
-        <ModalFooter className="pt-2 pb-4 px-5">
+        <ModalFooter className="pt-1 pb-3 px-4">
           <Button
             variant="flat"
             className="w-full text-slate-600 font-semibold text-xs h-10 rounded-xl bg-slate-100 hover:bg-slate-200"
