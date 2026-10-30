@@ -593,7 +593,7 @@ export function AdminAuditPage() {
                             startContent={<Eye size={13} strokeWidth={2} />}
                             className="text-xs text-slate-600 hover:text-slate-900"
                           >
-                            Inspect Payload
+                            View Details
                           </Button>
                         </div>
                       </div>
@@ -628,7 +628,7 @@ export function AdminAuditPage() {
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Audit Event Details</h3>
                   <p className="text-xs text-slate-500">
-                    Raw security and transaction payload metadata.
+                    Security and transaction event details.
                   </p>
                 </div>
               </div>
@@ -684,7 +684,7 @@ export function AdminAuditPage() {
                 variant="primary"
                 onClick={() => setInspectModal({ isOpen: false, log: null })}
               >
-                Close Inspector
+                Close Details
               </Button>
             </div>
           </div>
