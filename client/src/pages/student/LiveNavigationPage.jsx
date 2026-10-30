@@ -282,7 +282,7 @@ export function LiveNavigationPage() {
         setRoute({ status: 'error', data: null, error: err.message || 'Route calculation failed' });
       }
     }
-  }, [destLatRounded, destLngRounded, originMode, gps.position, gate.lat, gate.lng, dest, travelMode]);
+  }, [destLatRounded, destLngRounded, originMode, gps.position, gate.lat, gate.lng, dest, travelMode, gateId, property, id]);
 
   useEffect(() => {
     triggerFetchRoute();
