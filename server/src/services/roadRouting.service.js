@@ -23,7 +23,7 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
   const isRoxas =
     (Math.abs(oLat - 7.07175) < 0.00025 && Math.abs(oLng - 125.61255) < 0.00025) ||
     (Math.abs(oLat - 7.07180) < 0.00025 && Math.abs(oLng - 125.61230) < 0.00025);
-  const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
+  const isJacinto = (Math.abs(oLat - 7.07280) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012 || Math.abs(oLat - 7.07200) < 0.0012) && Math.abs(oLng - 125.61405) < 0.0015;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isCCFC =
     (Math.abs(oLat - 7.07135) < 0.00025 && Math.abs(oLng - 125.61285) < 0.00025) ||
@@ -95,7 +95,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
   const isRoxas =
     (Math.abs(oLat - 7.07175) < 0.00025 && Math.abs(oLng - 125.61255) < 0.00025) ||
     (Math.abs(oLat - 7.07180) < 0.00025 && Math.abs(oLng - 125.61230) < 0.00025);
-  const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
+  const isJacinto = (Math.abs(oLat - 7.07280) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012 || Math.abs(oLat - 7.07200) < 0.0012) && Math.abs(oLng - 125.61405) < 0.0015;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isCCFC =
     (Math.abs(oLat - 7.07135) < 0.00025 && Math.abs(oLng - 125.61285) < 0.00025) ||
@@ -106,13 +106,15 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
 
   // 1. Corella Dormitory
   if (Math.abs(dLat - 7.06945) < 0.0010 && Math.abs(dLng - 125.61468) < 0.0010) {
-    if (isJacinto) {
+        if (isJacinto) {
       return {
-        distanceMeters: 510,
-        durationMinutes: isWalk ? 6 : 4,
+        distanceMeters: 560,
+        durationMinutes: isWalk ? 7 : 4,
         summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
         coordinates: [
-          [125.61415, 7.07225], // Ateneo Jacinto Gate
+          [125.61405, 7.07280], // Ateneo Jacinto Gate (Bellarmine Hall entrance)
+          [125.61415, 7.07255], // E. Jacinto St near 7-Eleven
+          [125.61415, 7.07220], // E. Jacinto St near Keepsakes / Sun Star
           [125.61395, 7.07170], // E. Jacinto St past PNB
           [125.61375, 7.07125], // E. Jacinto St
           [125.61365, 7.07105], // Corner of E. Jacinto St & Padre Zamora St
@@ -199,7 +201,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         durationMinutes: isWalk ? 7 : 3,
         summary: 'via Emilio Jacinto St & Padre Gomez St',
         coordinates: [
-          [125.61410, 7.07200], // Jacinto Gate
+          [125.61405, 7.07280], // Ateneo Jacinto Gate
           [125.61360, 7.07110], // Jacinto St
           [125.61320, 7.07030], // Corner of Jacinto St & Padre Gomez St
           [125.61290, 7.06950], // Padre Gomez St
@@ -232,7 +234,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         durationMinutes: isWalk ? 4 : 2,
         summary: 'via Emilio Jacinto St & Padre Faura St',
         coordinates: [
-          [125.61410, 7.07200], // Jacinto Gate
+          [125.61405, 7.07280], // Ateneo Jacinto Gate
           [125.61360, 7.07110], // Jacinto St past Martin Hall
           [125.61320, 7.07030], // Jacinto St
           [125.61280, 7.06940], // Corner of Jacinto St & Padre Faura St
@@ -250,7 +252,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         durationMinutes: isWalk ? 4 : 2,
         summary: 'via Emilio Jacinto St & Juan Luna St',
         coordinates: [
-          [125.61410, 7.07200], // Jacinto Gate
+          [125.61405, 7.07280], // Ateneo Jacinto Gate
           [125.61425, 7.07240], // Corner of Jacinto St & Juan Luna St
           [125.61510, 7.07250], // Juan Luna St heading East
           [125.61601, 7.07259], // Juan Luna Boarding House

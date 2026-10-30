@@ -319,7 +319,7 @@ export function MapLibreTracker({
       }
     };
 
-    if (map.isStyleLoaded()) {
+    if (isMapLoadedRef.current || map.isStyleLoaded()) {
       updateRoute();
     } else {
       map.once('load', updateRoute);

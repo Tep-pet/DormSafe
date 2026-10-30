@@ -10,7 +10,7 @@ const durationCache = new Map();
  */
 function getKnownOsrmDuration(origin, destination) {
   const isRoxas = Math.abs(origin.lat - 7.0718) < 0.0006 && Math.abs(origin.lng - 125.6123) < 0.0006;
-  const isJacinto = Math.abs(origin.lat - 7.0720) < 0.0006 && Math.abs(origin.lng - 125.6141) < 0.0006;
+  const isJacinto = (Math.abs(origin.lat - 7.0728) < 0.0012 || Math.abs(origin.lat - 7.0720) < 0.0012) && Math.abs(origin.lng - 125.6141) < 0.0015;
   const isClaveria = Math.abs(origin.lat - 7.0726) < 0.0006 && Math.abs(origin.lng - 125.6122) < 0.0006;
 
   // 1. Ivory Residences (lat 7.08719, lng 125.60915 - Bajada 2 km) -> Google Maps: Claveria 25 min, Jacinto 25 min, Roxas 26 min

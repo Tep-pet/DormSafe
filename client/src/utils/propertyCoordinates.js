@@ -161,7 +161,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
   // 1. Corella Dormitory (Addu Roxas Gate: 3 min walk, 2 min car; Jacinto Gate: 6 min walk, 4 min car)
   if (propId === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' || name.includes('corella') || name.includes('correla') || addr.includes('108 roxas')) {
     if (isRoxas) return isWalk ? 3 : 2;
-    if (isJacinto) return isWalk ? 6 : 4;
+    if (isJacinto) return isWalk ? 7 : 4;
     if (isClaveria) return isWalk ? 6 : 3;
     if (isMartinHall) return isWalk ? 4 : 2;
     if (isCommunityCenter) return isWalk ? 4 : 2;
@@ -225,7 +225,7 @@ export function getKnownTravelDuration(gateId, property, mode = 'walk') {
     }
     if (Math.abs(lat - 7.06945) < 0.0003 && Math.abs(lng - 125.61468) < 0.0003) {
       if (isRoxas) return isWalk ? 3 : 2;
-      if (isJacinto) return isWalk ? 6 : 4;
+      if (isJacinto) return isWalk ? 7 : 4;
       if (isClaveria) return isWalk ? 6 : 3;
       return isWalk ? 3 : 2;
     }
@@ -313,12 +313,14 @@ export const VERIFIED_ROAD_ROUTES = {
     ],
   },
   'corella_jacinto': {
-    distanceMeters: 510,
-    walkMins: 6,
+    distanceMeters: 560,
+    walkMins: 7,
     driveMins: 4,
     summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
     coordinates: [
-      [7.07225, 125.61415], // Ateneo Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate (Bellarmine Hall entrance)
+      [7.07255, 125.61415], // E. Jacinto St near 7-Eleven
+      [7.07220, 125.61415], // E. Jacinto St near Keepsakes / Sun Star
       [7.07170, 125.61395], // E. Jacinto St past PNB
       [7.07125, 125.61375], // E. Jacinto St
       [7.07105, 125.61365], // Corner of E. Jacinto St & Padre Zamora St
@@ -332,12 +334,14 @@ export const VERIFIED_ROAD_ROUTES = {
     ],
   },
   'correla_jacinto': {
-    distanceMeters: 510,
-    walkMins: 6,
+    distanceMeters: 560,
+    walkMins: 7,
     driveMins: 4,
     summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
     coordinates: [
-      [7.07225, 125.61415], // Ateneo Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate (Bellarmine Hall entrance)
+      [7.07255, 125.61415], // E. Jacinto St near 7-Eleven
+      [7.07220, 125.61415], // E. Jacinto St near Keepsakes / Sun Star
       [7.07170, 125.61395], // E. Jacinto St past PNB
       [7.07125, 125.61375], // E. Jacinto St
       [7.07105, 125.61365], // Corner of E. Jacinto St & Padre Zamora St
@@ -462,7 +466,7 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 3,
     summary: 'via Emilio Jacinto St & Padre Gomez St',
     coordinates: [
-      [7.07200, 125.61410], // Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate
       [7.07110, 125.61360], // Jacinto St
       [7.07030, 125.61320], // Corner of Jacinto St & Padre Gomez St
       [7.06950, 125.61290], // Padre Gomez St
@@ -494,7 +498,7 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 2,
     summary: 'via Emilio Jacinto St & Padre Faura St',
     coordinates: [
-      [7.07200, 125.61410], // Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate
       [7.07110, 125.61460], // Emilio Jacinto St past Martin Hall
       [7.07030, 125.61520], // Emilio Jacinto St
       [7.06990, 125.61570], // Corner of Emilio Jacinto St & Padre Faura St
@@ -509,7 +513,7 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 2,
     summary: 'via Emilio Jacinto St & Juan Luna St',
     coordinates: [
-      [7.07200, 125.61410], // Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate
       [7.07240, 125.61425], // Corner of Emilio Jacinto St & Juan Luna St
       [7.07250, 125.61510], // Juan Luna St heading East
       [7.07259, 125.61601], // Juan Luna Boarding House
@@ -551,7 +555,7 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 10,
     summary: 'via Emilio Jacinto St & J.P. Laurel Ave',
     coordinates: [
-      [7.07200, 125.61410], // Jacinto Gate
+      [7.07280, 125.61405], // Ateneo Jacinto Gate
       [7.07340, 125.61450], // E. Jacinto St to Recto
       [7.07500, 125.61350], // Recto to Bajada
       [7.07800, 125.61150], // J.P. Laurel Ave
