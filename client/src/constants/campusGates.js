@@ -27,8 +27,8 @@ export const ADDU_GATE_COORDINATES = [
   {
     id: 'claveria',
     name: 'Ateneo Claveria Gate (Finster Gate)',
-    lat: 7.07270,
-    lng: 125.61390,
+    lat: 7.07260,
+    lng: 125.61220,
     address: 'C.M. Recto Ave (Claveria St), Poblacion District, Davao City',
   },
 ];
@@ -59,8 +59,8 @@ export const ADDU_GATES = [
     label: 'Ateneo Claveria Gate (Finster Gate)',
     name: 'Ateneo Claveria Gate (Finster Gate)',
     address: 'C.M. Recto Ave (Claveria St), Poblacion District, Davao City',
-    lat: 7.07270,
-    lng: 125.61390,
+    lat: 7.07260,
+    lng: 125.61220,
     desc: 'North pedestrian gate along C.M. Recto Ave (Claveria)',
     isPrimary: false,
   },

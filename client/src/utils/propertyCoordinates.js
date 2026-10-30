@@ -327,17 +327,34 @@ export const VERIFIED_ROAD_ROUTES = {
     ],
   },
   'corella_finster': {
-    distanceMeters: 520,
+    distanceMeters: 470,
     walkMins: 6,
     driveMins: 3,
-    summary: 'via C.M. Recto Ave & M. Roxas Ave',
+    summary: 'via M. Roxas Ave',
     coordinates: [
-      [7.07270, 125.61390], // Finster / Claveria Gate
-      [7.07340, 125.61350], // C.M. Recto Ave
-      [7.07430, 125.61110], // Corner of Recto & Roxas Ave
-      [7.07280, 125.61180], // M. Roxas Ave heading South
+      [7.07260, 125.61220], // Finster / Claveria Gate
+      [7.07220, 125.61225], // M. Roxas Ave past Finster Hall
       [7.07180, 125.61230], // Roxas Gate
-      [7.07040, 125.61305], // M. Roxas Ave
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
+      [7.06945, 125.61468], // Corella Dormitory
+    ],
+  },
+  'correla_finster': {
+    distanceMeters: 470,
+    walkMins: 6,
+    driveMins: 3,
+    summary: 'via M. Roxas Ave',
+    coordinates: [
+      [7.07260, 125.61220], // Finster / Claveria Gate
+      [7.07220, 125.61225], // M. Roxas Ave past Finster Hall
+      [7.07180, 125.61230], // Roxas Gate
+      [7.07140, 125.61260], // M. Roxas Ave past Community Center
+      [7.07090, 125.61295], // M. Roxas Ave near Night Market
+      [7.07040, 125.61335], // M. Roxas Ave
+      [7.06990, 125.61375], // M. Roxas Ave
       [7.06945, 125.61468], // Corella Dormitory
     ],
   },
@@ -437,7 +454,7 @@ export const VERIFIED_ROAD_ROUTES = {
     driveMins: 10,
     summary: 'via C.M. Recto Ave & J.P. Laurel Ave (Bajada)',
     coordinates: [
-      [7.07270, 125.61390], // Finster / Claveria Gate
+      [7.07260, 125.61220], // Finster / Claveria Gate
       [7.07340, 125.61450], // C.M. Recto Ave
       [7.07500, 125.61350], // Recto Ave turning toward Bajada
       [7.07800, 125.61150], // J.P. Laurel Ave

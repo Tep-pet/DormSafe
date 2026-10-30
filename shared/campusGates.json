@@ -18,15 +18,15 @@
     "finster": {
       "id": "finster",
       "label": "Ateneo Finster Gate (Claveria)",
-      "lat": 7.0727,
-      "lng": 125.6139,
+      "lat": 7.0726,
+      "lng": 125.6122,
       "note": "North pedestrian gate along C.M. Recto Ave (Claveria)"
     },
     "claveria": {
       "id": "claveria",
       "label": "Ateneo Finster Gate (Claveria)",
-      "lat": 7.0727,
-      "lng": 125.6139,
+      "lat": 7.0726,
+      "lng": 125.6122,
       "note": "North pedestrian gate along C.M. Recto Ave (Claveria)"
     }
   },

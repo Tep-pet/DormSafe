@@ -22,7 +22,7 @@ function calculateGoogleMapsDriveMinutes(distanceMeters) {
 function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
   const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
-  const isClaveria = Math.abs(oLat - 7.07270) < 0.0006 && Math.abs(oLng - 125.61390) < 0.0006;
+  const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isMartinHall = Math.abs(oLat - 7.07150) < 0.0006 && Math.abs(oLng - 125.61350) < 0.0006;
   const isCommunityCenter = Math.abs(oLat - 7.07110) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isDotterweich = Math.abs(oLat - 7.07080) < 0.0006 && Math.abs(oLng - 125.61260) < 0.0006;
@@ -88,7 +88,7 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
 function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
   const isRoxas = Math.abs(oLat - 7.07180) < 0.0006 && Math.abs(oLng - 125.61230) < 0.0006;
   const isJacinto = Math.abs(oLat - 7.07200) < 0.0006 && Math.abs(oLng - 125.61410) < 0.0006;
-  const isClaveria = Math.abs(oLat - 7.07270) < 0.0006 && Math.abs(oLng - 125.61390) < 0.0006;
+  const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
   const isWalk = mode === 'walk';
 
   // 1. Corella Dormitory
@@ -121,6 +121,22 @@ function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
           [125.61305, 7.07040], // M. Roxas Ave
           [125.61380, 7.06980], // M. Roxas Ave
           [125.61468, 7.06945], // Corella Dormitory
+        ],
+      };
+    }
+    if (isClaveria) {
+      return {
+        distanceMeters: 470,
+        durationMinutes: isWalk ? 6 : 3,
+        summary: 'via M. Roxas Ave',
+        coordinates: [
+          [125.61220, 7.07260], // Finster / Claveria Gate
+          [125.61225, 7.07220], // M. Roxas Ave past Finster Hall
+          [125.61230, 7.07180], // M. Roxas Ave past Roxas Gate
+          [125.61265, 7.07100], // M. Roxas Ave past Arrupe Hall
+          [125.61305, 7.07040], // M. Roxas Ave
+          [125.61380, 7.06980], // M. Roxas Ave
+          [125.61468, 7.06945], // Corella Dormitory (108 Roxas Ave)
         ],
       };
     }
@@ -231,7 +247,7 @@ function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         durationMinutes: isWalk ? 25 : 10,
         summary: 'via C.M. Recto Ave & J.P. Laurel Ave (Bajada)',
         coordinates: [
-          [125.61390, 7.07270], // Finster / Claveria Gate
+          [125.61220, 7.07260], // Finster / Claveria Gate
           [125.61450, 7.07340], // C.M. Recto Ave
           [125.61350, 7.07500], // Recto Ave turning toward Bajada
           [125.61150, 7.07800], // J.P. Laurel Ave
