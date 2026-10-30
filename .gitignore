@@ -25,6 +25,7 @@ npm-debug.log*
 Thumbs.db
 
 # IDE
+.agent/
 .vscode/
 .idea/
 *.swp

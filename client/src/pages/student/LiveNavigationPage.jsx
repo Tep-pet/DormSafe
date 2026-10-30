@@ -1,24 +1,24 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Compass, AlertTriangle, ShieldCheck, MapPin, Footprints, Car } from 'lucide-react';
+import { ArrowLeft, Compass, AlertTriangle } from 'lucide-react';
 import { MapLibreTracker } from '../../components/map/MapLibreTracker.jsx';
 import { TrackingBottomSheet } from '../../components/map/TrackingBottomSheet.jsx';
-import { PermissionPromptModal } from '../../components/map/PermissionPromptModal.jsx';
 import { LandmarkSelectorModal } from '../../components/map/LandmarkSelectorModal.jsx';
-import { ADDU_GATES, CAMPUS_GATES } from '../../constants/campusGates.js';
+import { ADDU_GATES } from '../../constants/campusGates.js';
 import { proximityService } from '../../services/proximityService.js';
 import { GeolocationEngine } from '../../services/map/GeolocationEngine.js';
-import { RouteService } from '../../services/map/RouteService.js';
+import { fetchRoute } from '../../services/map/LiveRouteService.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import {
-  getKnownWalkingMinutes,
-  getKnownDrivingMinutes,
-  getKnownTravelDuration,
-  getVerifiedRoadRoute,
-  getPreferredCampusGate,
   getKnownBenchmarkProperty,
+  getAccuratePinpoint,
+  getPreferredCampusGate,
 } from '../../utils/propertyCoordinates.js';
-import { calculateHaversineMeters } from '../../services/map/GeoUtils.js';
+import {
+  calculateHaversineMeters,
+  remainingAlongRoute,
+  remainingMinutes,
+} from '../../services/map/GeoUtils.js';
 
 export function LiveNavigationPage() {
   const { id } = useParams();
@@ -26,123 +26,104 @@ export function LiveNavigationPage() {
   const location = useLocation();
   const { accessToken } = useAuth();
 
-  // If passed directly via router state or matching benchmark catalog by UUID/name, use it immediately (zero loading screen)
+  // Instant benchmark resolution if navigating to a known dorm
   const knownBenchmark = getKnownBenchmarkProperty(id);
   const passedProperty = location.state?.property || knownBenchmark;
 
-  // Determine default starting gate (Roxas Gate is the primary reference gate)
+  // Initial gate resolution
   const preferredGate = getPreferredCampusGate(passedProperty);
   const queryGate = new URLSearchParams(location.search).get('gate');
-  const resolvedGateId = queryGate || location.state?.initialGate || preferredGate || 'roxas';
-  const defaultGate = ADDU_GATES.find((g) => g.id === resolvedGateId) || ADDU_GATES.find((g) => g.id === 'roxas') || ADDU_GATES[0];
+  const initialGateId = queryGate || location.state?.initialGate || preferredGate || 'roxas';
 
+  // State
   const [property, setProperty] = useState(passedProperty || null);
   const [loading, setLoading] = useState(!passedProperty);
   const [error, setError] = useState(null);
 
-  // Permission & Modals
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [showLandmarkModal, setShowLandmarkModal] = useState(!queryGate && !location.state?.initialGate);
-
-  // GPS Detection State: 'detecting' | 'detected' | 'unavailable'
-  const [gpsStatus, setGpsStatus] = useState('detecting');
-  const [gpsErrorMessage, setGpsErrorMessage] = useState(null);
-  const [detectedGpsPos, setDetectedGpsPos] = useState(null);
-
-  // Travel Mode: 'walk' is selected by default; 'drive' is optional toggle
-  const [travelMode, setTravelMode] = useState(location.state?.travelMode || 'walk');
-
-  // Live Location & Navigation State
-  const [userLocation, setUserLocation] = useState({ lat: defaultGate.lat, lng: defaultGate.lng });
-  const [userBearing, setUserBearing] = useState(0);
-  const [originName, setOriginName] = useState(defaultGate.name);
-
-  const verifiedInitial = getVerifiedRoadRoute(defaultGate.id, passedProperty, location.state?.travelMode || 'walk');
-  const initialDuration = getKnownTravelDuration(defaultGate.id, passedProperty, location.state?.travelMode || 'walk') || verifiedInitial?.durationMinutes || 6;
-
-  const [routeStats, setRouteStats] = useState({
-    distanceMeters: verifiedInitial?.distanceMeters || passedProperty?.distance_meters || 450,
-    durationMinutes: initialDuration,
-    formattedDistance: verifiedInitial?.formattedDistance || `${verifiedInitial?.distanceMeters || 450} m`,
-    formattedDuration: `${initialDuration} min`,
-    durationText: `${initialDuration} min`,
-    distanceText: verifiedInitial?.formattedDistance || `${verifiedInitial?.distanceMeters || 450} m`,
-    summary: verifiedInitial?.summary || 'via pedestrian road network',
-    mode: location.state?.travelMode || 'walk',
+  const [originMode, setOriginMode] = useState(() => {
+    return location.state?.originMode || (GeolocationEngine.lastKnownPosition ? 'gps' : 'gate');
   });
-  const [isArrived, setIsArrived] = useState(false);
-  const [isCompassMode, setIsCompassMode] = useState(true);
-  const [recenterCount, setRecenterCount] = useState(0);
+  const [travelMode, setTravelMode] = useState(
+    location.state?.travelMode === 'drive' ? 'drive' : 'walk'
+  );
+  const [gateId, setGateId] = useState(initialGateId);
 
+  const [gps, setGps] = useState(() => {
+    const last = GeolocationEngine.lastKnownPosition;
+    if (last) {
+      return { status: 'ok', position: last };
+    }
+    return { status: 'locating', position: null };
+  });
+  const [recalibrating, setRecalibrating] = useState(false);
+  const [route, setRoute] = useState({ status: 'idle', data: null, error: null });
+  const [progress, setProgress] = useState(null); // { remainingMeters, minutes }
+  const [routeFetchCount, setRouteFetchCount] = useState(0);
+
+  const [follow, setFollow] = useState(true);
+  const [headingUp, setHeadingUp] = useState(false);
+  const [heading, setHeading] = useState(null);
+  const [recenterCount, setRecenterCount] = useState(0);
+  const [arrived, setArrived] = useState(false);
+  const [showGateModal, setShowGateModal] = useState(false);
+
+  // Refs
+  const userChoseOriginRef = useRef(Boolean(location.state?.originMode));
+  const autoSwitchedRef = useRef(Boolean(location.state?.originMode || GeolocationEngine.lastKnownPosition));
+  const lastRouteFetchRef = useRef({ time: 0 });
+  const offRouteCountRef = useRef(0);
+  const requestIdRef = useRef(0);
   const wakeLockRef = useRef(null);
 
-  // Recalculates route and duration using Google Directions & verified road network (never straight lines)
-  const recalculateRouteForLocation = useCallback(async (originCoords, mode, currentName, overrideProperty = null) => {
-    const targetProp = overrideProperty || property || getKnownBenchmarkProperty(id);
-    if (!originCoords || !targetProp) return;
-    const destLat = Number(targetProp.latitude || 7.06956);
-    const destLng = Number(targetProp.longitude || 125.61525);
+  // Derived Gate & Destination Coordinates
+  const gate = useMemo(() => {
+    return ADDU_GATES.find((g) => g.id === gateId) || ADDU_GATES[0];
+  }, [gateId]);
 
-    try {
-      const route = await RouteService.fetchRoute(originCoords, { lat: destLat, lng: destLng }, mode, targetProp);
-      if (route) {
-        setRouteStats({
-          distanceMeters: route.distanceMeters,
-          durationMinutes: route.durationMinutes,
-          formattedDistance: route.formattedDistance || `${route.distanceMeters} m`,
-          formattedDuration: route.formattedDuration || `${route.durationMinutes} min`,
-          durationText: route.durationText || route.formattedDuration || `${route.durationMinutes} min`,
-          distanceText: route.distanceText || route.formattedDistance || `${route.distanceMeters} m`,
-          summary: route.summary || 'via road network',
-          mode,
-          coordinates: route.coordinates,
-          isFallback: route.isFallback,
-        });
-      }
-    } catch (err) {
-      console.warn('[LiveNavigationPage] Route calculation notice:', err.message);
+  const dest = useMemo(() => {
+    const pinpoint = getAccuratePinpoint(property);
+    return {
+      lat: Number(pinpoint?.lat || property?.latitude || 7.07),
+      lng: Number(pinpoint?.lng || property?.longitude || 125.614),
+    };
+  }, [property?.latitude, property?.longitude, property?.lat, property?.lng, property?.id, property?.name]);
+
+  const origin = useMemo(() => {
+    if (originMode === 'gps' && gps.position) {
+      return { lat: gps.position.lat, lng: gps.position.lng };
     }
-  }, [property, id]);
+    return { lat: gate.lat, lng: gate.lng };
+  }, [originMode, gps.position, gate.lat, gate.lng]);
 
-  // Request browser geolocation with enableHighAccuracy: true
-  const requestGeolocation = useCallback(() => {
-    setGpsStatus('detecting');
-    setGpsErrorMessage(null);
+  // Mode thresholds
+  const T = useMemo(() => {
+    return {
+      walk: { offRoute: 40, arrive: 25, farKm: 5 },
+      drive: { offRoute: 60, arrive: 40, farKm: 20 },
+    }[travelMode];
+  }, [travelMode]);
 
-    if (!('geolocation' in navigator)) {
-      setGpsStatus('unavailable');
-      setGpsErrorMessage('Geolocation is not supported by your browser. Please select an Ateneo campus gate below.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setDetectedGpsPos(coords);
-        setGpsStatus('detected');
-        setGpsErrorMessage(null);
-      },
-      (err) => {
-        console.info('[LiveNavigationPage] GPS error:', err.message);
-        setGpsStatus('unavailable');
-        if (err.code === 1) {
-          setGpsErrorMessage('Location permission was denied. Please allow location access in your browser settings to track from your position, or choose an Ateneo campus gate below.');
-        } else if (err.code === 3) {
-          setGpsErrorMessage('Location request timed out. Please check your GPS signal or select an Ateneo campus gate below.');
-        } else {
-          setGpsErrorMessage('Unable to determine location. Please select an Ateneo campus gate below.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+  // Check far distance
+  const farKm = useMemo(() => {
+    if (originMode !== 'gps' || !gps.position) return null;
+    const directMeters = calculateHaversineMeters(
+      gps.position.lat,
+      gps.position.lng,
+      dest.lat,
+      dest.lng
     );
-  }, []);
+    if (directMeters > T.farKm * 1000) {
+      return (directMeters / 1000).toFixed(1);
+    }
+    return null;
+  }, [originMode, gps.position, dest.lat, dest.lng, T.farKm]);
 
-  // 1. Proactively detect student's live GPS location as soon as page mounts
-  useEffect(() => {
-    requestGeolocation();
-  }, [requestGeolocation]);
+  // Stable route identity key to trigger camera fitBounds only when a route was freshly fetched
+  const routeKey = useMemo(() => {
+    return `${originMode}:${gateId}:${travelMode}:${routeFetchCount}`;
+  }, [originMode, gateId, travelMode, routeFetchCount]);
 
-  // 2. Fetch Accommodation Data if not already in state
+  // 1. Fetch Accommodation Data if needed
   useEffect(() => {
     let isMounted = true;
     if (passedProperty) {
@@ -151,82 +132,49 @@ export function LiveNavigationPage() {
       return;
     }
 
-    // Instant zero-delay resolution for benchmark dorms (Corella, BRC, Residencia, Juan Luna, Ivory)
-    const benchmarkProp = getKnownBenchmarkProperty(id);
-    if (benchmarkProp) {
-      setProperty(benchmarkProp);
+    const benchmark = getKnownBenchmarkProperty(id);
+    if (benchmark) {
+      setProperty(benchmark);
       setLoading(false);
-      recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, benchmarkProp);
       return;
     }
 
-    // Safety fallback timer so page never hangs if backend API is offline
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) {
-        console.info('[LiveNavigationPage] Using local fallback catalog accommodation');
-        const fallbackProp = getKnownBenchmarkProperty(id) || {
-          id: id || 'residencia',
-          name: 'Residencia de Maria Goretti',
-          address: '32 Padre Faura St, Poblacion District, Davao City, Davao del Sur',
-          latitude: 7.0695629,
-          longitude: 125.6152546,
-          is_verified: true,
-        };
-        setProperty(fallbackProp);
-        setLoading(false);
-        recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, fallbackProp);
-      }
-    }, 1500);
-
-    async function fetchProperty() {
+    async function fetchProp() {
       try {
         setLoading(true);
-        const data = await proximityService.getPropertyById(id, defaultGate.id, accessToken);
-        clearTimeout(safetyTimer);
+        const data = await proximityService.getPropertyById(id, gateId, accessToken);
         if (isMounted) {
           setProperty(data);
-          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, data);
+          setError(null);
         }
       } catch (err) {
-        clearTimeout(safetyTimer);
-        console.warn('API fetch failed, falling back to local listing catalog:', err);
-        const fallbackProp = getKnownBenchmarkProperty(id) || {
-          id: id || 'residencia',
-          name: 'Residencia de Maria Goretti',
-          address: '32 Padre Faura St, Poblacion District, Davao City, Davao del Sur',
-          latitude: 7.0695629,
-          longitude: 125.6152546,
-          is_verified: true,
-        };
+        console.warn('[LiveNavigationPage] Property fetch error:', err.message);
         if (isMounted) {
-          setProperty(fallbackProp);
-          setError(null);
-          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name, fallbackProp);
+          setProperty(getKnownBenchmarkProperty(id) || null);
+          setError('Could not load listing details.');
         }
       } finally {
         if (isMounted) setLoading(false);
       }
     }
 
-    fetchProperty();
+    fetchProp();
     return () => {
       isMounted = false;
-      RouteService.reset();
     };
-  }, [id, passedProperty, accessToken, defaultGate.id, defaultGate.lat, defaultGate.lng, defaultGate.name, recalculateRouteForLocation, travelMode]);
+  }, [id, passedProperty, gateId, accessToken]);
 
-  // 3. Request Mobile Screen WakeLock (prevents phone screen turning black while walking)
+  // 2. Mobile Screen WakeLock
   useEffect(() => {
     async function acquireWakeLock() {
       if ('wakeLock' in navigator) {
         try {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
         } catch {
-          // Silent ignore if unsupported
+          // Ignore
         }
       }
     }
-
     acquireWakeLock();
     return () => {
       if (wakeLockRef.current) {
@@ -235,94 +183,214 @@ export function LiveNavigationPage() {
     };
   }, []);
 
-  const startLiveGPS = useCallback(() => {
-    setShowPermissionModal(false);
-    setShowLandmarkModal(false);
-    RouteService.reset();
-
-    // If GPS was already detected during modal, immediately set position and calculate road route
-    if (detectedGpsPos) {
-      setUserLocation(detectedGpsPos);
-      setOriginName('My Current Location (Live GPS)');
-      setRecenterCount((c) => c + 1);
-      const activeProp = property || getKnownBenchmarkProperty(id);
-      recalculateRouteForLocation(detectedGpsPos, travelMode, 'My Current Location (Live GPS)', activeProp);
-    }
-
-    // Fallback timer for devices without GPS fixes (3.5 seconds)
-    const fallbackTimer = setTimeout(() => {
-      setUserLocation((curr) => {
-        if (!curr) {
-          console.info('GPS fix delayed. Using default Ateneo Roxas gate.');
-          setOriginName(defaultGate.name);
-          return { lat: defaultGate.lat, lng: defaultGate.lng };
-        }
-        return curr;
-      });
-    }, 3500);
-
+  // 3. Start Geolocation Tracking on Mount
+  useEffect(() => {
     GeolocationEngine.startTracking({
       onLocation: (pos) => {
-        clearTimeout(fallbackTimer);
-        setUserLocation(pos);
-        setDetectedGpsPos(pos);
-        setGpsStatus('detected');
-        setOriginName('My Current Location (Live GPS)');
+        // Always accept valid position coordinates without locking out accuracy > 500
+        setGps({ status: 'ok', position: pos });
       },
-      onBearing: (bearing) => {
-        setUserBearing(bearing);
+      onBearing: (b) => {
+        setHeading(b);
       },
       onError: (err) => {
-        clearTimeout(fallbackTimer);
-        console.warn('Geolocation tracking notice:', err.message);
-        if (!detectedGpsPos) {
-          setUserLocation({ lat: defaultGate.lat, lng: defaultGate.lng });
-          setOriginName(defaultGate.name);
-          recalculateRouteForLocation({ lat: defaultGate.lat, lng: defaultGate.lng }, travelMode, defaultGate.name);
+        if (err.code === 1) {
+          setGps((prev) => ({ ...prev, status: 'denied' }));
+        } else if (err.code === 2 || err.code === 0) {
+          setGps((prev) => ({ ...prev, status: 'unavailable' }));
         }
       },
     });
-  }, [detectedGpsPos, defaultGate, travelMode, recalculateRouteForLocation]);
 
-  const handleLandmarkSelect = (landmark) => {
-    GeolocationEngine.stopTracking();
-    setUserLocation({ lat: landmark.lat, lng: landmark.lng });
-    setOriginName(landmark.name);
-    setShowLandmarkModal(false);
-    setRecenterCount((c) => c + 1);
-    RouteService.reset();
+    return () => {
+      GeolocationEngine.stopTracking();
+    };
+  }, []);
 
-    // Recalculate route and duration from chosen gate using Google Directions & verified paths
-    const activeProp = property || getKnownBenchmarkProperty(id);
-    recalculateRouteForLocation({ lat: landmark.lat, lng: landmark.lng }, travelMode, landmark.name, activeProp);
-  };
-
-  const handleToggleMode = (newMode) => {
-    if (newMode === travelMode) return;
-    setTravelMode(newMode);
-    RouteService.reset();
-
-    const activeProp = property || getKnownBenchmarkProperty(id);
-    if (userLocation) {
-      recalculateRouteForLocation(userLocation, newMode, originName, activeProp);
+  // 4. One-time auto-switch to GPS when first good fix arrives
+  useEffect(() => {
+    if (
+      gps.status === 'ok' &&
+      gps.position &&
+      !autoSwitchedRef.current &&
+      !userChoseOriginRef.current
+    ) {
+      const dist = calculateHaversineMeters(
+        gps.position.lat,
+        gps.position.lng,
+        dest.lat,
+        dest.lng
+      );
+      if (dist <= T.farKm * 1000) {
+        setOriginMode('gps');
+        autoSwitchedRef.current = true;
+      }
     }
-  };
+  }, [gps.status, gps.position, dest.lat, dest.lng, T.farKm]);
+
+  // 5. Route Fetching Effect
+  const destLatRounded = Number(dest.lat.toFixed(5));
+  const destLngRounded = Number(dest.lng.toFixed(5));
+  const gpsEntryKey = originMode === 'gps' && gps.position ? 'has_gps' : 'no_gps';
+
+  const triggerFetchRoute = useCallback(async () => {
+    if (!destLatRounded || !destLngRounded) return;
+    const reqId = ++requestIdRef.current;
+
+    // Clear stale line immediately so wrong travelMode line never shows
+    setRoute((r) => ({ status: 'loading', data: null, error: null }));
+    setProgress(null);
+    setArrived(false);
+
+    try {
+      const activeOrigin =
+        originMode === 'gps' && gps.position
+          ? { lat: gps.position.lat, lng: gps.position.lng }
+          : { lat: gate.lat, lng: gate.lng };
+
+      const data = await fetchRoute(activeOrigin, dest, travelMode);
+      if (reqId === requestIdRef.current) {
+        setRoute({ status: 'ok', data, error: null });
+        setRouteFetchCount((c) => c + 1);
+        lastRouteFetchRef.current = { time: Date.now() };
+        offRouteCountRef.current = 0;
+      }
+    } catch (err) {
+      if (reqId === requestIdRef.current) {
+        setRoute({ status: 'error', data: null, error: err.message || 'Route calculation failed' });
+      }
+    }
+  }, [destLatRounded, destLngRounded, originMode, gps.position, gate.lat, gate.lng, dest, travelMode]);
+
+  useEffect(() => {
+    triggerFetchRoute();
+  }, [originMode, gateId, travelMode, destLatRounded, destLngRounded, gpsEntryKey]);
+
+  // 6. Progress and Arrival Tracking on each GPS fix
+  useEffect(() => {
+    if (originMode !== 'gps' || route.status !== 'ok' || !route.data || !gps.position) {
+      return;
+    }
+
+    const { remainingMeters, offRouteMeters } = remainingAlongRoute(
+      gps.position.lat,
+      gps.position.lng,
+      route.data.coordinates
+    );
+
+    const mins = remainingMinutes(
+      route.data.durationSeconds,
+      route.data.distanceMeters,
+      remainingMeters
+    );
+
+    setProgress({ remainingMeters, minutes: mins });
+
+    // Off-route reroute check: 2 consecutive fixes > threshold throttled to 10s
+    if (offRouteMeters > T.offRoute) {
+      offRouteCountRef.current += 1;
+      const timeSinceFetch = Date.now() - lastRouteFetchRef.current.time;
+      if (offRouteCountRef.current >= 2 && timeSinceFetch > 10000) {
+        triggerFetchRoute();
+      }
+    } else {
+      offRouteCountRef.current = 0;
+    }
+
+    // Arrival detection
+    const distToDest = calculateHaversineMeters(
+      gps.position.lat,
+      gps.position.lng,
+      dest.lat,
+      dest.lng
+    );
+    if (distToDest <= T.arrive) {
+      setArrived(true);
+    }
+  }, [gps.position, route.data, originMode, T.offRoute, T.arrive, dest.lat, dest.lng, triggerFetchRoute]);
+
+  // Recalibrate GPS position handler
+  const handleRecalibrateGps = useCallback(async () => {
+    setRecalibrating(true);
+    try {
+      const fresh = await GeolocationEngine.recalibrate();
+      setGps({ status: 'ok', position: fresh });
+      setOriginMode('gps');
+      setFollow(true);
+    } catch (err) {
+      console.warn('GPS Recalibrate error:', err);
+    } finally {
+      setRecalibrating(false);
+    }
+  }, []);
+
+  // Handle manual drag fine-tuning of the user marker
+  const handleUserDragEnd = useCallback((newCoords) => {
+    const updated = GeolocationEngine.setManualLocation(newCoords);
+    setGps({ status: 'ok', position: updated });
+    setOriginMode('gps');
+  }, []);
+
+  // Stable callbacks for MapLibreTracker and TrackingBottomSheet
+  const handleUserInteract = useCallback(() => {
+    setFollow(false);
+  }, []);
+
+  const handleRecenter = useCallback(() => {
+    setFollow(true);
+    setRecenterCount((c) => c + 1);
+  }, []);
+
+  const handleChangeOriginMode = useCallback((newMode) => {
+    userChoseOriginRef.current = true;
+    setOriginMode(newMode);
+    if (newMode === 'gps') {
+      setFollow(true);
+      if (!gps.position) {
+        handleRecalibrateGps();
+      }
+    }
+  }, [gps.position, handleRecalibrateGps]);
+
+  const handleToggleMode = useCallback((newMode) => {
+    setTravelMode((curr) => (curr !== newMode ? newMode : curr));
+  }, []);
+
+  const handleRetryRoute = useCallback(() => {
+    triggerFetchRoute();
+  }, [triggerFetchRoute]);
+
+  const handlePickGate = useCallback(() => {
+    setShowGateModal(true);
+  }, []);
+
+  const handleSelectGate = useCallback((selectedGate) => {
+    userChoseOriginRef.current = true;
+    setGateId(selectedGate.id);
+    setOriginMode('gate');
+    setShowGateModal(false);
+  }, []);
+
+  const handleSwitchToGate = useCallback(() => {
+    userChoseOriginRef.current = true;
+    setOriginMode('gate');
+  }, []);
 
   if (loading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white gap-3">
         <div className="w-10 h-10 border-4 border-ateneo-blue border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-semibold text-slate-300">Loading live road navigation...</p>
+        <p className="text-sm font-semibold text-slate-300">Loading live navigation...</p>
       </div>
     );
   }
 
-  if (error || !property) {
+  if (error && !property) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center gap-4">
         <AlertTriangle size={36} className="text-amber-400" />
         <h2 className="text-lg font-bold">Accommodation Not Found</h2>
-        <p className="text-xs text-slate-400 max-w-xs">{error || 'Could not find listing coordinates.'}</p>
+        <p className="text-xs text-slate-400 max-w-xs">{error}</p>
         <button
           onClick={() => navigate(-1)}
           className="px-5 py-2.5 rounded-2xl bg-ateneo-blue text-white font-bold text-xs"
@@ -345,111 +413,73 @@ export function LiveNavigationPage() {
           <span>Exit Map</span>
         </button>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Walk / Drive Mode Quick Toggle */}
-          <div className="flex items-center p-0.5 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg">
-            <button
-              onClick={() => handleToggleMode('walk')}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition ${
-                travelMode === 'walk'
-                  ? 'bg-ateneo-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Walk on pedestrian roads"
-            >
-              <Footprints size={13} />
-              <span className="hidden sm:inline">Walk</span>
-            </button>
-            <button
-              onClick={() => handleToggleMode('drive')}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold transition ${
-                travelMode === 'drive'
-                  ? 'bg-ateneo-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Drive on vehicular roads"
-            >
-              <Car size={13} />
-              <span className="hidden sm:inline">Drive</span>
-            </button>
-          </div>
-
-          {/* Starting Origin Quick Selector (Current GPS or Campus Gates) */}
+        {/* Heading-Up Toggle: Rendered ONLY if the device actually reported a heading */}
+        {heading != null && !isNaN(heading) && (
           <button
-            onClick={() => setShowLandmarkModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/95 text-ateneo-blue text-xs font-bold backdrop-blur-md border border-slate-200/90 shadow-lg active:scale-95 transition hover:bg-blue-50"
-            title="Click to choose starting point (Current GPS or Ateneo Gates)"
-          >
-            <MapPin size={13} className="text-ateneo-blue shrink-0" />
-            <span className="hidden sm:inline text-slate-500 font-normal">Origin:</span>
-            <span className="max-w-[100px] sm:max-w-[140px] md:max-w-[170px] truncate">
-              {originName.replace('Ateneo ', '')}
-            </span>
-          </button>
-
-          {/* Heading / Compass Mode Toggle */}
-          <button
-            onClick={() => setIsCompassMode((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-md border shadow-lg transition active:scale-95 text-xs font-bold ${
-              isCompassMode
+            onClick={() => setHeadingUp((prev) => !prev)}
+            className={`pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full backdrop-blur-md border shadow-lg transition active:scale-95 text-xs font-bold ${
+              headingUp
                 ? 'bg-ateneo-blue text-white border-blue-400'
                 : 'bg-white/95 text-slate-700 border-slate-200/90 hover:bg-slate-50'
             }`}
-            title={isCompassMode ? 'Map rotates with your direction' : 'Map locked North-up'}
+            title={headingUp ? 'Heading-Up mode active' : 'North-Up mode active'}
           >
             <Compass size={15} />
-            <span className="hidden md:inline">{isCompassMode ? 'Heading-Up' : 'North-Up'}</span>
+            <span>{headingUp ? 'Heading-Up' : 'North-Up'}</span>
           </button>
-        </div>
+        )}
       </div>
 
-      {/* MapLibre GL 3D Turn-By-Turn Road Tracking Canvas */}
+      {/* MapLibre GL 3D Road Tracking Canvas */}
       <MapLibreTracker
-        property={property || knownBenchmark || getKnownBenchmarkProperty(id)}
-        userLocation={userLocation}
-        userBearing={userBearing}
-        isCompassMode={isCompassMode}
+        property={property}
+        dest={dest}
+        origin={origin}
+        originKind={originMode === 'gps' && gps.position ? 'gps' : 'gate'}
+        gateName={gate.name}
+        accuracy={originMode === 'gps' ? gps.position?.accuracy ?? null : null}
+        routeCoords={route.data?.coordinates || null}
+        routeKey={routeKey}
         travelMode={travelMode}
+        heading={heading}
+        headingUp={headingUp}
+        follow={follow}
         recenterTrigger={recenterCount}
-        onRouteStats={(stats) => setRouteStats(stats)}
-        onArrival={() => setIsArrived(true)}
+        onUserInteract={handleUserInteract}
+        onUserDragEnd={handleUserDragEnd}
       />
 
-      {/* Responsive Turn-By-Turn Bottom Sheet with Mode & ETA */}
+      {/* Responsive Turn-By-Turn Bottom Sheet with Origin, Mode & ETA */}
       <TrackingBottomSheet
-        property={property || knownBenchmark || getKnownBenchmarkProperty(id)}
-        routeStats={routeStats}
+        property={property}
+        originMode={originMode}
+        onChangeOriginMode={handleChangeOriginMode}
+        gateName={gate.name}
+        onPickGate={handlePickGate}
         travelMode={travelMode}
         onToggleMode={handleToggleMode}
-        isArrived={isArrived}
-        originName={originName}
-        onRecenter={() => setRecenterCount((c) => c + 1)}
-        onSelectManualOrigin={() => setShowLandmarkModal(true)}
+        gpsStatus={gps.status}
+        gpsAccuracy={gps.position?.accuracy ?? null}
+        recalibrating={recalibrating}
+        onRecalibrateGps={handleRecalibrateGps}
+        route={route}
+        progress={progress}
+        arrived={arrived}
+        farKm={farKm}
+        onSwitchToGate={handleSwitchToGate}
+        onRetryRoute={handleRetryRoute}
+        onRecenter={handleRecenter}
         onStopTracking={() => navigate(-1)}
+        follow={follow}
       />
 
-      {/* Pre-Permission Modal */}
-      <PermissionPromptModal
-        isOpen={showPermissionModal}
-        onAllow={startLiveGPS}
-        onDeny={() => {
-          setShowPermissionModal(false);
-          setOriginName(defaultGate.name);
-          setUserLocation({ lat: defaultGate.lat, lng: defaultGate.lng });
-        }}
-      />
-
-      {/* Starting Point Choice Modal: Live GPS or Ateneo Gates */}
+      {/* Gate Selector Modal (Campus Gates List Only) */}
       <LandmarkSelectorModal
-        isOpen={showLandmarkModal}
-        currentOriginName={originName}
+        isOpen={showGateModal}
+        currentOriginName={gate.name}
         property={property}
-        gpsStatus={gpsStatus}
-        gpsErrorMessage={gpsErrorMessage}
-        onSelect={handleLandmarkSelect}
-        onSelectCurrentLocation={startLiveGPS}
-        onRetryGps={requestGeolocation}
-        onClose={() => setShowLandmarkModal(false)}
+        onSelect={handleSelectGate}
+        onClose={() => setShowGateModal(false)}
       />
     </div>
   );

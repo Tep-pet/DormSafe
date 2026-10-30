@@ -7,9 +7,8 @@ import {
   ModalFooter,
   Button,
 } from '@heroui/react';
-import { MapPin, Navigation, Crosshair, Building2, Check, Footprints, Car, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Crosshair, Building2, Check, Loader2 } from 'lucide-react';
 import { ADDU_GATES } from '../../constants/campusGates.js';
-import { getKnownTravelDuration } from '../../utils/propertyCoordinates.js';
 
 export const ADDU_LANDMARKS = ADDU_GATES;
 
@@ -158,9 +157,6 @@ export function LandmarkSelectorModal({
                   (currentOriginName.toLowerCase().includes(gate.id) ||
                     (gate.id === 'finster' && currentOriginName.toLowerCase().includes('claveria')));
 
-                const walkMins = getKnownTravelDuration(gate.id, property, 'walk');
-                const driveMins = getKnownTravelDuration(gate.id, property, 'drive');
-
                 return (
                   <button
                     key={gate.id}
@@ -203,25 +199,7 @@ export function LandmarkSelectorModal({
                         )}
                       </div>
 
-                      {/* Google Maps verified time badges */}
-                      {(walkMins != null || driveMins != null) && (
-                        <div className="flex items-center gap-2 mt-1 pl-5">
-                          {walkMins != null && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-ateneo-blue bg-blue-100/70 px-1.5 py-0.5 rounded-md">
-                              <Footprints size={11} />
-                              <span>{walkMins} min walk</span>
-                            </span>
-                          )}
-                          {driveMins != null && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-1.5 py-0.5 rounded-md">
-                              <Car size={11} />
-                              <span>{driveMins} min car</span>
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <p className="text-[11px] text-slate-500 mt-0.5 truncate pl-5">
+                      <p className="text-[11px] text-slate-500 mt-1 truncate pl-5">
                         {gate.desc}
                       </p>
                     </div>

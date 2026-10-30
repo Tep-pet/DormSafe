@@ -25,5 +25,9 @@ router.get(
   proximityController.getRoute
 );
 
-export default router;
+router.get(
+  '/live-route',
+  proximityController.getLiveRoute
+);
 
+export default router;

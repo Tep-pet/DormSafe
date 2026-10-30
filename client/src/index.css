@@ -56,30 +56,19 @@ body {
   content: '';
 }
 
-/* Pulsing Grab-like live user location dot */
-@keyframes userPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
-  }
-  70% {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-  }
-}
-
+/* Live user location dot (static, draggable) */
 .user-live-dot {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background-color: #2563eb;
   border: 3px solid #ffffff;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  animation: userPulse 2s infinite;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+}
+
+.user-live-dot:active {
+  cursor: grabbing;
 }
 
 .leaflet-container {
@@ -100,4 +89,3 @@ body {
 .custom-gate-pin:hover, .addu-start-gate-pin:hover {
   transform: scale(1.12);
 }
-

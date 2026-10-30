@@ -599,8 +599,8 @@ export function VerifyAccountsPage() {
                 const isAdDU = v.profiles?.email?.endsWith('@addu.edu.ph');
                 const fullName = v.profiles?.full_name || 'Applicant';
                 const email = v.profiles?.email || 'No email registered';
-                const hasIdDoc = Boolean(v.id_url);
-                const hasLicenseDoc = Boolean(v.license_url);
+                const hasIdDoc = Boolean(v.id_url || v.id_storage_path);
+                const hasLicenseDoc = Boolean(v.license_url || v.license_storage_path);
 
                 return (
                   <Card

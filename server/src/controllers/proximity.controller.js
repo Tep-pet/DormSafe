@@ -1,5 +1,6 @@
 import { searchNearbyProperties, getPropertyById } from '../services/proximity.service.js';
 import { getRoadRoute } from '../services/roadRouting.service.js';
+import { getLiveRoute as computeLiveRoute } from '../services/liveRouting.service.js';
 import { success } from '../utils/apiResponse.js';
 
 export async function search(req, res, next) {
@@ -34,3 +35,12 @@ export async function getRoute(req, res, next) {
   }
 }
 
+export async function getLiveRoute(req, res, next) {
+  try {
+    const { originLat, originLng, destLat, destLng, mode = 'walk' } = req.query;
+    const route = await computeLiveRoute({ originLat, originLng, destLat, destLng, mode });
+    return success(res, route, 'Route calculated');
+  } catch (err) {
+    next(err);
+  }
+}

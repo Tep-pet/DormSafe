@@ -1,18 +1,24 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CAMPUS_GATES, SEARCH_RADIUS_KM } from '../../constants/campusGates';
-import {
-  getAccuratePinpoint,
-  calculateStraightLineDistance,
-  getKnownWalkingMinutes,
-  getKnownTravelDuration,
-  getVerifiedRoadRoute,
-} from '../../utils/propertyCoordinates';
-import { apiClient } from '../../services/apiClient';
+import { getAccuratePinpoint } from '../../utils/propertyCoordinates';
+import { GeolocationEngine } from '../../services/map/GeolocationEngine';
+import { fetchRoute } from '../../services/map/LiveRouteService';
 import { formatPrice } from '../../utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
-import { Navigation, Footprints, Car, X, Crosshair, MapPin, Compass } from 'lucide-react';
+import {
+  Navigation,
+  Footprints,
+  Car,
+  X,
+  Crosshair,
+  MapPin,
+  Compass,
+  Loader2,
+  AlertCircle,
+  RotateCcw,
+} from 'lucide-react';
 
 // Setup Leaflet default marker icons for bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -22,11 +28,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-/**
- * 100% Free, Mobile-Friendly Campus Map for DormSafe
- * Starting Point: Ateneo de Davao University (Jacinto / Roxas Gates)
- * To: Exact Pinpoint Location of Each Property
- */
 export function LeafletCampusMap({
   gateId = 'jacinto',
   properties = [],
@@ -42,16 +43,26 @@ export function LeafletCampusMap({
   const userMarkerRef = useRef(null);
   const userAccuracyCircleRef = useRef(null);
   const routePolylineRef = useRef(null);
+  const lastFittedRouteKeyRef = useRef('');
 
   const gate = CAMPUS_GATES[gateId] || CAMPUS_GATES.jacinto;
 
   // State
-  const [userLocation, setUserLocation] = useState(null); // { lat, lng, accuracy }
+  const [userLocation, setUserLocation] = useState(() => GeolocationEngine.lastKnownPosition);
+  const [locating, setLocating] = useState(false);
+  const [pinMode, setPinMode] = useState(false);
+  const [gpsError, setGpsError] = useState(null);
+
   const [activeDorm, setActiveDorm] = useState(selectedProperty || null);
-  const [travelMode, setTravelMode] = useState('walking'); // 'walking' | 'driving'
-  const [routeInfo, setRouteInfo] = useState(null); // { distanceMeters, durationMinutes }
-  const [loadingRoute, setLoadingRoute] = useState(false);
-  const [routeOriginMode, setRouteOriginMode] = useState('ateneo'); // 'ateneo' | 'gps'
+  const [travelMode, setTravelMode] = useState('walk'); // 'walk' | 'drive'
+  const [routeOriginMode, setRouteOriginMode] = useState(() =>
+    GeolocationEngine.lastKnownPosition ? 'gps' : 'ateneo'
+  ); // 'ateneo' | 'gps'
+  const [routeState, setRouteState] = useState({
+    status: 'idle',
+    data: null,
+    error: null,
+  });
 
   // Sync selectedProperty prop
   useEffect(() => {
@@ -59,6 +70,24 @@ export function LeafletCampusMap({
       setActiveDorm(selectedProperty);
     }
   }, [selectedProperty]);
+
+  // Subscribe to GeolocationEngine on mount
+  useEffect(() => {
+    GeolocationEngine.startTracking({
+      onLocation: (pos) => {
+        setUserLocation(pos);
+      },
+      onError: (err) => {
+        if (!GeolocationEngine.lastKnownPosition) {
+          setGpsError(err?.message || 'Could not detect location');
+        }
+      },
+    });
+
+    return () => {
+      GeolocationEngine.stopTracking();
+    };
+  }, []);
 
   // 1. Initialize Leaflet Map
   useEffect(() => {
@@ -77,12 +106,10 @@ export function LeafletCampusMap({
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
 
-      // Attribution bottom-right
       L.control
         .attribution({ position: 'bottomright', prefix: '© OpenStreetMap' })
         .addTo(map);
 
-      // Zoom control on top-left
       L.control.zoom({ position: 'topleft' }).addTo(map);
 
       mapInstanceRef.current = map;
@@ -100,29 +127,31 @@ export function LeafletCampusMap({
     };
   }, []);
 
-  // 2. Watch live user GPS (for user reference dot only; does not override default starting point)
+  // Handle map click when pinMode ("Pin My Location") is active
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
-        setUserLocation({ lat: latitude, lng: longitude, accuracy });
-      },
-      () => {},
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 5000,
-      }
-    );
-
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
+    const onMapClick = (e) => {
+      if (!pinMode) return;
+      const newPos = GeolocationEngine.setManualLocation({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+      });
+      setUserLocation(newPos);
+      setRouteOriginMode('gps');
+      setPinMode(false);
+      setGpsError(null);
+      map.flyTo([e.latlng.lat, e.latlng.lng], 16, { duration: 0.8 });
     };
-  }, []);
 
-  // 3. Render Live User Dot (if permitted)
+    map.on('click', onMapClick);
+    return () => {
+      map.off('click', onMapClick);
+    };
+  }, [pinMode]);
+
+  // 2. Render Live User Dot (Draggable!) & Accuracy Circle
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -132,23 +161,51 @@ export function LeafletCampusMap({
 
       const userDotIcon = L.divIcon({
         className: 'custom-live-user-dot',
-        html: `<div class="user-live-dot" title="You are here"></div>`,
+        html: `<div class="user-live-dot" title="Your location (Drag to fine-tune)"></div>`,
         iconSize: [18, 18],
         iconAnchor: [9, 9],
       });
 
       if (!userMarkerRef.current) {
-        userMarkerRef.current = L.marker(userPos, { icon: userDotIcon, zIndexOffset: 800 })
-          .addTo(map)
-          .bindPopup('<b>Your Current Location</b><br/>GPS signal active');
+        const marker = L.marker(userPos, {
+          icon: userDotIcon,
+          zIndexOffset: 800,
+          draggable: true,
+        }).addTo(map);
+
+        marker.on('dragend', () => {
+          const latlng = marker.getLatLng();
+          const updated = GeolocationEngine.setManualLocation({
+            lat: latlng.lat,
+            lng: latlng.lng,
+          });
+          setUserLocation(updated);
+          setRouteOriginMode('gps');
+          setGpsError(null);
+        });
+
+        marker.bindTooltip(
+          userLocation.isManual
+            ? '<b>Pinned Location</b><br/>(Drag to adjust)'
+            : '<b>Your Location</b><br/>(Drag to fine-tune)',
+          { direction: 'top', offset: [0, -10] }
+        );
+
+        userMarkerRef.current = marker;
       } else {
         userMarkerRef.current.setLatLng(userPos);
+        userMarkerRef.current.setTooltipContent(
+          userLocation.isManual
+            ? '<b>Pinned Location</b><br/>(Drag to adjust)'
+            : '<b>Your Location</b><br/>(Drag to fine-tune)'
+        );
       }
 
-      if (userLocation.accuracy) {
+      if (userLocation.accuracy && !userLocation.isManual) {
+        const radius = Math.min(userLocation.accuracy, 300);
         if (!userAccuracyCircleRef.current) {
           userAccuracyCircleRef.current = L.circle(userPos, {
-            radius: Math.min(userLocation.accuracy, 150),
+            radius,
             color: '#3b82f6',
             fillColor: '#93c5fd',
             fillOpacity: 0.15,
@@ -156,13 +213,25 @@ export function LeafletCampusMap({
           }).addTo(map);
         } else {
           userAccuracyCircleRef.current.setLatLng(userPos);
-          userAccuracyCircleRef.current.setRadius(Math.min(userLocation.accuracy, 150));
+          userAccuracyCircleRef.current.setRadius(radius);
         }
+      } else if (userAccuracyCircleRef.current) {
+        userAccuracyCircleRef.current.remove();
+        userAccuracyCircleRef.current = null;
+      }
+    } else {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      if (userAccuracyCircleRef.current) {
+        userAccuracyCircleRef.current.remove();
+        userAccuracyCircleRef.current = null;
       }
     }
   }, [userLocation]);
 
-  // 4. Update Ateneo de Davao Campus Gate Pin & 2km Perimeter Circle
+  // 3. Update Campus Gate Marker & 2km Radius
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -181,7 +250,6 @@ export function LeafletCampusMap({
     }).addTo(map);
     circleRef.current = circle;
 
-    // Ateneo de Davao Gate Marker (Distinctive Blue & Gold Crest)
     const gateIcon = L.divIcon({
       className: 'custom-gate-pin',
       html: `
@@ -210,23 +278,18 @@ export function LeafletCampusMap({
       gateMarkerRef.current.setLatLng([gate.lat, gate.lng]);
       gateMarkerRef.current.setIcon(gateIcon);
       gateMarkerRef.current.setPopupContent(
-        `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:700;">${gate.label}</span><br/><small>Campus Origin / Starting Point</small>`
+        `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:700;">${gate.label}</span><br/><small>Campus Origin</small>`
       );
     } else {
       gateMarkerRef.current = L.marker([gate.lat, gate.lng], { icon: gateIcon, zIndexOffset: 500 })
         .addTo(map)
         .bindPopup(
-          `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:700;">${gate.label}</span><br/><small>Campus Origin / Starting Point</small>`
+          `<b>Ateneo de Davao University</b><br/><span style="color:#003366;font-weight:700;">${gate.label}</span><br/><small>Campus Origin</small>`
         );
     }
+  }, [gate]);
 
-    // Recenter if no dorm route is currently active
-    if (!activeDorm) {
-      map.setView([gate.lat, gate.lng], 15, { animate: true });
-    }
-  }, [gate, activeDorm]);
-
-  // 5. Update Dorm Markers with accurate pinpoints
+  // 4. Update Dorm Property Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -268,7 +331,10 @@ export function LeafletCampusMap({
         iconAnchor: [48, 14],
       });
 
-      const marker = L.marker([pinpoint.lat, pinpoint.lng], { icon: propIcon, zIndexOffset: isCurrent ? 600 : 300 }).addTo(map);
+      const marker = L.marker([pinpoint.lat, pinpoint.lng], {
+        icon: propIcon,
+        zIndexOffset: isCurrent ? 600 : 300,
+      }).addTo(map);
 
       marker.on('click', () => {
         setActiveDorm(p);
@@ -277,312 +343,347 @@ export function LeafletCampusMap({
 
       markersRef.current.push(marker);
     });
-  }, [properties, activeDorm, onMarkerClick]);
+  }, [properties, activeDorm?.id, onMarkerClick]);
 
-  // 6. Calculate Route: Always Starting from Ateneo de Davao University
-  const calculateRoute = useCallback(async () => {
-    if (!activeDorm) return;
+  // 5. Stable Route Calculation & Camera Fit
+  const activePinpoint = useMemo(() => {
+    return activeDorm ? getAccuratePinpoint(activeDorm) : null;
+  }, [activeDorm]);
 
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    // Starting Point:
-    // Default and primary: Ateneo de Davao University (Campus Gate)
-    // Optional toggle: student's live GPS if explicitly toggled to 'gps'
-    let startLat = gate.lat;
-    let startLng = gate.lng;
-
+  const originCoords = useMemo(() => {
     if (routeOriginMode === 'gps' && userLocation) {
-      startLat = userLocation.lat;
-      startLng = userLocation.lng;
+      return { lat: userLocation.lat, lng: userLocation.lng };
     }
+    return { lat: gate.lat, lng: gate.lng };
+  }, [routeOriginMode, userLocation?.lat, userLocation?.lng, gate.lat, gate.lng]);
 
-    const destPinpoint = getAccuratePinpoint(activeDorm);
-
-    setLoadingRoute(true);
-
-    const mode = travelMode === 'driving' ? 'drive' : 'walk';
-
-    // 0. Instant Ground-Truth Verified Route from Ateneo Gates (zero latency, 100% road accuracy)
-    if (routeOriginMode !== 'gps') {
-      const verified = getVerifiedRoadRoute(gateId, activeDorm, mode);
-      if (verified) {
-        if (routePolylineRef.current) {
-          routePolylineRef.current.remove();
-        }
-
-        const polyline = L.polyline(verified.coordinates, {
-          color: travelMode === 'driving' ? '#0284c7' : '#003366',
-          weight: 5,
-          opacity: 0.88,
-          dashArray: travelMode === 'driving' ? null : '6, 8',
-          lineCap: 'round',
-        }).addTo(map);
-
-        routePolylineRef.current = polyline;
-        map.fitBounds(polyline.getBounds(), { padding: [45, 45], maxZoom: 17 });
-        setRouteInfo({
-          distanceMeters: verified.distanceMeters,
-          durationMinutes: verified.durationMinutes,
-        });
-        setLoadingRoute(false);
-        return;
-      }
+  const originKey = useMemo(() => {
+    if (routeOriginMode === 'gps' && userLocation) {
+      return `gps:${userLocation.lat.toFixed(4)},${userLocation.lng.toFixed(4)}`;
     }
+    return `ateneo:${gateId}`;
+  }, [routeOriginMode, userLocation?.lat, userLocation?.lng, gateId]);
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1500);
+  const routeIdentityKey = useMemo(() => {
+    if (!activeDorm || !activePinpoint) return '';
+    return `${activeDorm.id}|${originKey}|${travelMode}`;
+  }, [activeDorm?.id, originKey, travelMode, activePinpoint]);
 
-    try {
-      // 1. Query Backend Road Routing Service (proxies OSM foot & car routing with Google Maps benchmark accuracy)
-      const query = `originLat=${startLat}&originLng=${startLng}&destLat=${destPinpoint.lat}&destLng=${destPinpoint.lng}&mode=${mode}`;
-      let routeData = null;
-
-      try {
-        const res = await apiClient.get(`/api/proximity/route?${query}`);
-        routeData = res?.data || res;
-      } catch (backendErr) {
-        // Direct OSM / OSRM routed engines fallback
-        const profile = mode === 'drive' ? 'routed-car' : 'routed-foot';
-        const osmUrl = `https://routing.openstreetmap.de/${profile}/route/v1/driving/${startLng},${startLat};${destPinpoint.lng},${destPinpoint.lat}?overview=full&geometries=geojson`;
-        const res = await fetch(osmUrl);
-        const data = await res.json();
-        if (data?.routes?.[0]) {
-          const r = data.routes[0];
-          routeData = {
-            coordinates: r.geometry.coordinates,
-            distanceMeters: Math.round(r.distance),
-            durationMinutes: mode === 'drive'
-              ? (Math.round(r.distance) <= 400 ? 2 : Math.max(2, Math.round(1.5 + (r.distance / 250))))
-              : Math.max(1, Math.round(r.distance / 83.3)),
-          };
-        }
-      }
-
-      if (routeData?.coordinates?.length > 1) {
-        const coordinates = routeData.coordinates.map((c) => {
-          if (Array.isArray(c)) {
-            const [a, b] = c;
-            return a > 50 ? [b, a] : [a, b];
-          }
-          return [c.lat, c.lng];
-        });
-
-        if (routePolylineRef.current) {
-          routePolylineRef.current.remove();
-        }
-
-        const polyline = L.polyline(coordinates, {
-          color: travelMode === 'driving' ? '#0284c7' : '#003366',
-          weight: 5,
-          opacity: 0.88,
-          dashArray: travelMode === 'driving' ? null : '6, 8',
-          lineCap: 'round',
-        }).addTo(map);
-
-        routePolylineRef.current = polyline;
-
-        // Auto zoom bounds to fit route nicely
-        map.fitBounds(polyline.getBounds(), { padding: [45, 45], maxZoom: 17 });
-
-        const dur = getKnownTravelDuration(gateId, activeDorm, mode) || routeData.durationMinutes;
-        setRouteInfo({
-          distanceMeters: routeData.distanceMeters,
-          durationMinutes: dur,
-        });
-        return;
-      }
-      throw new Error('No road route returned');
-    } catch (err) {
-      console.warn('Road routing notice (using street-grid alignment):', err.message);
-
-      // Street-aligned grid fallback (never a diagonal cutting through buildings)
-      if (routePolylineRef.current) {
-        routePolylineRef.current.remove();
-      }
-
-      const gridCoords = [
-        [startLat, startLng],
-        [startLat, destPinpoint.lng],
-        [destPinpoint.lat, destPinpoint.lng],
-      ];
-
-      const fallbackLine = L.polyline(gridCoords, {
-        color: '#003366',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '6, 6',
-      }).addTo(map);
-
-      routePolylineRef.current = fallbackLine;
-      map.fitBounds(fallbackLine.getBounds(), { padding: [45, 45], maxZoom: 17 });
-
-      const dLatM = Math.abs(destPinpoint.lat - startLat) * 111139;
-      const dLngM = Math.abs(destPinpoint.lng - startLng) * 111139 * Math.cos((startLat * Math.PI) / 180);
-      const gridDist = Math.round(dLatM + dLngM);
-      const fallbackMins = getKnownTravelDuration(gateId, activeDorm, mode) || (mode === 'drive' ? 2 : Math.max(1, Math.round(gridDist / 83.3)));
-
-      setRouteInfo({
-        distanceMeters: gridDist,
-        durationMinutes: fallbackMins,
-      });
-    } finally {
-      setLoadingRoute(false);
-      map.invalidateSize();
-    }
-  }, [activeDorm, gateId, gate, travelMode, routeOriginMode, userLocation]);
-
-  // Recalculate route when active dorm, gate, or travel mode changes
   useEffect(() => {
-    if (activeDorm) {
-      calculateRoute();
-    } else {
+    if (!activeDorm || !activePinpoint) {
       if (routePolylineRef.current) {
         routePolylineRef.current.remove();
         routePolylineRef.current = null;
       }
-      setRouteInfo(null);
+      setRouteState({ status: 'idle', data: null, error: null });
+      return;
     }
-  }, [activeDorm, gate, travelMode, routeOriginMode, calculateRoute]);
 
-  // Recenter map on Ateneo de Davao campus gate
+    let isCancelled = false;
+    setRouteState((s) => ({ ...s, status: 'loading', error: null }));
+
+    async function loadRoute() {
+      try {
+        const data = await fetchRoute(originCoords, activePinpoint, travelMode);
+        if (isCancelled) return;
+
+        setRouteState({ status: 'ok', data, error: null });
+
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        if (routePolylineRef.current) {
+          routePolylineRef.current.remove();
+        }
+
+        const isDrive = travelMode === 'drive';
+        const polyline = L.polyline(data.coordinates, {
+          color: isDrive ? '#0284c7' : '#0052cc',
+          weight: 5,
+          opacity: 0.9,
+          lineCap: 'round',
+        }).addTo(map);
+
+        routePolylineRef.current = polyline;
+
+        // Auto zoom bounds ONLY when route identity changes (never on GPS drift!)
+        if (lastFittedRouteKeyRef.current !== routeIdentityKey) {
+          lastFittedRouteKeyRef.current = routeIdentityKey;
+          map.fitBounds(polyline.getBounds(), { padding: [45, 45], maxZoom: 17 });
+        }
+      } catch (err) {
+        if (isCancelled) return;
+        setRouteState({
+          status: 'error',
+          data: null,
+          error: err.message || 'Route calculation unavailable',
+        });
+      }
+    }
+
+    loadRoute();
+    return () => {
+      isCancelled = true;
+    };
+  }, [routeIdentityKey, originCoords, activePinpoint, travelMode, activeDorm]);
+
+  // Recenter / Locate Handlers
   const handleRecenterAteneo = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    map.setView([gate.lat, gate.lng], 16, { animate: true });
+    map.flyTo([gate.lat, gate.lng], 16, { duration: 0.8 });
   };
 
-  // Recenter map on live user GPS
-  const handleRecenterUser = () => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    if (userLocation) {
-      map.setView([userLocation.lat, userLocation.lng], 16, { animate: true });
-    } else {
-      map.setView([gate.lat, gate.lng], 15, { animate: true });
-    }
-  };
+  const handleLocateMe = useCallback(() => {
+    setGpsError(null);
+    setLocating(true);
+    GeolocationEngine.recalibrate({
+      onLocation: (pos) => {
+        setLocating(false);
+        setUserLocation(pos);
+        setRouteOriginMode('gps');
+        const map = mapInstanceRef.current;
+        if (map) {
+          map.flyTo([pos.lat, pos.lng], 16, { duration: 0.8 });
+        }
+      },
+      onError: (err) => {
+        setLocating(false);
+        setGpsError(
+          err?.code === 1
+            ? 'Location permission denied. Click the Pin icon to set your position manually on the map.'
+            : 'Could not detect GPS signal. Click the Pin icon to tap your position on the map.'
+        );
+      },
+    });
+  }, []);
 
-  // Clear current route
   const handleClearRoute = () => {
     setActiveDorm(null);
-    setRouteInfo(null);
+    setRouteState({ status: 'idle', data: null, error: null });
     if (routePolylineRef.current) {
       routePolylineRef.current.remove();
       routePolylineRef.current = null;
     }
-    const map = mapInstanceRef.current;
-    if (map) {
-      map.setView([gate.lat, gate.lng], 15, { animate: true });
-    }
   };
-
-  const activePinpoint = activeDorm ? getAccuratePinpoint(activeDorm) : null;
 
   return (
     <div className="relative w-full h-full min-h-[400px] sm:min-h-[460px] lg:min-h-[580px] rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm flex flex-col">
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full flex-1 z-10" />
 
-      {/* Floating Map Controls */}
+      {/* Floating Map Controls (Top Right) */}
       <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2 pointer-events-none">
         {/* Recenter on Ateneo Gate */}
         <button
           type="button"
           onClick={handleRecenterAteneo}
           className="pointer-events-auto p-2.5 rounded-full bg-white shadow-md border border-slate-200 text-ateneo-blue hover:bg-slate-50 transition active:scale-95"
-          title={`Recenter on Ateneo de Davao (${gate.label})`}
+          title={`Center on Ateneo (${gate.label})`}
         >
           <span className="font-extrabold text-xs">🏛️</span>
         </button>
 
-        {/* Live GPS Recenter Button */}
-        {userLocation && (
-          <button
-            type="button"
-            onClick={handleRecenterUser}
-            className="pointer-events-auto p-2.5 rounded-full bg-white shadow-md border border-slate-200 text-slate-700 hover:text-ateneo-blue hover:bg-slate-50 transition active:scale-95"
-            title="Locate my position on map"
-          >
-            <Crosshair className="h-4 w-4 text-blue-600" />
-          </button>
-        )}
+        {/* Locate / Recalibrate GPS Button (ALWAYS VISIBLE!) */}
+        <button
+          type="button"
+          onClick={handleLocateMe}
+          disabled={locating}
+          className={`pointer-events-auto p-2.5 rounded-full bg-white shadow-md border transition active:scale-95 ${
+            locating
+              ? 'border-blue-400 text-blue-600'
+              : routeOriginMode === 'gps' && userLocation
+                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                : 'border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-slate-50'
+          }`}
+          title="Recalibrate and locate my position"
+        >
+          {locating ? (
+            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+          ) : (
+            <Crosshair className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Pin My Location on Map Button (Desktop/Manual fallback) */}
+        <button
+          type="button"
+          onClick={() => setPinMode((curr) => !curr)}
+          className={`pointer-events-auto p-2.5 rounded-full shadow-md border transition active:scale-95 ${
+            pinMode
+              ? 'bg-blue-600 text-white border-blue-700 ring-2 ring-blue-300'
+              : 'bg-white border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-slate-50'
+          }`}
+          title={pinMode ? 'Cancel pinning' : 'Click on map to drop your exact position manually'}
+        >
+          <MapPin className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Origin Campus Indicator Pill (Top Left) */}
+      {/* Pin Mode Banner Notification */}
+      {pinMode && (
+        <div className="absolute top-3 left-12 right-16 z-30 pointer-events-auto">
+          <div className="rounded-xl bg-blue-600 text-white px-3 py-2 text-xs font-bold shadow-lg flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <MapPin size={14} className="shrink-0 animate-bounce" />
+              <span className="truncate">Tap anywhere on the map to set your location</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPinMode(false)}
+              className="text-[11px] underline font-medium hover:text-blue-100 shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* GPS Error Toast */}
+      {gpsError && (
+        <div className="absolute top-14 left-3 right-3 z-30 pointer-events-auto max-w-sm mx-auto">
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-900 shadow-md flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle size={15} className="text-amber-600 shrink-0" />
+              <span className="text-[11px] leading-tight truncate">{gpsError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setGpsError(null)}
+              className="text-slate-400 hover:text-slate-600 p-1"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Origin Selector Pill (Top Left) */}
       <div className="absolute top-3 left-12 z-20 pointer-events-auto">
-        <div className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-800 shadow-md border border-slate-200 flex items-center gap-1.5 backdrop-blur-xs">
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-ateneo-blue text-white text-[9px] font-bold">
-            A
-          </span>
-          <span>Starting Point: <strong>Ateneo ({gate.label})</strong></span>
+        <div className="flex items-center p-0.5 rounded-full bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-md text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setRouteOriginMode('ateneo')}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition ${
+              routeOriginMode === 'ateneo'
+                ? 'bg-ateneo-blue text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>Ateneo ({gate.label})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (userLocation) {
+                setRouteOriginMode('gps');
+                const map = mapInstanceRef.current;
+                if (map) {
+                  map.flyTo([userLocation.lat, userLocation.lng], 16, { duration: 0.8 });
+                }
+              } else {
+                handleLocateMe();
+              }
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition ${
+              routeOriginMode === 'gps'
+                ? 'bg-ateneo-blue text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Crosshair size={12} className={locating ? 'animate-spin' : ''} />
+            <span>My Location</span>
+          </button>
         </div>
       </div>
 
-      {/* Active Route Floating Card */}
-      {activeDorm && routeInfo && (
+      {/* Active Route Bottom Card */}
+      {activeDorm && (
         <div className="absolute bottom-3 left-3 right-3 z-30 pointer-events-auto max-w-md mx-auto">
-          <div className="rounded-2xl border border-slate-200 bg-white/98 p-3.5 shadow-xl backdrop-blur-md space-y-2.5">
+          <div className="rounded-2xl border border-slate-200 bg-white/98 p-3.5 shadow-xl backdrop-blur-md space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-blue-100 text-ateneo-blue">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="p-1.5 rounded-lg bg-blue-100 text-ateneo-blue shrink-0">
                   <Navigation className="h-4 w-4" />
                 </span>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-slate-900 leading-tight truncate">
                     {activeDorm.name}
                   </h4>
-                  <p className="text-[11px] text-slate-500">
-                    {activeDorm.address?.slice(0, 40)}...
+                  <p className="text-[11px] text-slate-500 truncate">
+                    {activeDorm.address || 'Davao City, Philippines'}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleClearRoute}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0"
                 title="Clear route"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Starting Point & Destination Label */}
+            {/* Starting Point & Origin Switch */}
             <div className="text-[11px] text-slate-600 bg-slate-50 p-1.5 rounded-lg border border-slate-100 flex items-center justify-between">
               <div>
                 <span className="text-slate-400">From: </span>
-                <span className="font-semibold text-ateneo-blue">
-                  {routeOriginMode === 'gps' && userLocation ? 'My Current GPS' : `Ateneo (${gate.label})`}
+                <span className="font-semibold text-slate-900">
+                  {routeOriginMode === 'gps' && userLocation
+                    ? userLocation.isManual
+                      ? 'Pinned Location'
+                      : 'My Current Location'
+                    : `Ateneo (${gate.label})`}
                 </span>
               </div>
-              {userLocation && (
-                <button
-                  type="button"
-                  onClick={() => setRouteOriginMode(routeOriginMode === 'ateneo' ? 'gps' : 'ateneo')}
-                  className="text-[10px] text-blue-600 font-bold hover:underline"
-                >
-                  {routeOriginMode === 'ateneo' ? 'Switch to My GPS' : 'Reset to Ateneo'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (routeOriginMode === 'ateneo') {
+                    if (userLocation) {
+                      setRouteOriginMode('gps');
+                    } else {
+                      handleLocateMe();
+                    }
+                  } else {
+                    setRouteOriginMode('ateneo');
+                  }
+                }}
+                className="text-[10px] text-blue-600 font-bold hover:underline"
+              >
+                {routeOriginMode === 'ateneo' ? 'Switch to My Location' : 'Reset to Ateneo'}
+              </button>
             </div>
 
             {/* Travel Stats & Walking/Driving Toggle */}
             <div className="flex items-center justify-between pt-1 border-t border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="text-xs">
-                  <span className="text-slate-400">Distance: </span>
-                  <span className="font-bold text-slate-800">
-                    {routeInfo.distanceMeters >= 1000
-                      ? `${(routeInfo.distanceMeters / 1000).toFixed(1)} km`
-                      : `${routeInfo.distanceMeters} m`}
-                  </span>
-                </div>
-                <div className="text-xs">
-                  <span className="text-slate-400">ETA: </span>
-                  <span className="font-bold text-emerald-600">
-                    ~{routeInfo.durationMinutes} min {travelMode}
-                  </span>
-                </div>
+                {routeState.status === 'loading' ? (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+                    <Loader2 size={13} className="animate-spin text-blue-600" />
+                    <span>Calculating route…</span>
+                  </div>
+                ) : routeState.status === 'error' ? (
+                  <div className="text-xs text-rose-600 font-semibold">
+                    Route calculation unavailable
+                  </div>
+                ) : routeState.data ? (
+                  <>
+                    <div className="text-xs">
+                      <span className="text-slate-400">Distance: </span>
+                      <span className="font-bold text-slate-800">
+                        {routeState.data.formattedDistance}
+                      </span>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-slate-400">ETA: </span>
+                      <span className="font-bold text-emerald-600">
+                        ~{routeState.data.durationMinutes} min {travelMode}
+                      </span>
+                    </div>
+                  </>
+                ) : null}
               </div>
 
               {/* Mode Toggle & Live Navigation */}
@@ -590,9 +691,9 @@ export function LeafletCampusMap({
                 <div className="flex items-center rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
                   <button
                     type="button"
-                    onClick={() => setTravelMode('walking')}
+                    onClick={() => setTravelMode('walk')}
                     className={`px-2 py-1 rounded-md transition flex items-center gap-1 ${
-                      travelMode === 'walking'
+                      travelMode === 'walk'
                         ? 'bg-white text-ateneo-blue shadow-xs font-bold'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
@@ -602,9 +703,9 @@ export function LeafletCampusMap({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTravelMode('driving')}
+                    onClick={() => setTravelMode('drive')}
                     className={`px-2 py-1 rounded-md transition flex items-center gap-1 ${
-                      travelMode === 'driving'
+                      travelMode === 'drive'
                         ? 'bg-white text-ateneo-blue shadow-xs font-bold'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
@@ -614,28 +715,28 @@ export function LeafletCampusMap({
                   </button>
                 </div>
 
-                {activeDorm && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/navigate/${activeDorm.id || activeDorm._id}`, {
-                        state: {
-                          property: {
-                            ...activeDorm,
-                            walking_minutes: routeInfo?.durationMinutes || activeDorm.walking_minutes,
-                          },
-                          initialGate: gateId,
-                          travelMode: travelMode === 'driving' ? 'drive' : 'walk',
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/navigate/${activeDorm.id || activeDorm._id}`, {
+                      state: {
+                        property: {
+                          ...activeDorm,
+                          walking_minutes:
+                            routeState.data?.durationMinutes || activeDorm.walking_minutes,
                         },
-                      })
-                    }
-                    className="px-2.5 py-1 rounded-lg bg-ateneo-blue text-white hover:bg-blue-800 transition flex items-center gap-1.5 shadow-xs"
-                    title="Start Live In-App Navigation"
-                  >
-                    <Compass className="h-3.5 w-3.5" />
-                    <span className="text-[11px] font-bold">Navigate</span>
-                  </button>
-                )}
+                        initialGate: gateId,
+                        travelMode: travelMode === 'drive' ? 'drive' : 'walk',
+                        originMode: routeOriginMode === 'gps' ? 'gps' : 'gate',
+                      },
+                    })
+                  }
+                  className="px-2.5 py-1 rounded-lg bg-ateneo-blue text-white hover:bg-blue-800 transition flex items-center gap-1.5 shadow-xs"
+                  title="Start Live In-App Navigation"
+                >
+                  <Compass className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-bold">Navigate</span>
+                </button>
               </div>
             </div>
           </div>

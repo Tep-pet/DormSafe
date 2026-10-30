@@ -675,15 +675,6 @@ export function AdminAuditPage() {
                   <p className="text-slate-500">{inspectModal.log?.profiles?.email || 'No email'}</p>
                 </div>
               </div>
-
-              <div>
-                <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">
-                  JSON Metadata Payload
-                </span>
-                <pre className="p-3 bg-slate-900 text-slate-100 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-48">
-                  {JSON.stringify(inspectModal.log?.details || {}, null, 2)}
-                </pre>
-              </div>
             </div>
 
             <div className="flex items-center justify-end pt-2 border-t border-slate-100">

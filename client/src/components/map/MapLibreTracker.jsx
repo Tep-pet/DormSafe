@@ -4,158 +4,59 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import * as pmtiles from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './MapLibreTracker.css';
+import { circlePolygon } from '../../services/map/GeoUtils.js';
 
 // Configure Web Worker for Vite production bundle
 maplibregl.setWorkerUrl(workerUrl);
-import { RouteService } from '../../services/map/RouteService.js';
-import { MapConfig } from '../../services/map/MapConfig.js';
-import { getAccuratePinpoint } from '../../utils/propertyCoordinates.js';
 
-/**
- * Normalizes coordinate pairs to [longitude, latitude] for GeoJSON.
- * Davao City: Longitude ~125.x, Latitude ~7.x.
- * This prevents inverted coordinates regardless of data source.
- */
-function toLngLatPair(coord) {
-  if (Array.isArray(coord)) {
-    const [a, b] = coord;
-    if (a > 50 && b < 50) return [a, b]; // already [lng, lat]
-    return [b, a]; // was [lat, lng]
-  }
-  if (coord && typeof coord === 'object') {
-    const lat = Number(coord.lat ?? coord.latitude);
-    const lng = Number(coord.lng ?? coord.longitude);
-    return [lng, lat];
-  }
-  return coord;
-}
-
-/**
- * Ensures walking route source and solid route line layers exist and are updated.
- */
-function ensureRouteOnMap(map, rawCoordinates) {
-  if (!map || !map.isStyleLoaded()) return false;
-  if (!rawCoordinates || rawCoordinates.length < 2) return false;
-
-  const validCoords = rawCoordinates
-    .map(toLngLatPair)
-    .filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat));
-
-  if (validCoords.length < 2) return false;
-
-  const geojsonData = {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: validCoords,
-        },
-      },
-    ],
-  };
-
-  const existingSource = map.getSource('walking-route');
-  if (existingSource) {
-    existingSource.setData(geojsonData);
-    return true;
-  }
-
-  // Add GeoJSON source
-  map.addSource('walking-route', {
-    type: 'geojson',
-    data: geojsonData,
-  });
-
-  // Background white casing for contrast against street map
-  if (!map.getLayer('walking-route-casing')) {
-    map.addLayer({
-      id: 'walking-route-casing',
-      type: 'line',
-      source: 'walking-route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': '#ffffff',
-        'line-width': 10,
-        'line-opacity': 0.95,
-      },
-    });
-  }
-
-  // Primary bold blue navigation line
-  if (!map.getLayer('walking-route-line')) {
-    map.addLayer({
-      id: 'walking-route-line',
-      type: 'line',
-      source: 'walking-route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': '#0052cc',
-        'line-width': 6,
-        'line-opacity': 0.95,
-      },
-    });
-  }
-
-  return true;
-}
+const EMPTY_GEOJSON = {
+  type: 'FeatureCollection',
+  features: [],
+};
 
 export function MapLibreTracker({
   property,
-  userLocation,
-  userBearing,
-  isCompassMode,
-  travelMode = 'walk',
-  recenterTrigger,
-  onRouteStats,
-  onArrival,
+  dest,
+  origin,
+  originKind = 'gate', // 'gps' | 'gate'
+  gateName = 'Ateneo Gate',
+  accuracy = null,
+  routeCoords = null, // [[lat, lng], ...]
+  routeKey = '',
+  travelMode = 'walk', // 'walk' | 'drive'
+  heading = null,
+  headingUp = false,
+  follow = true,
+  recenterTrigger = 0,
+  onUserInteract,
+  onUserDragEnd,
 }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
+  const isMapLoadedRef = useRef(false);
+
+  // Markers
   const userMarkerRef = useRef(null);
+  const gateMarkerRef = useRef(null);
+  const gateTextSpanRef = useRef(null);
   const destMarkerRef = useRef(null);
-  const hasFittedBoundsRef = useRef(false);
-  const cachedCoordinatesRef = useRef(null);
 
-  const accuratePinpoint = getAccuratePinpoint(property);
-  const destLat = Number(accuratePinpoint?.lat || property?.latitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[0]);
-  const destLng = Number(accuratePinpoint?.lng || property?.longitude || MapConfig.CAMPUS_BOUNDS.defaultCenter[1]);
+  // Refs for tracking changes and stable callbacks
+  const onUserInteractRef = useRef(onUserInteract);
+  useEffect(() => {
+    onUserInteractRef.current = onUserInteract;
+  }, [onUserInteract]);
 
-  const renderPolyline = (coordinates) => {
-    if (!coordinates || coordinates.length < 2) return;
-    cachedCoordinatesRef.current = coordinates;
+  const onUserDragEndRef = useRef(onUserDragEnd);
+  useEffect(() => {
+    onUserDragEndRef.current = onUserDragEnd;
+  }, [onUserDragEnd]);
 
-    const map = mapRef.current;
-    if (!map) return;
+  const lastFitKeyRef = useRef('');
+  const lastBearingRef = useRef(0);
+  const isFirstMountRef = useRef(true);
 
-    if (map.isStyleLoaded()) {
-      ensureRouteOnMap(map, coordinates);
-    } else {
-      map.once('styledata', () => {
-        ensureRouteOnMap(map, coordinates);
-      });
-    }
-
-    // Fit map bounds to the road route
-    try {
-      const bounds = new maplibregl.LngLatBounds();
-      coordinates.forEach((c) => {
-        const pair = toLngLatPair(c);
-        if (pair && Number.isFinite(pair[0]) && Number.isFinite(pair[1])) {
-          bounds.extend(pair);
-        }
-      });
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
-      }
-    } catch {
-      // safe ignore
-    }
-  };
-
-  // 1. Initialize MapLibre GL Map
+  // 1. Initialize MapLibre GL Map (Runs once on mount)
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
@@ -185,19 +86,33 @@ export function MapLibreTracker({
       ],
     };
 
+    const initialCenter = [dest.lng || 125.614, dest.lat || 7.07];
+
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: mapStyle,
-      center: [destLng, destLat],
+      center: initialCenter,
       zoom: 16.5,
-      pitch: 35,
+      pitch: 0, // Flat map for accurate panning and positioning
       bearing: 0,
       attributionControl: { compact: true },
     });
 
     mapRef.current = map;
 
-    // Add Accommodation Destination Marker
+    // User interaction listeners to cancel auto-follow
+    const handleInteract = (e) => {
+      if (e.originalEvent) {
+        onUserInteractRef.current?.();
+      }
+    };
+
+    map.on('dragstart', handleInteract);
+    map.on('zoomstart', handleInteract);
+    map.on('rotatestart', handleInteract);
+    map.on('pitchstart', handleInteract);
+
+    // Destination Marker
     const destEl = document.createElement('div');
     destEl.className = 'dest-pin-container';
     destEl.innerHTML = `
@@ -209,120 +124,293 @@ export function MapLibreTracker({
         </svg>
       </div>
     `;
-
     destMarkerRef.current = new maplibregl.Marker({ element: destEl, anchor: 'bottom' })
-      .setLngLat([destLng, destLat])
+      .setLngLat([dest.lng, dest.lat])
       .addTo(map);
 
-    const onMapReady = () => {
-      if (cachedCoordinatesRef.current) {
-        ensureRouteOnMap(map, cachedCoordinatesRef.current);
-      }
-    };
+    // Live User GPS Dot Marker (Draggable for precise fine-tuning on desktop/mobile)
+    const userDotEl = document.createElement('div');
+    userDotEl.className = 'user-dot';
+    userDotEl.title = 'Your location (Drag to fine-tune)';
+    userDotEl.style.display = 'none';
 
-    map.on('load', onMapReady);
-    map.on('styledata', onMapReady);
+    const userMarker = new maplibregl.Marker({
+      element: userDotEl,
+      draggable: true,
+    })
+      .setLngLat([initialCenter[0], initialCenter[1]])
+      .addTo(map);
+
+    userMarker.on('dragend', () => {
+      const lngLat = userMarker.getLngLat();
+      onUserDragEndRef.current?.({ lat: lngLat.lat, lng: lngLat.lng });
+    });
+
+    userMarkerRef.current = userMarker;
+
+    // Campus Gate Pin Marker
+    const gatePinEl = document.createElement('div');
+    gatePinEl.className = 'gate-pin';
+    gatePinEl.innerHTML = `
+      <span class="gate-pin-badge">A</span>
+      <span class="gate-pin-text">${gateName}</span>
+    `;
+    gateTextSpanRef.current = gatePinEl.querySelector('.gate-pin-text');
+    gatePinEl.style.display = 'none';
+    gateMarkerRef.current = new maplibregl.Marker({ element: gatePinEl })
+      .setLngLat([initialCenter[0], initialCenter[1]])
+      .addTo(map);
+
+    map.on('load', () => {
+      isMapLoadedRef.current = true;
+
+      // Accuracy circle source and layers
+      if (!map.getSource('accuracy')) {
+        map.addSource('accuracy', {
+          type: 'geojson',
+          data: EMPTY_GEOJSON,
+        });
+
+        map.addLayer({
+          id: 'accuracy-fill',
+          type: 'fill',
+          source: 'accuracy',
+          paint: {
+            'fill-color': '#3b82f6',
+            'fill-opacity': 0.15,
+          },
+        });
+
+        map.addLayer({
+          id: 'accuracy-line',
+          type: 'line',
+          source: 'accuracy',
+          paint: {
+            'line-color': '#2563eb',
+            'line-width': 1.5,
+            'line-opacity': 0.4,
+          },
+        });
+      }
+
+      // Walking/Driving route source and layers
+      if (!map.getSource('walking-route')) {
+        map.addSource('walking-route', {
+          type: 'geojson',
+          data: EMPTY_GEOJSON,
+        });
+
+        // Background white casing
+        map.addLayer({
+          id: 'walking-route-casing',
+          type: 'line',
+          source: 'walking-route',
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': 10,
+            'line-opacity': 0.95,
+          },
+        });
+
+        // Primary navigation route line
+        map.addLayer({
+          id: 'walking-route-line',
+          type: 'line',
+          source: 'walking-route',
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': travelMode === 'drive' ? '#0284c7' : '#0052cc',
+            'line-width': 6,
+            'line-opacity': 0.95,
+          },
+        });
+      }
+    });
 
     return () => {
       map.remove();
       maplibregl.removeProtocol('pmtiles');
       mapRef.current = null;
+      isMapLoadedRef.current = false;
     };
-  }, [destLat, destLng, property?.name]);
+  }, []);
 
-  // 2. Handle Heading Rotation (Grab-style navigation)
+  // 2. Update Destination Pin position and name
+  useEffect(() => {
+    if (!destMarkerRef.current || !dest) return;
+    destMarkerRef.current.setLngLat([dest.lng, dest.lat]);
+    const badge = destMarkerRef.current.getElement().querySelector('.dest-pin-badge');
+    if (badge && property?.name) {
+      badge.textContent = property.name;
+    }
+  }, [dest.lat, dest.lng, property?.name]);
+
+  // 3. Update Origin Marker & Accuracy Circle based on originKind
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!origin || !userMarkerRef.current || !gateMarkerRef.current) return;
+
+    if (originKind === 'gps') {
+      // Show user dot, hide gate pin
+      userMarkerRef.current.setLngLat([origin.lng, origin.lat]);
+      userMarkerRef.current.getElement().style.display = 'block';
+      gateMarkerRef.current.getElement().style.display = 'none';
+
+      // Update accuracy circle
+      if (map && map.getSource('accuracy')) {
+        if (accuracy && accuracy > 0) {
+          const poly = circlePolygon(origin.lat, origin.lng, accuracy);
+          map.getSource('accuracy').setData(poly);
+        } else {
+          map.getSource('accuracy').setData(EMPTY_GEOJSON);
+        }
+      }
+    } else {
+      // Gate mode: show gate pin, hide user dot
+      gateMarkerRef.current.setLngLat([origin.lng, origin.lat]);
+      gateMarkerRef.current.getElement().style.display = 'flex';
+      if (gateTextSpanRef.current) {
+        gateTextSpanRef.current.textContent = gateName;
+      }
+      userMarkerRef.current.getElement().style.display = 'none';
+
+      // Remove accuracy circle
+      if (map && map.getSource('accuracy')) {
+        map.getSource('accuracy').setData(EMPTY_GEOJSON);
+      }
+    }
+  }, [originKind, origin.lat, origin.lng, accuracy, gateName]);
+
+  // 4. Update Route Line GeoJSON & Color
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    if (isCompassMode && userBearing != null && !isNaN(userBearing)) {
-      map.easeTo({ bearing: userBearing, duration: 350 });
-    } else if (!isCompassMode) {
+    const updateRoute = () => {
+      const src = map.getSource('walking-route');
+      if (!src) return;
+
+      if (routeCoords && routeCoords.length >= 2) {
+        const coords = routeCoords.map(([lat, lng]) => [lng, lat]);
+        src.setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: coords,
+              },
+            },
+          ],
+        });
+      } else {
+        src.setData(EMPTY_GEOJSON);
+      }
+
+      if (map.getLayer('walking-route-line')) {
+        map.setPaintProperty(
+          'walking-route-line',
+          'line-color',
+          travelMode === 'drive' ? '#0284c7' : '#0052cc'
+        );
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateRoute();
+    } else {
+      map.once('load', updateRoute);
+    }
+  }, [routeCoords, travelMode]);
+
+  // 5. Fit camera bounds ONLY when routeKey changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !routeKey) return;
+    if (lastFitKeyRef.current === routeKey) return;
+    lastFitKeyRef.current = routeKey;
+
+    try {
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend([origin.lng, origin.lat]);
+      bounds.extend([dest.lng, dest.lat]);
+
+      if (routeCoords && routeCoords.length >= 2) {
+        for (const [lat, lng] of routeCoords) {
+          bounds.extend([lng, lat]);
+        }
+      }
+
+      map.fitBounds(bounds, {
+        padding: { top: 90, bottom: 260, left: 40, right: 40 },
+        maxZoom: 17,
+        duration: 600,
+      });
+    } catch {
+      // Safe fallback
+    }
+  }, [routeKey, origin.lat, origin.lng, dest.lat, dest.lng, routeCoords]);
+
+  // 6. Camera Follow Mode (GPS only)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !follow || originKind !== 'gps' || !origin) return;
+
+    map.easeTo({
+      center: [origin.lng, origin.lat],
+      duration: 500,
+    });
+  }, [follow, originKind, origin.lat, origin.lng]);
+
+  // 7. Recenter Trigger Handler (Manual user action)
+  useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    const map = mapRef.current;
+    if (!map) return;
+
+    try {
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend([origin.lng, origin.lat]);
+      bounds.extend([dest.lng, dest.lat]);
+
+      if (routeCoords && routeCoords.length >= 2) {
+        for (const [lat, lng] of routeCoords) {
+          bounds.extend([lng, lat]);
+        }
+      }
+
+      map.fitBounds(bounds, {
+        padding: { top: 90, bottom: 260, left: 40, right: 40 },
+        maxZoom: 17,
+        duration: 600,
+      });
+    } catch {
+      // Safe fallback
+    }
+  }, [recenterTrigger]);
+
+  // 8. Bearing & Heading-Up Rotation Handler
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (headingUp && follow && heading != null && !isNaN(heading) && originKind === 'gps') {
+      const delta = Math.abs(heading - lastBearingRef.current);
+      if (delta >= 5) {
+        lastBearingRef.current = heading;
+        map.easeTo({ bearing: heading, duration: 350 });
+      }
+    } else if (!headingUp && lastBearingRef.current !== 0) {
+      lastBearingRef.current = 0;
       map.easeTo({ bearing: 0, duration: 350 });
     }
-  }, [userBearing, isCompassMode]);
-
-  // 3. Update User Marker and Fetch/Update Walking Route
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !userLocation) return;
-
-    const { lat, lng } = userLocation;
-
-    // Render / update pulsing radar student dot
-    if (!userMarkerRef.current) {
-      const el = document.createElement('div');
-      el.className = 'user-live-radar';
-      el.innerHTML = `
-        <div class="user-live-radar-pulse"></div>
-        <div class="user-live-radar-dot"></div>
-      `;
-      userMarkerRef.current = new maplibregl.Marker({ element: el })
-        .setLngLat([lng, lat])
-        .addTo(map);
-    } else {
-      userMarkerRef.current.setLngLat([lng, lat]);
-    }
-
-    // Fit bounds smoothly on coordinate updates
-    if (!hasFittedBoundsRef.current) {
-      hasFittedBoundsRef.current = true;
-      const bounds = new maplibregl.LngLatBounds();
-      const directDist = Math.hypot(lat - destLat, lng - destLng) * 111000;
-      if (directDist <= 1500) {
-        bounds.extend([lng, lat]);
-      }
-      bounds.extend([destLng, destLat]);
-      map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17 });
-    }
-
-    // Update position in RouteService to get exact street-level road paths
-    RouteService.updateStudentPosition(
-      { lat, lng },
-      { lat: destLat, lng: destLng },
-      travelMode,
-      (routeResult) => {
-        if (onRouteStats) {
-          onRouteStats({
-            distanceMeters: routeResult.distanceMeters,
-            durationMinutes: routeResult.durationMinutes,
-            formattedDistance: routeResult.formattedDistance,
-            formattedDuration: routeResult.formattedDuration,
-            summary: routeResult.summary,
-            mode: routeResult.mode,
-            isFallback: routeResult.isFallback,
-          });
-        }
-        renderPolyline(routeResult.coordinates);
-      },
-      () => {
-        if (onArrival) onArrival();
-      },
-      property
-    );
-  }, [userLocation, destLat, destLng, travelMode, onRouteStats, onArrival, property]);
-
-  // 4. Handle Manual Recenter Trigger
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !userLocation) return;
-
-    const bounds = new maplibregl.LngLatBounds();
-    const directDist = Math.hypot(userLocation.lat - destLat, userLocation.lng - destLng) * 111000;
-    if (directDist <= 1500) {
-      bounds.extend([userLocation.lng, userLocation.lat]);
-    }
-    bounds.extend([destLng, destLat]);
-    if (cachedCoordinatesRef.current?.length > 1) {
-      cachedCoordinatesRef.current.forEach((c) => {
-        const pair = toLngLatPair(c);
-        if (pair && Number.isFinite(pair[0]) && Number.isFinite(pair[1])) {
-          bounds.extend(pair);
-        }
-      });
-    }
-    map.fitBounds(bounds, { padding: { top: 90, bottom: 230, left: 40, right: 40 }, maxZoom: 17.5 });
-  }, [recenterTrigger, userLocation, destLat, destLng]);
+  }, [headingUp, follow, heading, originKind]);
 
   return <div ref={mapContainerRef} className="maplibre-container" />;
 }

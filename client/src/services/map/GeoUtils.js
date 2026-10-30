@@ -98,3 +98,58 @@ export function formatDuration(minutes) {
   if (minutes < 1) return '< 1 min';
   return `${Math.round(minutes)} min`;
 }
+
+/**
+ * Meters remaining ALONG the route from the user's position.
+ * polyline: [[lat, lng], ...]. Returns { remainingMeters, offRouteMeters }.
+ */
+export function remainingAlongRoute(lat, lng, polyline) {
+  if (!polyline || polyline.length < 2) return { remainingMeters: null, offRouteMeters: Infinity };
+  const R = 6371000;
+  const rad = (d) => (d * Math.PI) / 180;
+  const cosLat = Math.cos(rad(lat));
+  const proj = ([a, b]) => [rad(b - lng) * R * cosLat, rad(a - lat) * R]; // meters, user at (0,0)
+  const pts = polyline.map(proj);
+
+  let best = { dist: Infinity, seg: 0, t: 0 };
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i];
+    const [bx, by] = pts[i + 1];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, (-ax * dx + -ay * dy) / lenSq));
+    const d = Math.hypot(ax + t * dx, ay + t * dy);
+    if (d < best.dist) best = { dist: d, seg: i, t };
+  }
+  const [ax, ay] = pts[best.seg];
+  const [bx, by] = pts[best.seg + 1];
+  let remaining = Math.hypot(bx - ax, by - ay) * (1 - best.t);
+  for (let i = best.seg + 1; i < pts.length - 1; i++) {
+    remaining += Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+  }
+  return { remainingMeters: Math.round(remaining), offRouteMeters: Math.round(best.dist) };
+}
+
+/**
+ * Scale the provider's own total duration by how much of the route is left.
+ * Returns whole minutes, never below 1 (and 0 is not shown; arrival handles the end).
+ */
+export function remainingMinutes(totalSeconds, totalMeters, remainingMeters) {
+  if (!Number.isFinite(totalSeconds) || !Number.isFinite(totalMeters) || totalMeters <= 0) return null;
+  const frac = Math.max(0, Math.min(1, remainingMeters / totalMeters));
+  return Math.max(1, Math.ceil((totalSeconds * frac) / 60));
+}
+
+/** GeoJSON polygon approximating a circle (GPS accuracy radius). */
+export function circlePolygon(lat, lng, radiusMeters, steps = 64) {
+  const R = 6371000;
+  const coords = [];
+  for (let i = 0; i <= steps; i++) {
+    const ang = (i / steps) * 2 * Math.PI;
+    const dLat = ((radiusMeters * Math.cos(ang)) / R) * (180 / Math.PI);
+    const dLng = ((radiusMeters * Math.sin(ang)) / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
+    coords.push([lng + dLng, lat + dLat]);
+  }
+  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coords] } };
+}

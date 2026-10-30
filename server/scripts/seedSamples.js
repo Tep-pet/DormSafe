@@ -54,6 +54,7 @@ const STUDENTS_CONFIG = [
     email: 'fmppacatang@addu.edu.ph',
     altEmails: ['franshiska.pacatang@addu.edu.ph'],
     contact: '0939-555-4321',
+    password: 'Student12345!',
   },
   {
     name: 'Zhea Zafra',
@@ -70,6 +71,7 @@ const STUDENTS_CONFIG = [
 ];
 
 async function getOrCreateStudent(config) {
+  const studentPassword = config.password || DEFAULT_STUDENT_PASSWORD;
   const { data: list, error: listError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   if (listError) throw listError;
 
@@ -84,7 +86,7 @@ async function getOrCreateStudent(config) {
         await supabase.auth.admin.updateUserById(altUser.id, {
           email: config.email,
           email_confirm: true,
-          password: DEFAULT_STUDENT_PASSWORD,
+          password: studentPassword,
           user_metadata: { full_name: config.name, role: 'student' },
         });
         primaryUser = { ...altUser, email: config.email };
@@ -98,7 +100,7 @@ async function getOrCreateStudent(config) {
   if (!primaryUser) {
     const { data, error } = await supabase.auth.admin.createUser({
       email: config.email,
-      password: DEFAULT_STUDENT_PASSWORD,
+      password: studentPassword,
       email_confirm: true,
       user_metadata: { full_name: config.name, role: 'student' },
     });
@@ -107,7 +109,7 @@ async function getOrCreateStudent(config) {
     console.log(`  + Created primary student account: ${config.name} (${config.email})`);
   } else {
     await supabase.auth.admin.updateUserById(primaryUser.id, {
-      password: DEFAULT_STUDENT_PASSWORD,
+      password: studentPassword,
       user_metadata: { full_name: config.name, role: 'student' },
     });
     console.log(`  ✓ Updated primary student account: ${config.name} (${config.email})`);
@@ -127,7 +129,7 @@ async function getOrCreateStudent(config) {
     const altUser = usersList.find((u) => u.email?.toLowerCase() === altEmail.toLowerCase());
     if (altUser) {
       await supabase.auth.admin.updateUserById(altUser.id, {
-        password: DEFAULT_STUDENT_PASSWORD,
+        password: studentPassword,
         user_metadata: { full_name: config.name, role: 'student' },
       });
       await supabase.from('profiles').upsert({
