@@ -20,10 +20,15 @@ function calculateGoogleMapsDriveMinutes(distanceMeters) {
  * Matches user-specified Google Maps benchmarks exactly.
  */
 function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
-  const isRoxas = (Math.abs(oLat - 7.07180) < 0.0012 || Math.abs(oLat - 7.07175) < 0.0012) && (Math.abs(oLng - 125.61230) < 0.0012 || Math.abs(oLng - 125.61255) < 0.0012);
+  const isRoxas =
+    (Math.abs(oLat - 7.07175) < 0.00025 && Math.abs(oLng - 125.61255) < 0.00025) ||
+    (Math.abs(oLat - 7.07180) < 0.00025 && Math.abs(oLng - 125.61230) < 0.00025);
   const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
-  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0012 || Math.abs(oLat - 7.07105) < 0.0012) && (Math.abs(oLng - 125.61220) < 0.0012 || Math.abs(oLng - 125.61305) < 0.0012);
+  const isCCFC =
+    (Math.abs(oLat - 7.07135) < 0.00025 && Math.abs(oLng - 125.61285) < 0.00025) ||
+    (Math.abs(oLat - 7.07105) < 0.00025 && Math.abs(oLng - 125.61305) < 0.00025) ||
+    (Math.abs(oLat - 7.07110) < 0.0003 && Math.abs(oLng - 125.61220) < 0.0003);
   const isCommunityCenter = isCCFC;
   const isMartinHall = Math.abs(oLat - 7.07150) < 0.0006 && Math.abs(oLng - 125.61350) < 0.0006;
   const isDotterweich = Math.abs(oLat - 7.07080) < 0.0006 && Math.abs(oLng - 125.61260) < 0.0006;
@@ -87,10 +92,15 @@ function getKnownGoogleMapsDuration(oLat, oLng, dLat, dLng, mode) {
  * Coordinates are formatted as [lng, lat] for GeoJSON standard.
  */
 export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
-  const isRoxas = (Math.abs(oLat - 7.07180) < 0.0012 || Math.abs(oLat - 7.07175) < 0.0012) && (Math.abs(oLng - 125.61230) < 0.0012 || Math.abs(oLng - 125.61255) < 0.0012);
+  const isRoxas =
+    (Math.abs(oLat - 7.07175) < 0.00025 && Math.abs(oLng - 125.61255) < 0.00025) ||
+    (Math.abs(oLat - 7.07180) < 0.00025 && Math.abs(oLng - 125.61230) < 0.00025);
   const isJacinto = (Math.abs(oLat - 7.07200) < 0.0012 || Math.abs(oLat - 7.07225) < 0.0012) && Math.abs(oLng - 125.61415) < 0.0012;
   const isClaveria = Math.abs(oLat - 7.07260) < 0.0006 && Math.abs(oLng - 125.61220) < 0.0006;
-  const isCCFC = (Math.abs(oLat - 7.07110) < 0.0012 || Math.abs(oLat - 7.07105) < 0.0012) && (Math.abs(oLng - 125.61220) < 0.0012 || Math.abs(oLng - 125.61305) < 0.0012);
+  const isCCFC =
+    (Math.abs(oLat - 7.07135) < 0.00025 && Math.abs(oLng - 125.61285) < 0.00025) ||
+    (Math.abs(oLat - 7.07105) < 0.00025 && Math.abs(oLng - 125.61305) < 0.00025) ||
+    (Math.abs(oLat - 7.07110) < 0.0003 && Math.abs(oLng - 125.61220) < 0.0003);
   const isCommunityCenter = isCCFC;
   const isWalk = mode === 'walk';
 
@@ -124,7 +134,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
         coordinates: [
           [125.61255, 7.07175], // Ateneo Roxas Gate (Northeast Sidewalk)
           [125.61280, 7.07140], // M. Roxas Ave past Roxas Grounds
-          [125.61305, 7.07105], // M. Roxas Ave past Ateneo CCFC Gate
+          [125.61285, 7.07135], // M. Roxas Ave past Ateneo CCFC Gate
           [125.61335, 7.07065], // M. Roxas Ave past Tree of Life / Night Market
           [125.61380, 7.07010], // M. Roxas Ave past Chippens
           [125.61415, 7.06970], // M. Roxas Ave approaching Correla Dormitory
@@ -142,7 +152,7 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
           [125.61235, 7.07210], // C.M. Recto Ave turning onto M. Roxas Ave
           [125.61255, 7.07175], // Ateneo Roxas Gate (Northeast Sidewalk)
           [125.61280, 7.07140], // M. Roxas Ave past Roxas Grounds
-          [125.61305, 7.07105], // M. Roxas Ave past CCFC Gate
+          [125.61285, 7.07135], // M. Roxas Ave past Ateneo CCFC Gate
           [125.61335, 7.07065], // M. Roxas Ave past Tree of Life
           [125.61380, 7.07010], // M. Roxas Ave past Chippens
           [125.61415, 7.06970], // M. Roxas Ave
@@ -152,11 +162,11 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
     }
     if (isCCFC || isCommunityCenter) {
       return {
-        distanceMeters: 230,
+        distanceMeters: 280,
         durationMinutes: isWalk ? 3 : 2,
         summary: 'via M. Roxas Ave',
         coordinates: [
-          [125.61305, 7.07105], // Ateneo Roxas CCFC Gate
+          [125.61285, 7.07135], // Ateneo Roxas CCFC Gate
           [125.61335, 7.07065], // M. Roxas Ave past Tree of Life / Night Market
           [125.61380, 7.07010], // M. Roxas Ave past Chippens
           [125.61415, 7.06970], // M. Roxas Ave

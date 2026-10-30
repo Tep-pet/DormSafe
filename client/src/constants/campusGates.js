@@ -27,8 +27,8 @@ export const ADDU_GATE_COORDINATES = [
   {
     id: 'ccfc',
     name: 'Ateneo Roxas CCFC Gate',
-    lat: 7.07105,
-    lng: 125.61305,
+    lat: 7.07135,
+    lng: 125.61285,
     address: 'M. Roxas Ave / Jacinto Extension, Davao City',
   },
   {
@@ -66,8 +66,8 @@ export const ADDU_GATES = [
     label: 'Ateneo Roxas CCFC Gate',
     name: 'Ateneo Roxas CCFC Gate',
     address: 'M. Roxas Ave / Jacinto Extension, Davao City',
-    lat: 7.07105,
-    lng: 125.61305,
+    lat: 7.07135,
+    lng: 125.61285,
     desc: 'Community Center of the First Companions (CCFC) entrance along Roxas Ave',
     isPrimary: false,
   },
