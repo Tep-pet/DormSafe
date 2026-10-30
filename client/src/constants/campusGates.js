@@ -31,27 +31,6 @@ export const ADDU_GATE_COORDINATES = [
     lng: 125.61390,
     address: 'C.M. Recto Ave (Claveria St), Poblacion District, Davao City',
   },
-  {
-    id: 'martin_hall',
-    name: 'Ateneo Martin Hall Gate',
-    lat: 7.07150,
-    lng: 125.61350,
-    address: 'E. Jacinto St, Poblacion District, Davao City',
-  },
-  {
-    id: 'community_center',
-    name: 'Ateneo Community Center Gate (Bapa Benny)',
-    lat: 7.07110,
-    lng: 125.61220,
-    address: 'Jacinto Extension, Davao City',
-  },
-  {
-    id: 'dotterweich',
-    name: 'Ateneo Dotterweich Gate',
-    lat: 7.07080,
-    lng: 125.61260,
-    address: 'Fr. Selga St, Davao City',
-  },
 ];
 
 export const ADDU_GATES = [
@@ -86,36 +65,6 @@ export const ADDU_GATES = [
     isPrimary: false,
   },
   {
-    id: 'martin_hall',
-    label: 'Ateneo Martin Hall Gate',
-    name: 'Ateneo Martin Hall Gate',
-    address: 'E. Jacinto St, Poblacion District, Davao City',
-    lat: 7.07150,
-    lng: 125.61350,
-    desc: 'Pedestrian access to university sports gym & arena',
-    isPrimary: false,
-  },
-  {
-    id: 'community_center',
-    label: 'Ateneo Community Center Gate (Bapa Benny)',
-    name: 'Ateneo Community Center Gate (Bapa Benny)',
-    address: 'Jacinto Extension, Davao City',
-    lat: 7.07110,
-    lng: 125.61220,
-    desc: 'Southwest entrance by Bapa Benny Community Center',
-    isPrimary: false,
-  },
-  {
-    id: 'dotterweich',
-    label: 'Ateneo Dotterweich Gate',
-    name: 'Ateneo Dotterweich Gate',
-    address: 'Fr. Selga St, Davao City',
-    lat: 7.07080,
-    lng: 125.61260,
-    desc: 'South pedestrian gate near Canisius Hall',
-    isPrimary: false,
-  },
-  {
     id: 'matina',
     label: 'Ateneo Matina Campus Gate',
     name: 'Ateneo Matina Campus Gate',
@@ -133,4 +82,3 @@ export const CAMPUS_GATES = {
 };
 
 export const DEFAULT_GATE = 'roxas';
-

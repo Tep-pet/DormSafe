@@ -28,27 +28,6 @@
       "lat": 7.0727,
       "lng": 125.6139,
       "note": "North pedestrian gate along C.M. Recto Ave (Claveria)"
-    },
-    "martin_hall": {
-      "id": "martin_hall",
-      "label": "Ateneo Martin Hall Gate",
-      "lat": 7.0715,
-      "lng": 125.6135,
-      "note": "Pedestrian access to university sports gym & arena"
-    },
-    "community_center": {
-      "id": "community_center",
-      "label": "Ateneo Community Center Gate",
-      "lat": 7.0711,
-      "lng": 125.6122,
-      "note": "Southwest entrance by Bapa Benny Community Center"
-    },
-    "dotterweich": {
-      "id": "dotterweich",
-      "label": "Ateneo Dotterweich Gate",
-      "lat": 7.0708,
-      "lng": 125.6126,
-      "note": "South pedestrian gate near Canisius Hall"
     }
   },
   "defaultGate": "jacinto"
