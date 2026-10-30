@@ -53,6 +53,7 @@ export function MapLibreTracker({
   }, [onUserDragEnd]);
 
   const lastFitKeyRef = useRef('');
+  const updateRouteRef = useRef(null);
   const lastBearingRef = useRef(0);
   const isFirstMountRef = useRef(true);
 
@@ -226,6 +227,10 @@ export function MapLibreTracker({
           },
         });
       }
+
+      if (updateRouteRef.current) {
+        updateRouteRef.current();
+      }
     });
 
     return () => {
@@ -287,12 +292,22 @@ export function MapLibreTracker({
     const map = mapRef.current;
     if (!map) return;
 
+    const toLngLat = (pt) => {
+      if (!Array.isArray(pt) || pt.length < 2) return null;
+      const [a, b] = pt;
+      // MapLibre expects [lng, lat]. In Davao: lng ~125.6, lat ~7.07
+      if (a > 50) return [a, b];
+      return [b, a];
+    };
+
     const updateRoute = () => {
-      const src = map.getSource('walking-route');
+      const currentMap = mapRef.current;
+      if (!currentMap) return;
+      const src = currentMap.getSource('walking-route');
       if (!src) return;
 
       if (routeCoords && routeCoords.length >= 2) {
-        const coords = routeCoords.map(([lat, lng]) => [lng, lat]);
+        const coords = routeCoords.map(toLngLat).filter(Boolean);
         src.setData({
           type: 'FeatureCollection',
           features: [
@@ -310,8 +325,8 @@ export function MapLibreTracker({
         src.setData(EMPTY_GEOJSON);
       }
 
-      if (map.getLayer('walking-route-line')) {
-        map.setPaintProperty(
+      if (currentMap.getLayer('walking-route-line')) {
+        currentMap.setPaintProperty(
           'walking-route-line',
           'line-color',
           travelMode === 'drive' ? '#0284c7' : '#0052cc'
@@ -319,12 +334,16 @@ export function MapLibreTracker({
       }
     };
 
-    if (isMapLoadedRef.current || map.isStyleLoaded()) {
+    updateRouteRef.current = updateRoute;
+
+    if (map.getSource('walking-route')) {
       updateRoute();
+    } else if (isMapLoadedRef.current || map.isStyleLoaded()) {
+      requestAnimationFrame(updateRoute);
     } else {
       map.once('load', updateRoute);
     }
-  }, [routeCoords, travelMode]);
+  }, [routeCoords, travelMode, routeKey]);
 
   // 5. Fit camera bounds ONLY when routeKey changes
   useEffect(() => {
