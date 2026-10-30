@@ -289,7 +289,7 @@ export function TrackingBottomSheet({
               ) : (
                 <div className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                   {isWalk ? 'Walking' : 'Driving'} from{' '}
-                  <span className="text-slate-800 underline decoration-blue-300 decoration-2 underline-offset-2">
+                  <span className="text-slate-800">
                     {originLabel}
                   </span>
                   :{' '}
