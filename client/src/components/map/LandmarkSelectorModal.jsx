@@ -15,6 +15,7 @@ export const ADDU_LANDMARKS = ADDU_GATES;
 export function LandmarkSelectorModal({
   isOpen,
   currentOriginName,
+  selectedGateId,
   property,
   gpsStatus = 'detected', // 'detecting' | 'detected' | 'unavailable'
   gpsErrorMessage = null,
@@ -24,6 +25,22 @@ export function LandmarkSelectorModal({
   onClose,
 }) {
   const isGpsSelected = currentOriginName && currentOriginName.toLowerCase().includes('gps');
+
+  const selectedId = React.useMemo(() => {
+    if (isGpsSelected) return null;
+    if (selectedGateId) return selectedGateId;
+    if (!currentOriginName) return null;
+    const lower = currentOriginName.toLowerCase().trim();
+    const exactGate = ADDU_GATES.find(
+      (g) => g.name.toLowerCase() === lower || g.label?.toLowerCase() === lower
+    );
+    if (exactGate) return exactGate.id;
+    if (lower.includes('ccfc') || lower.includes('community')) return 'ccfc';
+    if (lower.includes('jacinto')) return 'jacinto';
+    if (lower.includes('claveria') || lower.includes('finster')) return 'claveria';
+    if (lower.includes('roxas')) return 'roxas';
+    return null;
+  }, [isGpsSelected, selectedGateId, currentOriginName]);
 
   return (
     <Modal
@@ -151,12 +168,7 @@ export function LandmarkSelectorModal({
 
             <div className="space-y-1.5">
               {ADDU_GATES.map((gate) => {
-                const isSelected =
-                  !isGpsSelected &&
-                  currentOriginName &&
-                  (currentOriginName.toLowerCase().includes(gate.id) ||
-                    (gate.id === 'claveria' && (currentOriginName.toLowerCase().includes('claveria') || currentOriginName.toLowerCase().includes('finster'))) ||
-                    (gate.id === 'ccfc' && (currentOriginName.toLowerCase().includes('ccfc') || currentOriginName.toLowerCase().includes('community'))));
+                const isSelected = selectedId === gate.id;
 
                 return (
                   <button

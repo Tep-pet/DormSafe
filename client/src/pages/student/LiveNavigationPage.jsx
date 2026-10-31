@@ -498,6 +498,7 @@ export function LiveNavigationPage() {
       {/* Gate Selector Modal (Campus Gates List Only) */}
       <LandmarkSelectorModal
         isOpen={showGateModal}
+        selectedGateId={gateId}
         currentOriginName={gate.name}
         property={property}
         onSelect={handleSelectGate}
