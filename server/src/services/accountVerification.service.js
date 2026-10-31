@@ -70,14 +70,17 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
     .eq('id', userId)
     .single();
 
-  if (!isStudent) {
-    await notifyAdmins({
-      type: 'account_submitted',
-      title: `New ${profile?.role || 'user'} application`,
-      body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
-      metadata: { verification_id: data.id, user_id: userId, role: profile?.role },
-    });
-  }
+  await notifyAdmins({
+    type: 'account_submitted',
+    title: `New ${profile?.role || 'user'} application`,
+    body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
+    metadata: {
+      verification_id: data.id,
+      user_id: userId,
+      role: profile?.role,
+      user_name: profile?.full_name,
+    },
+  });
 
   return data;
 }

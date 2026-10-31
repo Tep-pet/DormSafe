@@ -77,23 +77,21 @@ function checkVerifiedRoute(origin, destination, mode = 'walk') {
         coordinates: [
           [7.07280, 125.61405], // Ateneo Jacinto Gate (Bellarmine Hall entrance)
           [7.07255, 125.61415], // E. Jacinto St near 7-Eleven
-          [7.07220, 125.61415], // E. Jacinto St near Keepsakes / Sun Star
-          [7.07170, 125.61395], // E. Jacinto St past PNB
-          [7.07125, 125.61375], // E. Jacinto St
-          [7.07105, 125.61365], // Corner of E. Jacinto St & Padre Zamora St
-          [7.07090, 125.61330], // Padre Zamora St heading southwest
-          [7.07075, 125.61290], // Padre Zamora St past Jubilee Hall
-          [7.07065, 125.61270], // Corner of Padre Zamora St & M. Roxas Ave (Tree of Life Memorial)
-          [7.07035, 125.61305], // M. Roxas Ave heading southeast past Night Market
-          [7.07000, 125.61350], // M. Roxas Ave past Padre Gomez St
-          [7.06970, 125.61400], // M. Roxas Ave
+          [7.07210, 125.61420], // E. Jacinto St past Keepsakes & Sun Star
+          [7.07165, 125.61415], // E. Jacinto St past PNB
+          [7.07115, 125.61405], // E. Jacinto St approaching Padre Zamora St
+          [7.07095, 125.61400], // Corner of E. Jacinto St & Padre Zamora St
+          [7.07080, 125.61368], // Padre Zamora St heading southwest past Jubilee Hall
+          [7.07065, 125.61335], // Corner of Padre Zamora St & M. Roxas Ave (Northeast sidewalk)
+          [7.07010, 125.61380], // M. Roxas Ave past Chippens & Nika's Store
+          [7.06970, 125.61415], // M. Roxas Ave approaching Correla Dormitory
           [7.06945, 125.61468], // Correla Dormitory (108 Roxas Ave)
         ],
-        distanceMeters: 560,
-        durationSeconds: (isWalk ? 7 : 4) * 60,
-        durationMinutes: isWalk ? 7 : 4,
-        formattedDistance: '560 m',
-        formattedDuration: `${isWalk ? 7 : 4} min`,
+        distanceMeters: 490,
+        durationSeconds: (isWalk ? 6 : 3) * 60,
+        durationMinutes: isWalk ? 6 : 3,
+        formattedDistance: '490 m',
+        formattedDuration: `${isWalk ? 6 : 3} min`,
         summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
         provider: 'verified',
         trafficAware: false,

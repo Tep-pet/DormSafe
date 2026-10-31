@@ -108,22 +108,20 @@ export function getVerifiedStreetRoute(oLat, oLng, dLat, dLng, mode) {
   if (Math.abs(dLat - 7.06945) < 0.0010 && Math.abs(dLng - 125.61468) < 0.0010) {
         if (isJacinto) {
       return {
-        distanceMeters: 560,
-        durationMinutes: isWalk ? 7 : 4,
+        distanceMeters: 490,
+        durationMinutes: isWalk ? 6 : 3,
         summary: 'via E. Jacinto St, Padre Zamora St & M. Roxas Ave',
         coordinates: [
           [125.61405, 7.07280], // Ateneo Jacinto Gate (Bellarmine Hall entrance)
           [125.61415, 7.07255], // E. Jacinto St near 7-Eleven
-          [125.61415, 7.07220], // E. Jacinto St near Keepsakes / Sun Star
-          [125.61395, 7.07170], // E. Jacinto St past PNB
-          [125.61375, 7.07125], // E. Jacinto St
-          [125.61365, 7.07105], // Corner of E. Jacinto St & Padre Zamora St
-          [125.61330, 7.07090], // Padre Zamora St heading southwest
-          [125.61290, 7.07075], // Padre Zamora St past Jubilee Hall
-          [125.61270, 7.07065], // Corner of Padre Zamora St & M. Roxas Ave (Tree of Life Memorial)
-          [125.61305, 7.07035], // M. Roxas Ave heading southeast past Night Market
-          [125.61350, 7.07000], // M. Roxas Ave past Padre Gomez St
-          [125.61400, 7.06970], // M. Roxas Ave
+          [125.61420, 7.07210], // E. Jacinto St past Keepsakes & Sun Star
+          [125.61415, 7.07165], // E. Jacinto St past PNB
+          [125.61405, 7.07115], // E. Jacinto St approaching Padre Zamora St
+          [125.61400, 7.07095], // Corner of E. Jacinto St & Padre Zamora St
+          [125.61368, 7.07080], // Padre Zamora St heading southwest past Jubilee Hall
+          [125.61335, 7.07065], // Corner of Padre Zamora St & M. Roxas Ave (Northeast sidewalk)
+          [125.61380, 7.07010], // M. Roxas Ave past Chippens & Nika's Store
+          [125.61415, 7.06970], // M. Roxas Ave approaching Correla Dormitory
           [125.61468, 7.06945], // Corella Dormitory (108 Roxas Ave)
         ],
       };

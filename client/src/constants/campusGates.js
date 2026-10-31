@@ -11,18 +11,18 @@ export const SEARCH_RADIUS_KM = 2;
  */
 export const ADDU_GATE_COORDINATES = [
   {
-    id: 'jacinto',
-    name: 'Ateneo Jacinto Gate',
-    lat: 7.07280,
-    lng: 125.61405,
-    address: 'E. Jacinto St, Poblacion District, Davao City',
-  },
-  {
     id: 'roxas',
     name: 'Ateneo Roxas Gate',
     lat: 7.07175,
     lng: 125.61255,
     address: 'M. Roxas Ave, Poblacion District, Davao City',
+  },
+  {
+    id: 'jacinto',
+    name: 'Ateneo Jacinto Gate',
+    lat: 7.07280,
+    lng: 125.61405,
+    address: 'E. Jacinto St, Poblacion District, Davao City',
   },
   {
     id: 'ccfc',
@@ -42,16 +42,6 @@ export const ADDU_GATE_COORDINATES = [
 
 export const ADDU_GATES = [
   {
-    id: 'jacinto',
-    label: 'Ateneo Jacinto Gate',
-    name: 'Ateneo Jacinto Gate',
-    address: 'E. Jacinto St, Poblacion District, Davao City',
-    lat: 7.07280,
-    lng: 125.61405,
-    desc: 'Finster Hall & Bellarmine Hall entrance along E. Jacinto St',
-    isPrimary: true,
-  },
-  {
     id: 'roxas',
     label: 'Ateneo Roxas Gate',
     name: 'Ateneo Roxas Gate',
@@ -59,6 +49,16 @@ export const ADDU_GATES = [
     lat: 7.07175,
     lng: 125.61255,
     desc: 'Martin Hall, Arrupe Hall & Roxas Ave entrance',
+    isPrimary: true,
+  },
+  {
+    id: 'jacinto',
+    label: 'Ateneo Jacinto Gate',
+    name: 'Ateneo Jacinto Gate',
+    address: 'E. Jacinto St, Poblacion District, Davao City',
+    lat: 7.07280,
+    lng: 125.61405,
+    desc: 'Finster Hall & Bellarmine Hall entrance along E. Jacinto St',
     isPrimary: true,
   },
   {

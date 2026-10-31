@@ -40,3 +40,4 @@ inspect_*.mjs
 sanitize-hostname.cjs
 
 .vercel
+scratch/

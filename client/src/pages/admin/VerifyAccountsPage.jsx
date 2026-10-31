@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
   CardBody,
@@ -50,6 +50,7 @@ export function VerifyAccountsPage() {
   const { accessToken } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState(null);
@@ -69,16 +70,32 @@ export function VerifyAccountsPage() {
     isBulk: false,
   });
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     page: 1,
     limit: ITEMS_PER_PAGE,
-    status: 'pending',
-    sort: 'desc',
-    role: '',
-    search: '',
-    dateFrom: '',
-    dateTo: '',
-  });
+    status: searchParams.get('status') || 'pending',
+    sort: searchParams.get('sort') || 'desc',
+    role: searchParams.get('role') || '',
+    search: searchParams.get('search') || searchParams.get('q') || '',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || '',
+  }));
+
+  // Synchronize when searchParams update from navigation
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    const searchParam = searchParams.get('search') || searchParams.get('q');
+    const roleParam = searchParams.get('role');
+    if (statusParam || searchParam !== null || roleParam !== null) {
+      setFilters((prev) => ({
+        ...prev,
+        status: statusParam || prev.status,
+        search: searchParam !== null ? searchParam : prev.search,
+        role: roleParam !== null ? roleParam : prev.role,
+        page: 1,
+      }));
+    }
+  }, [searchParams]);
 
   // Clear selection on page/status tab switch
   useEffect(() => {
