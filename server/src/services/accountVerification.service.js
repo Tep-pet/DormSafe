@@ -70,14 +70,17 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
     .eq('id', userId)
     .single();
 
-  if (!isStudent) {
-    await notifyAdmins({
-      type: 'account_submitted',
-      title: `New ${profile?.role || 'user'} application`,
-      body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
-      metadata: { verification_id: data.id, user_id: userId, role: profile?.role },
-    });
-  }
+  await notifyAdmins({
+    type: 'account_submitted',
+    title: `New ${profile?.role || 'user'} application`,
+    body: `${profile?.full_name || 'A user'} submitted ID documents for review.`,
+    metadata: {
+      verification_id: data.id,
+      user_id: userId,
+      role: profile?.role,
+      user_name: profile?.full_name,
+    },
+  });
 
   return data;
 }
@@ -126,6 +129,7 @@ export async function getAccountVerifications(filters = {}) {
     dateFrom,
     dateTo,
     role,
+    search,
   } = filters;
 
   const from = (Math.max(1, page) - 1) * limit;
@@ -147,16 +151,34 @@ export async function getAccountVerifications(filters = {}) {
   if (dateFrom) query = query.gte('created_at', dateFrom);
   if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59.999Z`);
 
+  let targetUserIds = null;
   if (role) {
     const { data: roleUsers } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('role', role);
-    const ids = (roleUsers || []).map((u) => u.id);
-    if (!ids.length) {
+    targetUserIds = (roleUsers || []).map((u) => u.id);
+  }
+
+  if (search && search.trim()) {
+    const term = search.trim();
+    const { data: searchUsers } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+    const searchIds = (searchUsers || []).map((u) => u.id);
+    if (targetUserIds !== null) {
+      targetUserIds = targetUserIds.filter((id) => searchIds.includes(id));
+    } else {
+      targetUserIds = searchIds;
+    }
+  }
+
+  if (targetUserIds !== null) {
+    if (!targetUserIds.length) {
       return { items: [], total: 0, page: Math.max(1, page), limit, totalPages: 1 };
     }
-    query = query.in('user_id', ids);
+    query = query.in('user_id', targetUserIds);
   }
 
   query = query

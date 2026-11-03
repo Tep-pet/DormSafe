@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, RotateCw, Inbox, Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { notificationService } from '../../services/notificationService';
 
 export function NotificationBell() {
   const { accessToken, isAuthenticated, role } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState([]);
@@ -133,22 +134,69 @@ export function NotificationBell() {
                   n.title?.toLowerCase().includes('inquiry') ||
                   n.title?.toLowerCase().includes('request');
 
-                const targetLink =
-                  role === 'owner'
-                    ? '/owner/requests'
-                    : role === 'student'
-                    ? '/student/requests'
-                    : null;
+                const isAccountApp =
+                  n.type === 'account_submitted' ||
+                  n.type === 'account_reviewed' ||
+                  Boolean(n.metadata?.verification_id) ||
+                  n.title?.toLowerCase().includes('application');
 
-                const linkText =
-                  role === 'owner'
-                    ? 'View in Room Requests →'
-                    : 'View Request Status →';
+                const isListingSub =
+                  n.type === 'listing_submitted' ||
+                  n.type === 'property_submitted' ||
+                  n.title?.toLowerCase().includes('listing');
+
+                const isReport =
+                  n.type?.includes('report') ||
+                  n.title?.toLowerCase().includes('report');
+
+                let targetLink = null;
+                let linkText = '';
+
+                if (role === 'owner') {
+                  if (isRoomReq) {
+                    targetLink = '/owner/requests';
+                    linkText = 'View in Room Requests →';
+                  }
+                } else if (role === 'student') {
+                  if (isRoomReq) {
+                    targetLink = '/student/requests';
+                    linkText = 'View Request Status →';
+                  } else if (isAccountApp) {
+                    targetLink = '/student/account-verification';
+                    linkText = 'View Verification Status →';
+                  }
+                } else if (role === 'admin') {
+                  if (isAccountApp) {
+                    const applicantName =
+                      n.metadata?.user_name ||
+                      n.body?.match(/^(.+?)\s+submitted/)?.[1] ||
+                      '';
+                    targetLink = applicantName
+                      ? `/admin/verify-accounts?status=all&search=${encodeURIComponent(applicantName)}`
+                      : '/admin/verify-accounts?status=all';
+                    linkText = 'Review Application →';
+                  } else if (isListingSub) {
+                    targetLink = '/admin/approve-listings';
+                    linkText = 'Review Listing →';
+                  } else if (isReport) {
+                    targetLink = '/admin/audit-log';
+                    linkText = 'View Reports →';
+                  }
+                }
 
                 return (
                   <div
                     key={n.id}
+                    onClick={() => {
+                      if (targetLink) {
+                        if (!n.read_at) handleRead(n.id);
+                        setIsOpen(false);
+                        navigate(targetLink);
+                      }
+                    }}
                     className={`p-3.5 text-left transition ${
+                      targetLink ? 'cursor-pointer hover:bg-slate-50/80' : ''
+                    } ${
                       n.read_at ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50/70'
                     }`}
                   >
@@ -166,24 +214,27 @@ export function NotificationBell() {
                     )}
 
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100/80">
-                      {isRoomReq && targetLink ? (
-                        <Link
-                          to={targetLink}
-                          onClick={() => setIsOpen(false)}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-ateneo-blue hover:underline"
-                        >
-                          {linkText}
-                        </Link>
-                      ) : (
+                      <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-400">
                           {n.created_at ? new Date(n.created_at).toLocaleDateString() : ''}
                         </span>
-                      )}
+                        {targetLink && (
+                          <>
+                            <span className="text-slate-300 text-[10px]">•</span>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-ateneo-blue hover:underline">
+                              {linkText}
+                            </span>
+                          </>
+                        )}
+                      </div>
 
                       {!n.read_at && (
                         <button
                           type="button"
-                          onClick={() => handleRead(n.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRead(n.id);
+                          }}
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900"
                         >
                           <Check size={11} strokeWidth={2.5} />

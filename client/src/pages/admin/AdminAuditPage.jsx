@@ -593,7 +593,7 @@ export function AdminAuditPage() {
                             startContent={<Eye size={13} strokeWidth={2} />}
                             className="text-xs text-slate-600 hover:text-slate-900"
                           >
-                            Inspect Payload
+                            View Details
                           </Button>
                         </div>
                       </div>
@@ -628,7 +628,7 @@ export function AdminAuditPage() {
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Audit Event Details</h3>
                   <p className="text-xs text-slate-500">
-                    Raw security and transaction payload metadata.
+                    Security and transaction event details.
                   </p>
                 </div>
               </div>
@@ -675,15 +675,6 @@ export function AdminAuditPage() {
                   <p className="text-slate-500">{inspectModal.log?.profiles?.email || 'No email'}</p>
                 </div>
               </div>
-
-              <div>
-                <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">
-                  JSON Metadata Payload
-                </span>
-                <pre className="p-3 bg-slate-900 text-slate-100 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-48">
-                  {JSON.stringify(inspectModal.log?.details || {}, null, 2)}
-                </pre>
-              </div>
             </div>
 
             <div className="flex items-center justify-end pt-2 border-t border-slate-100">
@@ -693,7 +684,7 @@ export function AdminAuditPage() {
                 variant="primary"
                 onClick={() => setInspectModal({ isOpen: false, log: null })}
               >
-                Close Inspector
+                Close Details
               </Button>
             </div>
           </div>

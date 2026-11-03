@@ -15,6 +15,7 @@ export const ADDU_LANDMARKS = ADDU_GATES;
 export function LandmarkSelectorModal({
   isOpen,
   currentOriginName,
+  selectedGateId,
   property,
   gpsStatus = 'detected', // 'detecting' | 'detected' | 'unavailable'
   gpsErrorMessage = null,
@@ -25,17 +26,39 @@ export function LandmarkSelectorModal({
 }) {
   const isGpsSelected = currentOriginName && currentOriginName.toLowerCase().includes('gps');
 
+  const selectedId = React.useMemo(() => {
+    if (isGpsSelected) return null;
+    if (selectedGateId) return selectedGateId;
+    if (!currentOriginName) return null;
+    const lower = currentOriginName.toLowerCase().trim();
+    const exactGate = ADDU_GATES.find(
+      (g) => g.name.toLowerCase() === lower || g.label?.toLowerCase() === lower
+    );
+    if (exactGate) return exactGate.id;
+    if (lower.includes('ccfc') || lower.includes('community')) {
+      const ccfcGate = ADDU_GATES.find((g) => g.id === 'ccfc' || g.id === 'community_center');
+      return ccfcGate ? ccfcGate.id : 'ccfc';
+    }
+    if (lower.includes('jacinto')) return 'jacinto';
+    if (lower.includes('claveria') || lower.includes('finster')) {
+      const claveriaGate = ADDU_GATES.find((g) => g.id === 'claveria' || g.id === 'finster');
+      return claveriaGate ? claveriaGate.id : 'claveria';
+    }
+    if (lower.includes('roxas')) return 'roxas';
+    return null;
+  }, [isGpsSelected, selectedGateId, currentOriginName]);
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      placement="bottom"
+      placement="center"
       classNames={{
-        base: 'bg-white rounded-t-3xl sm:rounded-3xl p-2 max-w-md mx-auto shadow-2xl border border-slate-100 max-h-[88vh] overflow-hidden flex flex-col',
+        base: 'bg-white rounded-3xl p-2 max-w-md mx-auto shadow-2xl border border-slate-100 max-h-[90vh] overflow-hidden flex flex-col',
       }}
     >
-      <ModalContent className="flex flex-col h-full">
-        <ModalHeader className="flex flex-col text-left px-5 pt-5 pb-2">
+      <ModalContent className="flex flex-col">
+        <ModalHeader className="flex flex-col text-left px-5 pt-4 pb-2">
           <div className="flex items-center gap-2 text-ateneo-blue font-bold text-base">
             <Navigation size={18} />
             <span>Choose Starting Location</span>
@@ -45,7 +68,7 @@ export function LandmarkSelectorModal({
           </p>
         </ModalHeader>
 
-        <ModalBody className="overflow-y-auto px-4 py-2 space-y-3 flex-1">
+        <ModalBody className="overflow-y-auto px-4 py-2 space-y-3">
           {/* Permission Denied or GPS Error Banner */}
           {gpsErrorMessage && (
             <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs flex flex-col gap-1.5">
@@ -150,12 +173,8 @@ export function LandmarkSelectorModal({
             </div>
 
             <div className="space-y-1.5">
-              {ADDU_GATES.filter((g) => g.id !== 'matina').map((gate) => {
-                const isSelected =
-                  !isGpsSelected &&
-                  currentOriginName &&
-                  (currentOriginName.toLowerCase().includes(gate.id) ||
-                    (gate.id === 'finster' && currentOriginName.toLowerCase().includes('claveria')));
+              {ADDU_GATES.map((gate) => {
+                const isSelected = selectedId === gate.id;
 
                 return (
                   <button
@@ -182,21 +201,6 @@ export function LandmarkSelectorModal({
                           className={isSelected ? 'text-ateneo-blue' : 'text-slate-400 group-hover:text-ateneo-blue'}
                         />
                         <span className="truncate">{gate.name}</span>
-                        {gate.id === 'roxas' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
-                            Roxas
-                          </span>
-                        )}
-                        {gate.id === 'jacinto' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900">
-                            Main
-                          </span>
-                        )}
-                        {gate.id === 'finster' && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900">
-                            Claveria
-                          </span>
-                        )}
                       </div>
 
                       <p className="text-[11px] text-slate-500 mt-1 truncate pl-5">
@@ -222,7 +226,7 @@ export function LandmarkSelectorModal({
           </div>
         </ModalBody>
 
-        <ModalFooter className="pt-2 pb-4 px-5">
+        <ModalFooter className="pt-1 pb-3 px-4">
           <Button
             variant="flat"
             className="w-full text-slate-600 font-semibold text-xs h-10 rounded-xl bg-slate-100 hover:bg-slate-200"

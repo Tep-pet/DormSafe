@@ -44,7 +44,7 @@ export async function getUserNotifications(userId, { unreadOnly = false } = {}) 
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(100);
 
   if (unreadOnly) {
     query = query.is('read_at', null);
