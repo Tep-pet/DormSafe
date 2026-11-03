@@ -24,20 +24,6 @@ export const ADDU_GATE_COORDINATES = [
     lng: 125.61410,
     address: 'E. Jacinto St, Poblacion District, Davao City',
   },
-  {
-    id: 'ccfc',
-    name: 'Ateneo Roxas CCFC Gate',
-    lat: 7.07110,
-    lng: 125.61220,
-    address: 'M. Roxas Ave / Jacinto Extension, Davao City',
-  },
-  {
-    id: 'claveria',
-    name: 'Ateneo Claveria Gate',
-    lat: 7.07270,
-    lng: 125.61390,
-    address: 'C.M. Recto Ave (Claveria St), Poblacion District, Davao City',
-  },
 ];
 
 export const ADDU_GATES = [
@@ -61,34 +47,14 @@ export const ADDU_GATES = [
     desc: 'Finster Hall & Bellarmine Hall entrance along E. Jacinto St',
     isPrimary: true,
   },
-  {
-    id: 'ccfc',
-    label: 'Ateneo Roxas CCFC Gate',
-    name: 'Ateneo Roxas CCFC Gate',
-    address: 'M. Roxas Ave / Jacinto Extension, Davao City',
-    lat: 7.07110,
-    lng: 125.61220,
-    desc: 'Community Center of the First Companions (CCFC) entrance along Roxas Ave',
-    isPrimary: false,
-  },
-  {
-    id: 'claveria',
-    label: 'Ateneo Claveria Gate',
-    name: 'Ateneo Claveria Gate',
-    address: 'C.M. Recto Ave (Claveria St), Poblacion District, Davao City',
-    lat: 7.07270,
-    lng: 125.61390,
-    desc: 'North pedestrian gate along C.M. Recto Ave (Claveria)',
-    isPrimary: false,
-  },
 ];
 
 export const CAMPUS_GATES = {
   ...Object.fromEntries(ADDU_GATES.map((gate) => [gate.id, gate])),
-  finster: ADDU_GATES.find((g) => g.id === 'claveria'),
-  claveria: ADDU_GATES.find((g) => g.id === 'claveria'),
-  community_center: ADDU_GATES.find((g) => g.id === 'ccfc'),
-  ccfc: ADDU_GATES.find((g) => g.id === 'ccfc'),
+  finster: ADDU_GATES.find((g) => g.id === 'jacinto'),
+  claveria: ADDU_GATES.find((g) => g.id === 'jacinto'),
+  community_center: ADDU_GATES.find((g) => g.id === 'roxas'),
+  ccfc: ADDU_GATES.find((g) => g.id === 'roxas'),
 };
 
 export const DEFAULT_GATE = 'roxas';

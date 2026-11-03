@@ -35,15 +35,7 @@ export function LandmarkSelectorModal({
       (g) => g.name.toLowerCase() === lower || g.label?.toLowerCase() === lower
     );
     if (exactGate) return exactGate.id;
-    if (lower.includes('ccfc') || lower.includes('community')) {
-      const ccfcGate = ADDU_GATES.find((g) => g.id === 'ccfc' || g.id === 'community_center');
-      return ccfcGate ? ccfcGate.id : 'ccfc';
-    }
     if (lower.includes('jacinto')) return 'jacinto';
-    if (lower.includes('claveria') || lower.includes('finster')) {
-      const claveriaGate = ADDU_GATES.find((g) => g.id === 'claveria' || g.id === 'finster');
-      return claveriaGate ? claveriaGate.id : 'claveria';
-    }
     if (lower.includes('roxas')) return 'roxas';
     return null;
   }, [isGpsSelected, selectedGateId, currentOriginName]);
