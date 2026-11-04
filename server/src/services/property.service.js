@@ -173,6 +173,7 @@ export async function getAdminListings(filters = {}) {
     dateFrom,
     dateTo,
     status = 'pending',
+    search,
   } = filters;
 
   const from = (Math.max(1, page) - 1) * limit;
@@ -191,6 +192,10 @@ export async function getAdminListings(filters = {}) {
   if (propertyId) query = query.eq('id', propertyId);
   if (dateFrom) query = query.gte('created_at', dateFrom);
   if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59.999Z`);
+  if (search && search.trim()) {
+    const term = search.trim();
+    query = query.or(`name.ilike.%${term}%,address.ilike.%${term}%`);
+  }
 
   query = query.order('created_at', { ascending: sort === 'asc' }).range(from, to);
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -61,6 +61,7 @@ export function ApproveListingsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const fetchIdRef = useRef(0);
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -107,6 +108,7 @@ export function ApproveListingsPage() {
   // Main Listings Fetch
   const fetchListings = useCallback(
     async (isManualRefresh = false) => {
+      const currentFetchId = ++fetchIdRef.current;
       if (isManualRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -119,21 +121,39 @@ export function ApproveListingsPage() {
           propertyId: filters.propertyId || undefined,
           dateFrom: filters.dateFrom || undefined,
           dateTo: filters.dateTo || undefined,
-          search: filters.search || undefined,
+          search: filters.search?.trim() || undefined,
         });
+
+        if (currentFetchId !== fetchIdRef.current) return;
 
         setListings(res.data?.items || []);
         setTotalPages(res.data?.totalPages || 1);
         setTotalCount(res.data?.total || res.data?.items?.length || 0);
       } catch (err) {
+        if (currentFetchId !== fetchIdRef.current) return;
         toast.error(err.message || 'Failed to fetch listings. Please try again.');
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (currentFetchId === fetchIdRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, filters, toast]
   );
+
+  // Client-side search & filtering fallback for instant feedback
+  const displayedListings = useMemo(() => {
+    if (!filters.search?.trim()) return listings;
+    const q = filters.search.trim().toLowerCase();
+    return listings.filter((l) => {
+      const name = (l.name || '').toLowerCase();
+      const addr = (l.address || '').toLowerCase();
+      const desc = (l.description || '').toLowerCase();
+      const owner = (l.owner?.full_name || '').toLowerCase();
+      return name.includes(q) || addr.includes(q) || desc.includes(q) || owner.includes(q);
+    });
+  }, [listings, filters.search]);
 
   useEffect(() => {
     fetchListings();
@@ -217,7 +237,7 @@ export function ApproveListingsPage() {
 
   // Select/Deselect All on Current Page
   const toggleSelectAll = () => {
-    const selectableIds = listings.filter((p) => p.status === 'pending').map((p) => p.id);
+    const selectableIds = displayedListings.filter((p) => p.status === 'pending').map((p) => p.id);
     const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.includes(id));
 
     if (allSelected) {
@@ -228,9 +248,9 @@ export function ApproveListingsPage() {
   };
 
   const isAllSelected =
-    listings.length > 0 &&
-    listings.filter((p) => p.status === 'pending').length > 0 &&
-    listings
+    displayedListings.length > 0 &&
+    displayedListings.filter((p) => p.status === 'pending').length > 0 &&
+    displayedListings
       .filter((p) => p.status === 'pending')
       .every((p) => selected.includes(p.id));
 
@@ -469,7 +489,7 @@ export function ApproveListingsPage() {
                 ) : (
                   <Square size={16} className="text-slate-400" />
                 )}
-                <span>Select all ({listings.filter((p) => p.status === 'pending').length})</span>
+                <span>Select all ({displayedListings.filter((p) => p.status === 'pending').length})</span>
               </button>
 
               <Chip size="sm" variant="flat" color="primary" className="font-bold text-xs">
@@ -547,7 +567,7 @@ export function ApproveListingsPage() {
 
           {loading ? (
             <PageSkeleton variant="table" rows={4} cols={4} />
-          ) : listings.length === 0 ? (
+          ) : displayedListings.length === 0 ? (
             <div className="rounded-3xl border border-slate-200/90 bg-white p-12 text-center shadow-xs">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <Building2 size={24} />
@@ -566,7 +586,7 @@ export function ApproveListingsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {listings.map((p) => {
+              {displayedListings.map((p) => {
                 const isSelected = selected.includes(p.id);
                 const isPending = p.status === 'pending';
                 const badgeVariant =

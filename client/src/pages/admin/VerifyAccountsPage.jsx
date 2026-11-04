@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
@@ -59,6 +59,7 @@ export function VerifyAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const fetchIdRef = useRef(0);
 
   // Document Viewer & Rejection Dialog State
   const [docsModal, setDocsModal] = useState(null);
@@ -119,6 +120,7 @@ export function VerifyAccountsPage() {
   // Main Account Verifications Fetch
   const fetchVerifications = useCallback(
     async (isManualRefresh = false) => {
+      const currentFetchId = ++fetchIdRef.current;
       if (isManualRefresh) setRefreshing(true);
       else setLoading(true);
 
@@ -129,24 +131,43 @@ export function VerifyAccountsPage() {
           status: filters.status,
           sort: filters.sort,
           role: filters.role || undefined,
-          search: filters.search || undefined,
+          search: filters.search?.trim() || undefined,
           dateFrom: filters.dateFrom || undefined,
           dateTo: filters.dateTo || undefined,
         });
+
+        if (currentFetchId !== fetchIdRef.current) return;
 
         const fetchedItems = res.data?.items || [];
         setItems(fetchedItems);
         setTotalPages(res.data?.totalPages || 1);
         setTotalCount(res.data?.total || fetchedItems.length || 0);
       } catch (err) {
+        if (currentFetchId !== fetchIdRef.current) return;
         toast.error(err.message || 'Failed to load account verification queue.');
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (currentFetchId === fetchIdRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, filters, toast]
   );
+
+  // Client-side search & filtering fallback for instant feedback
+  const displayedItems = useMemo(() => {
+    if (!filters.search?.trim()) return items;
+    const q = filters.search.trim().toLowerCase();
+    return items.filter((item) => {
+      const name = (item.profiles?.full_name || '').toLowerCase();
+      const email = (item.profiles?.email || '').toLowerCase();
+      const role = (item.profiles?.role || item.role || '').toLowerCase();
+      const notes = (item.notes || '').toLowerCase();
+      const id = (item.id || '').toLowerCase();
+      return name.includes(q) || email.includes(q) || role.includes(q) || notes.includes(q) || id.includes(q);
+    });
+  }, [items, filters.search]);
 
   useEffect(() => {
     fetchVerifications();
@@ -253,7 +274,7 @@ export function VerifyAccountsPage() {
 
   // Select/Deselect All on Current Page
   const toggleSelectAll = () => {
-    const selectableIds = items
+    const selectableIds = displayedItems
       .filter((v) => v.status === 'pending' && v.profiles?.id)
       .map((v) => v.profiles.id);
     const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.includes(id));
@@ -266,9 +287,9 @@ export function VerifyAccountsPage() {
   };
 
   const isAllSelected =
-    items.length > 0 &&
-    items.filter((v) => v.status === 'pending' && v.profiles?.id).length > 0 &&
-    items
+    displayedItems.length > 0 &&
+    displayedItems.filter((v) => v.status === 'pending' && v.profiles?.id).length > 0 &&
+    displayedItems
       .filter((v) => v.status === 'pending' && v.profiles?.id)
       .every((v) => selected.includes(v.profiles.id));
 
@@ -510,7 +531,7 @@ export function VerifyAccountsPage() {
                 ) : (
                   <Square size={16} className="text-slate-400" />
                 )}
-                <span>Select all ({items.filter((v) => v.status === 'pending' && v.profiles?.id).length})</span>
+                <span>Select all ({displayedItems.filter((v) => v.status === 'pending' && v.profiles?.id).length})</span>
               </button>
 
               <Chip size="sm" variant="flat" color="primary" className="font-bold text-xs">
@@ -587,7 +608,7 @@ export function VerifyAccountsPage() {
 
           {loading ? (
             <PageSkeleton variant="table" rows={4} cols={4} />
-          ) : items.length === 0 ? (
+          ) : displayedItems.length === 0 ? (
             <div className="rounded-3xl border border-slate-200/90 bg-white p-12 text-center shadow-xs">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <UserCheck size={24} />
@@ -606,7 +627,7 @@ export function VerifyAccountsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {items.map((v) => {
+              {displayedItems.map((v) => {
                 const profileId = v.profiles?.id || v.user_id;
                 const isSelected = profileId && selected.includes(profileId);
                 const isPending = v.status === 'pending';

@@ -20,6 +20,7 @@ function parseListFilters(query) {
     dateTo: query.dateTo || null,
     status: query.status || 'pending',
     role: query.role || null,
+    search: query.search || query.q || null,
   };
 }
 
