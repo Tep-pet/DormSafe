@@ -9,5 +9,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-/** Supabase client — anon key only (safe for browser) */
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+/**
+ * Generates a unique storage key per browser tab/window so multiple tabs or windows
+ * can stay logged into different accounts (Student, Owner, Admin) simultaneously
+ * without overwriting or syncing sessions on refresh.
+ */
+function getPerTabStorageKey() {
+  if (typeof window === 'undefined') return 'dormsafe-auth';
+  try {
+    let tabId =
+      window.name && window.name.startsWith('dormsafe_tab_') ? window.name : null;
+    if (!tabId) {
+      tabId = `dormsafe_tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      window.name = tabId;
+    }
+    return `sb-${tabId}-auth-token`;
+  } catch {
+    return 'dormsafe-auth';
+  }
+}
+
+/** Supabase client — anon key only (safe for browser), isolated per tab via sessionStorage */
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+  auth: {
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+    storageKey: getPerTabStorageKey(),
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
