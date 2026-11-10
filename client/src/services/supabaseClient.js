@@ -10,30 +10,67 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 /**
- * Generates a unique storage key per browser tab/window so multiple tabs or windows
- * can stay logged into different accounts (Student, Owner, Admin) simultaneously
- * without overwriting or syncing sessions on refresh.
+ * Per-tab isolated session storage adapter.
+ * - Uses a unique per-page-load `storageKey` so Supabase's internal `BroadcastChannel`
+ *   never broadcasts login/logout events across other open tabs or windows (even duplicated tabs).
+ * - Maps the dynamic key back to a stable `sessionStorage` key (`dormsafe-tab-auth`)
+ *   so refreshing (F5) a tab preserves its own logged-in account independently.
  */
-function getPerTabStorageKey() {
-  if (typeof window === 'undefined') return 'dormsafe-auth';
+const TAB_STORAGE_PREFIX = 'dormsafe-tab-auth';
+const uniqueBroadcastKey = `sb-isolated-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+if (typeof window !== 'undefined' && window.localStorage) {
   try {
-    let tabId =
-      window.name && window.name.startsWith('dormsafe_tab_') ? window.name : null;
-    if (!tabId) {
-      tabId = `dormsafe_tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-      window.name = tabId;
-    }
-    return `sb-${tabId}-auth-token`;
+    // Clear any legacy shared localStorage auth tokens from older builds
+    Object.keys(window.localStorage).forEach((k) => {
+      if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        window.localStorage.removeItem(k);
+      }
+    });
   } catch {
-    return 'dormsafe-auth';
+    // Ignore storage access errors
   }
 }
 
-/** Supabase client — anon key only (safe for browser), isolated per tab via sessionStorage */
+function normalizeTabKey(key) {
+  if (typeof key === 'string' && key.startsWith(uniqueBroadcastKey)) {
+    return TAB_STORAGE_PREFIX + key.slice(uniqueBroadcastKey.length);
+  }
+  return key;
+}
+
+const isolatedTabStorage = {
+  getItem(key) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return null;
+    try {
+      return window.sessionStorage.getItem(normalizeTabKey(key));
+    } catch {
+      return null;
+    }
+  },
+  setItem(key, value) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
+    try {
+      window.sessionStorage.setItem(normalizeTabKey(key), value);
+    } catch {
+      // Ignore storage quota errors
+    }
+  },
+  removeItem(key) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
+    try {
+      window.sessionStorage.removeItem(normalizeTabKey(key));
+    } catch {
+      // Ignore storage errors
+    }
+  },
+};
+
+/** Supabase client — anon key only (safe for browser), 100% isolated per tab/window */
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   auth: {
-    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
-    storageKey: getPerTabStorageKey(),
+    storage: isolatedTabStorage,
+    storageKey: uniqueBroadcastKey,
     persistSession: true,
     autoRefreshToken: true,
   },
