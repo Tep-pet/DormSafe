@@ -41,18 +41,15 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
     licensePath = await uploadDoc(licenseFile, userId, 'license');
   }
 
-  const isStudent = role === 'student';
-  const initialStatus = isStudent ? 'approved' : 'pending';
-
   const { data, error } = await supabaseAdmin
     .from('account_verifications')
     .insert({
       user_id: userId,
       id_storage_path: idPath,
       license_storage_path: licensePath,
-      status: initialStatus,
-      reviewed_at: isStudent ? new Date().toISOString() : null,
-      notes: isStudent ? 'Automatic verification on registration (student survey)' : null,
+      status: 'pending',
+      reviewed_at: null,
+      notes: null,
     })
     .select()
     .single();
@@ -61,7 +58,7 @@ export async function createAccountVerification(userId, { idFile, licenseFile, r
 
   await supabaseAdmin
     .from('profiles')
-    .update({ verification_status: initialStatus, updated_at: new Date().toISOString() })
+    .update({ verification_status: 'pending', updated_at: new Date().toISOString() })
     .eq('id', userId);
 
   const { data: profile } = await supabaseAdmin

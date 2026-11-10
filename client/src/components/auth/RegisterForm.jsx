@@ -69,10 +69,10 @@ export function RegisterForm() {
 
       if (form.role === 'student') {
         toast.success({
-          title: 'Welcome to DormSafe!',
-          message: 'Your student account has been verified. You can now explore accommodations.',
+          title: 'Account Submitted',
+          message: 'Your registration and student ID have been submitted for administrator review.',
         });
-        navigate(ROUTES.STUDENT_SEARCH);
+        navigate(ROUTES.STUDENT_VERIFICATION);
       } else {
         toast.success({
           title: 'Account Created',
