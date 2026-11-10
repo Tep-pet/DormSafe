@@ -266,11 +266,40 @@ export function getPreferredCampusGate(property) {
   const lat = Number(property.latitude ?? property.lat);
   const lng = Number(property.longitude ?? property.lng);
 
-  if (propId === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' || name.includes('juan') || addr.includes('juan luna') || (Math.abs(lat - 7.07259) < 0.001 && Math.abs(lng - 125.61601) < 0.001)) {
+  if (
+    propId === '1965b0c6-b3d0-4549-9b28-8e84d5e92936' ||
+    name.includes('juan') ||
+    addr.includes('juan luna') ||
+    addr.includes('jacinto') ||
+    (Math.abs(lat - 7.07259) < 0.001 && Math.abs(lng - 125.61601) < 0.001)
+  ) {
     return 'jacinto';
   }
-  if (propId === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' || propId === '7d67143d-00a3-4007-b656-5073d6bbf8b2' || name.includes('ivory') || addr.includes('bajada') || addr.includes('laurel') || (Math.abs(lat - 7.08719) < 0.003)) {
-    return 'finster';
+  if (
+    propId === 'f448e1fe-bdbd-487f-ab6e-0c732330a3a7' ||
+    propId === '7d67143d-00a3-4007-b656-5073d6bbf8b2' ||
+    name.includes('ivory') ||
+    addr.includes('bajada') ||
+    addr.includes('laurel') ||
+    Math.abs(lat - 7.08719) < 0.003
+  ) {
+    return 'jacinto';
+  }
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+    const isKnownRoxas =
+      propId === 'baea8d0e-133d-4aee-aab0-2702ca0d06fe' ||
+      name.includes('brc') ||
+      propId === 'f5414846-4176-4e2b-9f50-bad4dbfe5914' ||
+      name.includes('corella') ||
+      name.includes('correla') ||
+      propId === 'db5ad051-c0c7-4eba-8942-8ab98ab22e63' ||
+      name.includes('goretti') ||
+      name.includes('residencia');
+    if (isKnownRoxas) return 'roxas';
+
+    const distRoxas = Math.hypot(lat - 7.0718, lng - 125.6123);
+    const distJacinto = Math.hypot(lat - 7.072, lng - 125.6141);
+    return distJacinto < distRoxas ? 'jacinto' : 'roxas';
   }
   return 'roxas';
 }

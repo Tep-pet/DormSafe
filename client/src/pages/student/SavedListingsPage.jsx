@@ -52,7 +52,7 @@ export function SavedListingsPage() {
       else setLoading(true);
 
       try {
-        const res = await studentService.getFavorites(accessToken, gate);
+        const res = await studentService.getFavorites(accessToken);
         setItems(res.data || []);
       } catch (err) {
         toast.error(err.message || 'Failed to load saved listings');
@@ -61,7 +61,7 @@ export function SavedListingsPage() {
         setRefreshing(false);
       }
     },
-    [accessToken, gate, toast]
+    [accessToken, toast]
   );
 
   useEffect(() => {
@@ -94,13 +94,19 @@ export function SavedListingsPage() {
   const gateOptions = ADDU_GATES;
   const compareList = items.filter((p) => selected.includes(p.id));
 
+  // Filter saved listings by the selected gate (Roxas Gate vs Jacinto Gate)
+  const filteredItems = useMemo(() => {
+    if (!gate) return items;
+    return items.filter((p) => getPreferredCampusGate(p) === gate);
+  }, [items, gate]);
+
   // Pagination calculation
-  const totalCount = items.length;
+  const totalCount = filteredItems.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return items.slice(start, start + ITEMS_PER_PAGE);
-  }, [items, currentPage]);
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
 
   const headerAction = (
     <div className="flex items-center gap-2">
@@ -139,7 +145,7 @@ export function SavedListingsPage() {
           {/* Left Group: Selection counter & compare hint */}
           <div className="flex items-center gap-2 text-xs">
             <span className="font-semibold text-slate-800">
-              {items.length} {items.length === 1 ? 'saved listing' : 'saved listings'}
+              {filteredItems.length} {filteredItems.length === 1 ? 'saved listing' : 'saved listings'}
             </span>
             <span>·</span>
             <span className="text-slate-500">
@@ -161,7 +167,7 @@ export function SavedListingsPage() {
             )}
           </div>
 
-          {/* Right Group: Gate Switcher Tabs */}
+          {/* Right Group: Gate Switcher Tabs (Only Ateneo Roxas Gate & Ateneo Jacinto Gate) */}
           <div className="w-full lg:w-auto overflow-x-auto no-scrollbar py-0.5">
             <div className="inline-flex min-w-full sm:min-w-0 items-center gap-1 p-1 h-10 rounded-2xl bg-slate-100/90 border border-slate-200/70 shrink-0">
               {gateOptions.map((g) => {
@@ -174,7 +180,7 @@ export function SavedListingsPage() {
                       setGate(g.id);
                       setCurrentPage(1);
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-150 whitespace-nowrap shrink-0 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all duration-150 whitespace-nowrap shrink-0 ${
                       isActive
                         ? 'bg-ateneo-blue text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -182,13 +188,6 @@ export function SavedListingsPage() {
                   >
                     <MapPin size={13} strokeWidth={isActive ? 2.5 : 2} />
                     <span>{g.label}</span>
-                    <span
-                      className={`ml-0.5 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                      }`}
-                    >
-                      ≤ 2km
-                    </span>
                   </button>
                 );
               })}
@@ -300,6 +299,16 @@ export function SavedListingsPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-10 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-2xs text-slate-400 mb-3">
+              <MapPin size={26} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-base font-bold text-slate-800">No Saved Listings Near {activeGateLabel}</h3>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              You don&apos;t have any bookmarked properties near {activeGateLabel} yet. Switch to the other campus gate tab above to see your other saved places.
+            </p>
           </div>
         ) : (
           <>

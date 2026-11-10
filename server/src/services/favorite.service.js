@@ -57,6 +57,8 @@ export async function getFavorites(studentId, gate = 'jacinto') {
       name: p.name,
       type: p.type,
       address: p.address,
+      latitude: p.latitude,
+      longitude: p.longitude,
       is_verified: p.is_verified,
       min_price: prices.length ? Math.min(...prices) : null,
       available_rooms: rooms.filter((r) => r.is_available).length,

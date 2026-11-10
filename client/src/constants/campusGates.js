@@ -49,12 +49,8 @@ export const ADDU_GATES = [
   },
 ];
 
-export const CAMPUS_GATES = {
-  ...Object.fromEntries(ADDU_GATES.map((gate) => [gate.id, gate])),
-  finster: ADDU_GATES.find((g) => g.id === 'jacinto'),
-  claveria: ADDU_GATES.find((g) => g.id === 'jacinto'),
-  community_center: ADDU_GATES.find((g) => g.id === 'roxas'),
-  ccfc: ADDU_GATES.find((g) => g.id === 'roxas'),
-};
+export const CAMPUS_GATES = Object.fromEntries(
+  ADDU_GATES.map((gate) => [gate.id, gate])
+);
 
 export const DEFAULT_GATE = 'roxas';
