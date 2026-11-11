@@ -40,7 +40,7 @@ import { Select, Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { DocumentViewer } from '../../components/common/DocumentViewer';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROLE_LABELS, ROLES } from '../../constants/roles';
@@ -120,10 +120,12 @@ export function VerifyAccountsPage() {
 
   // Main Account Verifications Fetch
   const fetchVerifications = useCallback(
-    async (isManualRefresh = false) => {
+    async (isManualRefresh = false, isSilent = false) => {
       const currentFetchId = ++fetchIdRef.current;
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const res = await adminService.getAccountVerifications(accessToken, {
@@ -140,14 +142,16 @@ export function VerifyAccountsPage() {
         if (currentFetchId !== fetchIdRef.current) return;
 
         const fetchedItems = res.data?.items || [];
-        setItems(fetchedItems);
+        setItems((prev) => (JSON.stringify(prev) === JSON.stringify(fetchedItems) ? prev : fetchedItems));
         setTotalPages(res.data?.totalPages || 1);
         setTotalCount(res.data?.total || fetchedItems.length || 0);
       } catch (err) {
         if (currentFetchId !== fetchIdRef.current) return;
-        toast.error(err.message || 'Failed to load account verification queue.');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load account verification queue.');
+        }
       } finally {
-        if (currentFetchId === fetchIdRef.current) {
+        if (currentFetchId === fetchIdRef.current && !isSilent) {
           setLoading(false);
           setRefreshing(false);
         }
@@ -171,14 +175,17 @@ export function VerifyAccountsPage() {
   }, [items, filters.search]);
 
   useEffect(() => {
-    fetchVerifications();
+    fetchVerifications(false, false);
   }, [fetchVerifications]);
 
   // Auto-refresh when new account verification documents are submitted or updated
-  useRealtime(['account_verifications', 'notifications'], () => {
-    fetchVerifications();
-    fetchAuxiliaryStats();
-  });
+  useRealtimeSync(
+    () => {
+      fetchVerifications(false, true);
+      fetchAuxiliaryStats();
+    },
+    { enabled: Boolean(accessToken) }
+  );
 
   // Quick Action: Single Approve
   const handleApprove = async (item) => {
@@ -356,7 +363,7 @@ export function VerifyAccountsPage() {
         variant="ghost"
         isLoading={refreshing}
         onClick={() => {
-          fetchVerifications(true);
+          fetchVerifications(true, false);
           fetchAuxiliaryStats();
         }}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}

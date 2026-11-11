@@ -49,6 +49,7 @@ import { proximityService } from '../../services/proximityService';
 import { resolvePropertyContact } from '../../utils/parseContact';
 import { studentService } from '../../services/studentService';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { formatPrice } from '../../utils/formatPrice';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
@@ -173,6 +174,29 @@ export function PropertyDetailPage() {
       isMounted = false;
     };
   }, [id, gate, accessToken]);
+
+  const refreshPropertySilently = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await proximityService.getPropertyDetail(id, gate, accessToken, { bypassCache: true });
+      if (!res?.data) return;
+      const rooms = sortRooms(res.data.rooms || []);
+      setProperty((prev) => ({
+        ...(prev || {}),
+        ...res.data,
+        walking_minutes: res.data.walking_minutes ?? prev?.walking_minutes,
+        rooms,
+      }));
+      setSaved(Boolean(res.data.is_saved));
+      setSelectedRoomId((current) =>
+        rooms.some((room) => room.id === current) ? current : rooms[0]?.id || ''
+      );
+    } catch {
+      // Ignore silent refresh errors
+    }
+  }, [id, gate, accessToken]);
+
+  useRealtimeSync(refreshPropertySilently, { enabled: Boolean(id) });
 
   const activeGateLabel = CAMPUS_GATES[gate]?.label || 'Ateneo';
 

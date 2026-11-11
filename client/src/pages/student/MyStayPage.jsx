@@ -40,7 +40,7 @@ import { Button } from '../../components/common/Button';
 import { Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -77,9 +77,11 @@ export function MyStayPage() {
   const [processingAction, setProcessingAction] = useState(false);
 
   const load = useCallback(
-    async (isManual = false) => {
-      if (isManual) setRefreshing(true);
-      else setLoading(true);
+    async (isManual = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManual) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const [staysRes, resRes, payRes, maintRes] = await Promise.all([
@@ -88,26 +90,35 @@ export function MyStayPage() {
           studentService.getPayments(accessToken).catch(() => ({ data: [] })),
           studentService.getMaintenance(accessToken).catch(() => ({ data: [] })),
         ]);
-        setStays(staysRes.data || []);
-        setReservations(resRes.data || []);
-        setPayments(payRes.data || []);
-        setMaintenance(maintRes.data || []);
+        const nextStays = staysRes.data || [];
+        const nextRes = resRes.data || [];
+        const nextPay = payRes.data || [];
+        const nextMaint = maintRes.data || [];
+
+        setStays((prev) => (JSON.stringify(prev) === JSON.stringify(nextStays) ? prev : nextStays));
+        setReservations((prev) => (JSON.stringify(prev) === JSON.stringify(nextRes) ? prev : nextRes));
+        setPayments((prev) => (JSON.stringify(prev) === JSON.stringify(nextPay) ? prev : nextPay));
+        setMaintenance((prev) => (JSON.stringify(prev) === JSON.stringify(nextMaint) ? prev : nextMaint));
       } catch (err) {
-        toast.error(err.message || 'Failed to load stay records');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load stay records');
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, toast]
   );
 
   useEffect(() => {
-    load();
+    load(false, false);
   }, [load]);
 
   // Auto-refresh stays, reservations, payments, and maintenance
-  useRealtime(['tenants', 'room_reservations', 'payments', 'maintenance_requests'], () => load(false));
+  useRealtimeSync(() => load(false, true), { enabled: Boolean(accessToken) });
 
   const currentStays = stays.filter((s) => s.is_current);
   const upcomingStays = stays.filter((s) => s.is_upcoming);
@@ -248,7 +259,7 @@ export function MyStayPage() {
         variant="ghost"
         size="sm"
         radius="full"
-        onClick={() => load(true)}
+        onClick={() => load(true, false)}
         isLoading={refreshing}
         startContent={<RefreshCw size={13} strokeWidth={2} />}
       >

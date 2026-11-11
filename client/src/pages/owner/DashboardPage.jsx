@@ -21,6 +21,7 @@ import { StatsCard } from '../../components/dashboard/StatsCard';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { propertyService } from '../../services/propertyService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -36,27 +37,37 @@ export function DashboardPage() {
   const [error, setError] = useState('');
 
   const fetchStats = useCallback(
-    async (isManual = false) => {
-      if (isManual) setRefreshing(true);
-      else setLoading(true);
-      setError('');
+    async (isManual = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManual) setRefreshing(true);
+        else setLoading(true);
+        setError('');
+      }
 
       try {
         const res = await propertyService.getDashboardStats(accessToken, filterPropertyId);
-        setStats(res.data);
+        setStats((prev) => (JSON.stringify(prev) === JSON.stringify(res.data) ? prev : res.data));
       } catch (err) {
-        setError(err.message || 'Failed to load owner dashboard statistics');
+        if (!isSilent) {
+          setError(err.message || 'Failed to load owner dashboard statistics');
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, filterPropertyId]
   );
 
   useEffect(() => {
-    fetchStats();
+    fetchStats(false, false);
   }, [fetchStats]);
+
+  useRealtimeSync(() => fetchStats(false, true), {
+    enabled: Boolean(accessToken),
+  });
 
   const occupied = stats?.occupiedRooms ?? 0;
   const vacant = stats?.vacantRooms ?? 0;

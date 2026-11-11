@@ -37,6 +37,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROUTES } from '../../constants/routes';
@@ -73,30 +74,43 @@ export function ModerateReviewsPage() {
 
   // Load Data
   const loadData = useCallback(
-    async (isManualRefresh = false) => {
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+    async (isManualRefresh = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const [reviewsRes, reportsRes] = await Promise.all([
           adminService.getPendingReviews(accessToken),
           adminService.getPendingReports(accessToken),
         ]);
-        setReviews(reviewsRes.data || []);
-        setReports(reportsRes.data || []);
+        const nextReviews = reviewsRes.data || [];
+        const nextReports = reportsRes.data || [];
+        setReviews((prev) => (JSON.stringify(prev) === JSON.stringify(nextReviews) ? prev : nextReviews));
+        setReports((prev) => (JSON.stringify(prev) === JSON.stringify(nextReports) ? prev : nextReports));
       } catch (err) {
-        toast.error(err.message || 'Failed to load reviews and safety reports.');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load reviews and safety reports.');
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, toast]
   );
 
   useEffect(() => {
-    loadData();
+    loadData(false, false);
   }, [loadData]);
+
+  // Auto-refresh review and report moderation queue in real time
+  useRealtimeSync(() => loadData(false, true), {
+    enabled: Boolean(accessToken),
+  });
 
   // Moderate Review (Approve or Reject)
   const handleModerateReview = async (id, status, propertyName) => {
@@ -252,7 +266,7 @@ export function ModerateReviewsPage() {
         radius="full"
         variant="ghost"
         isLoading={refreshing}
-        onClick={() => loadData(true)}
+        onClick={() => loadData(true, false)}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
         title="Refresh review and report queues"
       >

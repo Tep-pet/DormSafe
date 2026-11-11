@@ -27,7 +27,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
 import { resolvePropertyContact } from '../../utils/parseContact';
@@ -59,44 +59,49 @@ export function RoomRequestsPage() {
   const [confirmCancelItem, setConfirmCancelItem] = useState(null);
 
   const load = useCallback(
-    async (mode = 'initial') => {
-      if (mode === 'manual' || mode === true) setRefreshing(true);
-      else if (mode === 'initial') setLoading(true);
+    async (isManual = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManual) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const res = await studentService.getInquiries(accessToken);
         const list = res.data || [];
-        setRequests(list);
-        setDrafts(
-          Object.fromEntries(
-            list.map((item) => [
-              item.id,
-              {
+        setRequests((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
+        setDrafts((prev) => {
+          const next = { ...prev };
+          for (const item of list) {
+            if (!isSilent || !next[item.id]) {
+              next[item.id] = {
                 move_in_date: item.move_in_date || '',
                 move_out_date: item.move_out_date || '',
                 note: item.note || '',
-              },
-            ])
-          )
-        );
+              };
+            }
+          }
+          return next;
+        });
       } catch (err) {
-        if (mode !== 'silent') {
+        if (!isSilent) {
           toast.error(err.message || 'Failed to load room inquiries');
         }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, toast]
   );
 
   useEffect(() => {
-    load('initial');
+    load(false, false);
   }, [load]);
 
   // Automatically refresh inquiries when owner updates request status in real time
-  useRealtime(['notifications', 'room_reservations'], () => load('silent'));
+  useRealtimeSync(() => load(false, true), { enabled: Boolean(accessToken) });
 
   const updateDraft = (id, field, value) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -107,7 +112,7 @@ export function RoomRequestsPage() {
     try {
       await studentService.updateInquiry(id, drafts[id], accessToken);
       toast.success('Inquiry updated. The property owner has been notified.');
-      load(true);
+      load(false, true);
     } catch (err) {
       toast.error(err.message || 'Failed to update inquiry');
     } finally {
@@ -120,7 +125,7 @@ export function RoomRequestsPage() {
     try {
       await studentService.cancelInquiry(id, accessToken);
       toast.info('Room inquiry cancelled.');
-      load(true);
+      load(false, true);
     } catch (err) {
       toast.error(err.message || 'Failed to cancel inquiry');
     } finally {

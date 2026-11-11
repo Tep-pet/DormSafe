@@ -75,7 +75,17 @@ export function LeafletCampusMap({
   useEffect(() => {
     GeolocationEngine.startTracking({
       onLocation: (pos) => {
-        setUserLocation(pos);
+        setUserLocation((prev) => {
+          if (!prev) return pos;
+          if (!pos) return prev;
+          // Guard against micro GPS jitter (less than ~1 meter)
+          const dLat = Math.abs(prev.lat - pos.lat);
+          const dLng = Math.abs(prev.lng - pos.lng);
+          if (dLat < 0.00001 && dLng < 0.00001 && prev.isManual === pos.isManual) {
+            return prev;
+          }
+          return pos;
+        });
       },
       onError: (err) => {
         if (!GeolocationEngine.lastKnownPosition) {

@@ -41,7 +41,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -108,10 +108,12 @@ export function ApproveListingsPage() {
 
   // Main Listings Fetch
   const fetchListings = useCallback(
-    async (isManualRefresh = false) => {
+    async (isManualRefresh = false, isSilent = false) => {
       const currentFetchId = ++fetchIdRef.current;
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const res = await adminService.getPendingListings(accessToken, {
@@ -127,14 +129,17 @@ export function ApproveListingsPage() {
 
         if (currentFetchId !== fetchIdRef.current) return;
 
-        setListings(res.data?.items || []);
+        const nextItems = res.data?.items || [];
+        setListings((prev) => (JSON.stringify(prev) === JSON.stringify(nextItems) ? prev : nextItems));
         setTotalPages(res.data?.totalPages || 1);
-        setTotalCount(res.data?.total || res.data?.items?.length || 0);
+        setTotalCount(res.data?.total || nextItems.length || 0);
       } catch (err) {
         if (currentFetchId !== fetchIdRef.current) return;
-        toast.error(err.message || 'Failed to fetch listings. Please try again.');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to fetch listings. Please try again.');
+        }
       } finally {
-        if (currentFetchId === fetchIdRef.current) {
+        if (currentFetchId === fetchIdRef.current && !isSilent) {
           setLoading(false);
           setRefreshing(false);
         }
@@ -157,14 +162,17 @@ export function ApproveListingsPage() {
   }, [listings, filters.search]);
 
   useEffect(() => {
-    fetchListings();
+    fetchListings(false, false);
   }, [fetchListings]);
 
   // Auto-refresh when new properties or rooms are submitted or updated
-  useRealtime(['properties', 'rooms'], () => {
-    fetchListings();
-    fetchAuxiliaryData();
-  });
+  useRealtimeSync(
+    () => {
+      fetchListings(false, true);
+      fetchAuxiliaryData();
+    },
+    { enabled: Boolean(accessToken) }
+  );
 
   // Quick Action: Single Approve
   const handleApprove = async (id, name) => {
@@ -317,7 +325,7 @@ export function ApproveListingsPage() {
         variant="ghost"
         isLoading={refreshing}
         onClick={() => {
-          fetchListings(true);
+          fetchListings(true, false);
           fetchAuxiliaryData();
         }}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}

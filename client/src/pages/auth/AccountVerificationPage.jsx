@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield,
@@ -21,6 +21,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { apiClient } from '../../services/apiClient';
 import { BrandLogo } from '../../components/common/BrandLogo';
@@ -52,49 +53,57 @@ export function AccountVerificationPage({
   const [previewState, setPreviewState] = useState(null);
 
   // Fetch live verification status from server
-  const fetchStatus = async (showNotification = false) => {
-    if (!accessToken) return;
-    try {
-      setRefreshing(true);
-      const res = await apiClient.get('/api/auth/verification/status', accessToken);
-      setStatus(res.data);
-      const updatedProfile = await refreshProfile();
+  const fetchStatus = useCallback(
+    async (showNotification = false, isSilent = false) => {
+      if (!accessToken) return;
+      try {
+        if (!isSilent) setRefreshing(true);
+        const res = await apiClient.get('/api/auth/verification/status', accessToken);
+        const resData = res.data;
+        setStatus((prev) => (JSON.stringify(prev) === JSON.stringify(resData) ? prev : resData));
+        const updatedProfile = await refreshProfile();
 
-      const currentStatus = res.data?.verification_status || updatedProfile?.verification_status;
+        const currentStatus = res.data?.verification_status || updatedProfile?.verification_status;
 
-      if (showNotification) {
-        if (currentStatus === 'approved') {
-          toast.success({
-            title: 'Account Verified!',
-            message: 'Your documents have been approved by the administrator.',
-          });
-        } else if (currentStatus === 'rejected') {
-          toast.error({
-            title: 'Verification Action Needed',
-            message: 'Your documents were rejected. Please review admin notes and resubmit.',
-          });
-        } else if (currentStatus === 'pending') {
-          toast.info({
-            title: 'Verification Under Review',
-            message: 'Your submission is queued for administrator evaluation.',
-          });
-        } else {
-          toast.info({
-            title: 'Status Checked',
-            message: 'No active verification document submitted yet.',
-          });
+        if (showNotification) {
+          if (currentStatus === 'approved') {
+            toast.success({
+              title: 'Account Verified!',
+              message: 'Your documents have been approved by the administrator.',
+            });
+          } else if (currentStatus === 'rejected') {
+            toast.error({
+              title: 'Verification Action Needed',
+              message: 'Your documents were rejected. Please review admin notes and resubmit.',
+            });
+          } else if (currentStatus === 'pending') {
+            toast.info({
+              title: 'Verification Under Review',
+              message: 'Your submission is queued for administrator evaluation.',
+            });
+          } else {
+            toast.info({
+              title: 'Status Checked',
+              message: 'No active verification document submitted yet.',
+            });
+          }
         }
+      } catch {
+        // Fallback silently if offline or initial load
+      } finally {
+        if (!isSilent) setRefreshing(false);
       }
-    } catch {
-      // Fallback silently if offline or initial load
-    } finally {
-      setRefreshing(false);
-    }
-  };
+    },
+    [accessToken, refreshProfile, toast]
+  );
 
   useEffect(() => {
-    fetchStatus(false);
-  }, [accessToken]);
+    fetchStatus(false, false);
+  }, [fetchStatus]);
+
+  useRealtimeSync(() => fetchStatus(false, true), {
+    enabled: Boolean(accessToken),
+  });
 
   const handleLogout = async () => {
     try {
@@ -142,7 +151,7 @@ export function AccountVerificationPage({
       setIdFile(null);
       setLicenseFile(null);
       setPreviewState(null); // Return to live DB
-      await fetchStatus(false);
+      await fetchStatus(false, true);
     } catch (err) {
       const msg = err.message || 'Failed to submit documents';
       setError(msg);
@@ -362,7 +371,7 @@ export function AccountVerificationPage({
                   <Button
                     type="button"
                     variant="primary"
-                    onClick={() => fetchStatus(true)}
+                    onClick={() => fetchStatus(true, false)}
                     isLoading={refreshing}
                     className="w-full sm:w-auto h-11 px-6 text-xs font-bold gap-2 text-white bg-ateneo-blue hover:bg-blue-900 shadow-md shadow-blue-900/10"
                   >

@@ -40,6 +40,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROUTES } from '../../constants/routes';
@@ -141,26 +142,38 @@ export function AdminAuditPage() {
 
   // Load Audit Logs
   const loadLogs = useCallback(
-    async (isManualRefresh = false) => {
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+    async (isManualRefresh = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const res = await adminService.getAuditLogs(accessToken, page);
-        setResult(res.data || { items: [], totalPages: 1, totalCount: 0 });
+        const nextResult = res.data || { items: [], totalPages: 1, totalCount: 0 };
+        setResult((prev) => (JSON.stringify(prev) === JSON.stringify(nextResult) ? prev : nextResult));
       } catch (err) {
-        toast.error(err.message || 'Failed to load administrative audit logs.');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load administrative audit logs.');
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, page, toast]
   );
 
   useEffect(() => {
-    loadLogs();
+    loadLogs(false, false);
   }, [loadLogs]);
+
+  // Auto-refresh audit logs in real time
+  useRealtimeSync(() => loadLogs(false, true), {
+    enabled: Boolean(accessToken),
+  });
 
   // Compute Metrics from current result
   const items = result.items || [];
@@ -305,7 +318,7 @@ export function AdminAuditPage() {
         radius="full"
         variant="ghost"
         isLoading={refreshing}
-        onClick={() => loadLogs(true)}
+        onClick={() => loadLogs(true, false)}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}
         title="Refresh audit records"
       >

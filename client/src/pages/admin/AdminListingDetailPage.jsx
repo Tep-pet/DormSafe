@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Card,
@@ -36,6 +36,7 @@ import { Button } from '../../components/common/Button';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { DocumentViewer } from '../../components/common/DocumentViewer';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { PROPERTY_TYPE_LABELS } from '../../constants/propertyTypes';
@@ -57,13 +58,31 @@ export function AdminListingDetailPage() {
   const [rejectionModal, setRejectionModal] = useState({ isOpen: false, reason: '' });
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
+  const loadDetail = useCallback(
+    async (isSilent = false) => {
+      if (!id || !accessToken) return;
+      if (!isSilent) setLoading(true);
+      try {
+        const res = await adminService.getListingDocuments(id, accessToken);
+        setData((prev) => (JSON.stringify(prev) === JSON.stringify(res.data) ? prev : res.data));
+      } catch (err) {
+        if (!isSilent) {
+          setError(err.message || 'Failed to load listing review details');
+        }
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [id, accessToken]
+  );
+
   useEffect(() => {
-    adminService
-      .getListingDocuments(id, accessToken)
-      .then((res) => setData(res.data))
-      .catch((err) => setError(err.message || 'Failed to load listing review details'))
-      .finally(() => setLoading(false));
-  }, [id, accessToken]);
+    loadDetail(false);
+  }, [loadDetail]);
+
+  useRealtimeSync(() => loadDetail(true), {
+    enabled: Boolean(id && accessToken),
+  });
 
   async function handleApprove() {
     setProcessing(true);

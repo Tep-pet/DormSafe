@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { authService } from '../services/authService';
-import { realtimeBus } from '../services/realtimeBus';
+import { useRealtimeSync } from '../hooks/useRealtimeSync';
 
 const AuthContext = createContext(null);
 
@@ -10,13 +10,25 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = useCallback(async (userId) => {
+  const loadProfile = useCallback(async (userId, isSilent = false) => {
     try {
       const p = await authService.getProfile(userId);
-      setProfile(p);
+      setProfile((prev) => {
+        if (
+          prev &&
+          prev.id === p?.id &&
+          prev.role === p?.role &&
+          prev.verification_status === p?.verification_status &&
+          prev.full_name === p?.full_name &&
+          prev.avatar_url === p?.avatar_url
+        ) {
+          return prev;
+        }
+        return p;
+      });
       return p;
     } catch {
-      setProfile(null);
+      if (!isSilent) setProfile(null);
       return null;
     }
   }, []);
@@ -46,9 +58,6 @@ export function AuthProvider({ children }) {
         }
 
         setSession(s);
-        if (s?.access_token) {
-          realtimeBus.setAuthToken(s.access_token);
-        }
         if (s?.user) {
           await loadProfile(s.user.id);
         }
@@ -62,9 +71,6 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'INITIAL_SESSION') return;
       setSession(newSession);
-      if (newSession?.access_token) {
-        realtimeBus.setAuthToken(newSession.access_token);
-      }
       if (newSession?.user) {
         await loadProfile(newSession.user.id);
       } else {
@@ -77,6 +83,16 @@ export function AuthProvider({ children }) {
       subscription.unsubscribe();
     };
   }, [loadProfile]);
+
+  // Silently revalidate profile on realtime events, window focus, or periodic poll
+  useRealtimeSync(
+    () => {
+      if (session?.user?.id) {
+        loadProfile(session.user.id, true);
+      }
+    },
+    { enabled: Boolean(session?.user?.id) }
+  );
 
   const refreshProfile = useCallback(async () => {
     if (session?.user?.id) {

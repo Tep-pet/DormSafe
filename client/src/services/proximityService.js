@@ -28,12 +28,12 @@ export const proximityService = {
     return res;
   },
 
-  async getPropertyDetail(id, gate, token) {
+  async getPropertyDetail(id, gate, token, { bypassCache = false } = {}) {
     const cacheKey = `prop_${id}_${gate || 'jacinto'}`;
     const cachedItem = this.getCachedProperty(id, gate);
 
-    // If cached in memory with rooms, return immediately (0ms instant page load)
-    if (cachedItem?.rooms?.length > 0) {
+    // If cached in memory with rooms and cache is not bypassed, return immediately (0ms instant page load)
+    if (!bypassCache && cachedItem?.rooms?.length > 0) {
       // Fire-and-forget background revalidation so user never waits 8 seconds
       apiClient.get(`/api/proximity/properties/${id}?gate=${encodeURIComponent(gate || 'jacinto')}`, token)
         .then((res) => {

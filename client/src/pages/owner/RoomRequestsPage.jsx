@@ -23,7 +23,7 @@ import { Button } from '../../components/common/Button';
 import { Pagination } from '../../components/common/Pagination';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { ownerService } from '../../services/ownerService';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
@@ -50,27 +50,28 @@ export function OwnerRoomRequestsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const load = useCallback(async (mode = 'initial') => {
-    if (mode === 'initial') setLoading(true);
+  const load = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const res = await ownerService.getInquiries(accessToken);
-      setRequests(res.data || []);
+      const list = res.data || [];
+      setRequests((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
     } catch (err) {
-      if (mode !== 'silent') {
+      if (!isSilent) {
         setError(err.message || 'Failed to load room requests');
         toast.error(err.message || 'Failed to load inquiries');
       }
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, [accessToken, toast]);
 
   useEffect(() => {
-    load('initial');
+    load(false);
   }, [load]);
 
   // Auto-refresh when students submit or update room requests
-  useRealtime(['notifications', 'room_reservations'], () => load('silent'));
+  useRealtimeSync(() => load(true), { enabled: Boolean(accessToken) });
 
   async function reply(id, status) {
     setError('');
@@ -82,7 +83,7 @@ export function OwnerRoomRequestsPage() {
           ? 'Inquiry accepted! The student has been notified.'
           : 'Inquiry declined.'
       );
-      load();
+      load(true);
     } catch (err) {
       setError(err.message || 'Failed to update request status');
       toast.error(err.message || 'Failed to process inquiry reply');
@@ -139,7 +140,7 @@ export function OwnerRoomRequestsPage() {
         radius="full"
         variant="ghost"
         isLoading={loading}
-        onClick={() => load()}
+        onClick={() => load(false)}
         startContent={!loading && <RefreshCw size={14} />}
       >
         Refresh Requests

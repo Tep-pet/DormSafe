@@ -34,6 +34,7 @@ import { Button } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -61,37 +62,56 @@ export function AdminDashboardPage() {
     isLoading: false,
   });
 
-  const fetchDashboardData = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) setRefreshing(true);
-    else setLoading(true);
-    setError('');
+  const fetchDashboardData = useCallback(
+    async (isManualRefresh = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+        setError('');
+      }
 
-    try {
-      const [statsRes, healthRes, campusRes, listingsRes, accountsRes] =
-        await Promise.all([
-          adminService.getDashboardStats(accessToken),
-          adminService.getSystemHealth(accessToken),
-          adminService.getCampusStats(accessToken),
-          adminService.getPendingListings(accessToken, { page: 1, limit: 4, status: 'pending' }).catch(() => ({ data: { items: [] } })),
-          adminService.getAccountVerifications(accessToken, { page: 1, limit: 4, status: 'pending' }).catch(() => ({ data: { items: [] } })),
-        ]);
+      try {
+        const [statsRes, healthRes, campusRes, listingsRes, accountsRes] =
+          await Promise.all([
+            adminService.getDashboardStats(accessToken),
+            adminService.getSystemHealth(accessToken),
+            adminService.getCampusStats(accessToken),
+            adminService.getPendingListings(accessToken, { page: 1, limit: 4, status: 'pending' }).catch(() => ({ data: { items: [] } })),
+            adminService.getAccountVerifications(accessToken, { page: 1, limit: 4, status: 'pending' }).catch(() => ({ data: { items: [] } })),
+          ]);
 
-      setStats(statsRes.data);
-      setHealth(healthRes.data);
-      setCampus(campusRes.data);
-      setPendingListings(listingsRes.data?.items || []);
-      setPendingAccounts(accountsRes.data?.items || []);
-    } catch (err) {
-      setError(err.message || 'Failed to load executive dashboard data');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [accessToken]);
+        const nextStats = statsRes.data;
+        const nextHealth = healthRes.data;
+        const nextCampus = campusRes.data;
+        const nextListings = listingsRes.data?.items || [];
+        const nextAccounts = accountsRes.data?.items || [];
+
+        setStats((prev) => (JSON.stringify(prev) === JSON.stringify(nextStats) ? prev : nextStats));
+        setHealth((prev) => (JSON.stringify(prev) === JSON.stringify(nextHealth) ? prev : nextHealth));
+        setCampus((prev) => (JSON.stringify(prev) === JSON.stringify(nextCampus) ? prev : nextCampus));
+        setPendingListings((prev) => (JSON.stringify(prev) === JSON.stringify(nextListings) ? prev : nextListings));
+        setPendingAccounts((prev) => (JSON.stringify(prev) === JSON.stringify(nextAccounts) ? prev : nextAccounts));
+      } catch (err) {
+        if (!isSilent) {
+          setError(err.message || 'Failed to load executive dashboard data');
+        }
+      } finally {
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    },
+    [accessToken]
+  );
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData(false, false);
   }, [fetchDashboardData]);
+
+  useRealtimeSync(() => fetchDashboardData(false, true), {
+    enabled: Boolean(accessToken),
+  });
 
   // Quick Action: Inline Approve Listing
   const handleQuickApproveListing = async (id, name) => {
@@ -207,7 +227,7 @@ export function AdminDashboardPage() {
         radius="full"
         variant="ghost"
         isLoading={refreshing}
-        onClick={() => fetchDashboardData(true)}
+        onClick={() => fetchDashboardData(true, false)}
         startContent={!refreshing && <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />}
         title="Refresh live campus data"
       >

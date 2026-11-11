@@ -35,7 +35,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Badge } from '../../components/common/Badge';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
@@ -75,26 +75,30 @@ export function ManageTenantsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const load = useCallback(async (mode = 'initial') => {
-    if (mode === 'initial') setLoading(true);
-    try {
-      const res = await tenantService.list(accessToken, filterPropertyId);
-      setTenants(res.data || []);
-    } catch (err) {
-      if (mode !== 'silent') {
-        toast.error(err.message || 'Failed to load tenant roster');
+  const load = useCallback(
+    async (isSilent = false) => {
+      if (!isSilent) setLoading(true);
+      try {
+        const res = await tenantService.list(accessToken, filterPropertyId);
+        const list = res.data || [];
+        setTenants((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
+      } catch (err) {
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load tenant roster');
+        }
+      } finally {
+        if (!isSilent) setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, filterPropertyId, toast]);
+    },
+    [accessToken, filterPropertyId, toast]
+  );
 
   useEffect(() => {
-    load('initial');
+    load(false);
   }, [load]);
 
   // Auto-refresh when tenants or room occupancies change
-  useRealtime(['tenants', 'rooms'], () => load('silent'));
+  useRealtimeSync(() => load(true), { enabled: Boolean(accessToken) });
 
   useEffect(() => {
     if (filterPropertyId) {
@@ -222,7 +226,7 @@ export function ManageTenantsPage() {
         radius="full"
         variant="ghost"
         isLoading={loading}
-        onClick={() => load()}
+        onClick={() => load(false)}
         startContent={!loading && <RefreshCw size={14} />}
       >
         Refresh

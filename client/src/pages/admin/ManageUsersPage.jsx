@@ -38,6 +38,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Select, Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROLE_LABELS, ROLES } from '../../constants/roles';
@@ -87,27 +88,43 @@ export function ManageUsersPage() {
 
   // Load all users
   const loadUsers = useCallback(
-    async (isManualRefresh = false) => {
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+    async (isManualRefresh = false, isSilent = false) => {
+      if (!isSilent) {
+        if (isManualRefresh) setRefreshing(true);
+        else setLoading(true);
+      }
 
       try {
         const res = await adminService.getUsers(accessToken);
-        setUsers(res.data || []);
+        const list = res.data || [];
+        setUsers((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
       } catch (err) {
-        toast.error(err.message || 'Failed to load user directory.');
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load user directory.');
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!isSilent) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [accessToken, toast]
   );
 
   useEffect(() => {
-    loadUsers();
+    loadUsers(false, false);
     fetchAuxiliaryStats();
   }, [loadUsers, fetchAuxiliaryStats]);
+
+  // Auto-refresh user directory and stats in real time
+  useRealtimeSync(
+    () => {
+      loadUsers(false, true);
+      fetchAuxiliaryStats();
+    },
+    { enabled: Boolean(accessToken) }
+  );
 
   // Quick Approve Verification
   const handleQuickApprove = async (user) => {
@@ -288,7 +305,7 @@ export function ManageUsersPage() {
         variant="ghost"
         isLoading={refreshing}
         onClick={() => {
-          loadUsers(true);
+          loadUsers(true, false);
           fetchAuxiliaryStats();
         }}
         startContent={!refreshing && <RefreshCw size={14} strokeWidth={2} className={refreshing ? 'animate-spin' : ''} />}

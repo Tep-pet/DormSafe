@@ -20,7 +20,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { paymentService } from '../../services/paymentService';
@@ -46,28 +46,35 @@ export function PaymentLogPage() {
     notes: '',
   });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [p, t] = await Promise.all([
-        paymentService.list(accessToken, filterPropertyId),
-        tenantService.list(accessToken, filterPropertyId),
-      ]);
-      setPayments(p.data || []);
-      setTenants(t.data || []);
-    } catch (err) {
-      toast.error(err.message || 'Failed to load payment logs');
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, filterPropertyId, toast]);
+  const load = useCallback(
+    async (isSilent = false) => {
+      if (!isSilent) setLoading(true);
+      try {
+        const [p, t] = await Promise.all([
+          paymentService.list(accessToken, filterPropertyId),
+          tenantService.list(accessToken, filterPropertyId),
+        ]);
+        const nextP = p.data || [];
+        const nextT = t.data || [];
+        setPayments((prev) => (JSON.stringify(prev) === JSON.stringify(nextP) ? prev : nextP));
+        setTenants((prev) => (JSON.stringify(prev) === JSON.stringify(nextT) ? prev : nextT));
+      } catch (err) {
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load payment logs');
+        }
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [accessToken, filterPropertyId, toast]
+  );
 
   useEffect(() => {
-    load();
+    load(false);
   }, [load]);
 
   // Auto-refresh when payments are logged or updated
-  useRealtime(['payments', 'tenants'], load);
+  useRealtimeSync(() => load(true), { enabled: Boolean(accessToken) });
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -139,7 +146,7 @@ export function PaymentLogPage() {
         radius="full"
         variant="ghost"
         isLoading={loading}
-        onClick={() => load()}
+        onClick={() => load(false)}
         startContent={!loading && <RefreshCw size={14} />}
       >
         Refresh

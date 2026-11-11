@@ -22,6 +22,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { Badge } from '../../components/common/Badge';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { ownerService } from '../../services/ownerService';
@@ -40,27 +41,38 @@ export function OwnerAnalyticsPage() {
   const [reminderMsg, setReminderMsg] = useState('');
   const [sendingReminder, setSendingReminder] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [a, o, m] = await Promise.all([
-        ownerService.getAnalytics(accessToken, filterPropertyId),
-        ownerService.getOccupancy(accessToken, filterPropertyId),
-        ownerService.getMaintenance(accessToken),
-      ]);
-      setAnalytics(a.data);
-      setEvents(o.data || []);
-      setMaintenance(m.data || []);
-    } catch (err) {
-      toast.error(err.message || 'Failed to load analytics data');
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, filterPropertyId, toast]);
+  const load = useCallback(
+    async (isSilent = false) => {
+      if (!isSilent) setLoading(true);
+      try {
+        const [a, o, m] = await Promise.all([
+          ownerService.getAnalytics(accessToken, filterPropertyId),
+          ownerService.getOccupancy(accessToken, filterPropertyId),
+          ownerService.getMaintenance(accessToken),
+        ]);
+        const nextA = a.data;
+        const nextO = o.data || [];
+        const nextM = m.data || [];
+        setAnalytics((prev) => (JSON.stringify(prev) === JSON.stringify(nextA) ? prev : nextA));
+        setEvents((prev) => (JSON.stringify(prev) === JSON.stringify(nextO) ? prev : nextO));
+        setMaintenance((prev) => (JSON.stringify(prev) === JSON.stringify(nextM) ? prev : nextM));
+      } catch (err) {
+        if (!isSilent) {
+          toast.error(err.message || 'Failed to load analytics data');
+        }
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [accessToken, filterPropertyId, toast]
+  );
 
   useEffect(() => {
-    load();
+    load(false);
   }, [load]);
+
+  // Auto-refresh analytics and timeline in real time
+  useRealtimeSync(() => load(true), { enabled: Boolean(accessToken) });
 
   async function sendReminders() {
     setSendingReminder(true);
@@ -110,7 +122,7 @@ export function OwnerAnalyticsPage() {
         radius="full"
         variant="ghost"
         isLoading={loading}
-        onClick={() => load()}
+        onClick={() => load(false)}
         startContent={!loading && <RefreshCw size={14} />}
       >
         Refresh

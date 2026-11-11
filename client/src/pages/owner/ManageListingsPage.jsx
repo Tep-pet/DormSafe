@@ -20,7 +20,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { Button } from '../../components/common/Button';
 import { Pagination } from '../../components/common/Pagination';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { propertyService } from '../../services/propertyService';
@@ -42,34 +42,36 @@ export function ManageListingsPage() {
   const [page, setPage] = useState(1);
   const itemsPerPage = ITEMS_PER_PAGE;
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const res = await propertyService.getMyProperties(accessToken);
       let list = res.data || [];
       if (filterPropertyId) {
         list = list.filter((p) => p.id === filterPropertyId);
       }
-      setProperties(list);
+      setProperties((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
     } catch (err) {
-      toast.error(err.message || 'Failed to load properties');
+      if (!isSilent) {
+        toast.error(err.message || 'Failed to load properties');
+      }
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, [accessToken, filterPropertyId, toast]);
 
   useEffect(() => {
-    load();
+    load(false);
   }, [load]);
 
   // Auto-refresh when properties or room availabilities change
-  useRealtime(['properties', 'rooms'], load);
+  useRealtimeSync(() => load(true), { enabled: Boolean(accessToken) });
 
   async function handleToggle(roomId, isAvailable) {
     try {
       await propertyService.updateAvailability(roomId, isAvailable, accessToken);
       toast.success(`Room marked as ${isAvailable ? 'available (vacant)' : 'occupied'}`);
-      load();
+      load(true);
     } catch (err) {
       toast.error(err.message || 'Failed to update room availability');
     }
@@ -145,7 +147,7 @@ export function ManageListingsPage() {
         radius="full"
         variant="ghost"
         isLoading={loading}
-        onClick={() => load()}
+        onClick={() => load(false)}
         startContent={!loading && <RefreshCw size={14} />}
       >
         Refresh

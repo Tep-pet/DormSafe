@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, RotateCw, Inbox, Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useRealtime } from '../../hooks/useRealtime';
+import { useRealtimeSync } from '../../hooks/useRealtimeSync';
 import { notificationService } from '../../services/notificationService';
 
 export function NotificationBell() {
@@ -14,33 +14,47 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
 
-  async function load() {
-    if (!accessToken) return;
-    try {
-      setLoading(true);
-      const [countRes, listRes] = await Promise.all([
-        notificationService.unreadCount(accessToken),
-        notificationService.list(accessToken),
-      ]);
-      const rawList = listRes.data || [];
-      const filtered = rawList.filter(
-        (n) => n.metadata?.kind !== 'room_request' && n.title !== 'Room request sent'
-      );
-      setCount(countRes.data?.count || 0);
-      setItems(filtered);
-    } catch (e) {
-      console.error('Failed to load notifications', e);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const load = useCallback(
+    async (isSilent = false) => {
+      if (!accessToken) return;
+      try {
+        if (!isSilent) setLoading(true);
+        const [countRes, listRes] = await Promise.all([
+          notificationService.unreadCount(accessToken),
+          notificationService.list(accessToken),
+        ]);
+        const rawList = listRes.data || [];
+        const filtered = rawList.filter(
+          (n) => n.metadata?.kind !== 'room_request' && n.title !== 'Room request sent'
+        );
+        const newCount = countRes.data?.count || 0;
+        setCount((prev) => (prev === newCount ? prev : newCount));
+        setItems((prev) => {
+          if (
+            prev.length === filtered.length &&
+            prev.every((item, i) => item.id === filtered[i]?.id && item.is_read === filtered[i]?.is_read)
+          ) {
+            return prev;
+          }
+          return filtered;
+        });
+      } catch (e) {
+        if (!isSilent) {
+          console.error('Failed to load notifications', e);
+        }
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [accessToken]
+  );
 
   useEffect(() => {
-    if (isAuthenticated) load();
-  }, [accessToken, isAuthenticated]);
+    if (isAuthenticated) load(false);
+  }, [isAuthenticated, load]);
 
-  // Auto-refresh notification count & list in real time
-  useRealtime('notifications', load, { enabled: isAuthenticated });
+  // Auto-refresh notification count & list in real time silently
+  useRealtimeSync(() => load(true), { enabled: isAuthenticated && Boolean(accessToken) });
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -65,7 +79,7 @@ export function NotificationBell() {
 
   async function handleRead(id) {
     await notificationService.markRead(id, accessToken);
-    load();
+    load(true);
   }
 
   if (!isAuthenticated) return null;
@@ -115,7 +129,7 @@ export function NotificationBell() {
             </div>
             <button
               type="button"
-              onClick={load}
+              onClick={() => load(false)}
               className="text-slate-400 hover:text-slate-600 transition p-1.5 rounded-lg hover:bg-slate-100"
               title="Refresh"
             >
