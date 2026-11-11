@@ -40,6 +40,7 @@ import { Button } from '../../components/common/Button';
 import { Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -104,6 +105,9 @@ export function MyStayPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Auto-refresh stays, reservations, payments, and maintenance
+  useRealtime(['tenants', 'room_reservations', 'payments', 'maintenance_requests'], () => load(false));
 
   const currentStays = stays.filter((s) => s.is_current);
   const upcomingStays = stays.filter((s) => s.is_upcoming);

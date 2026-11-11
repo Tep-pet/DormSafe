@@ -40,6 +40,7 @@ import { Select, Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { DocumentViewer } from '../../components/common/DocumentViewer';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { ROLE_LABELS, ROLES } from '../../constants/roles';
@@ -172,6 +173,12 @@ export function VerifyAccountsPage() {
   useEffect(() => {
     fetchVerifications();
   }, [fetchVerifications]);
+
+  // Auto-refresh when new account verification documents are submitted or updated
+  useRealtime(['account_verifications', 'notifications'], () => {
+    fetchVerifications();
+    fetchAuxiliaryStats();
+  });
 
   // Quick Action: Single Approve
   const handleApprove = async (item) => {

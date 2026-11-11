@@ -20,6 +20,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { paymentService } from '../../services/paymentService';
@@ -64,6 +65,9 @@ export function PaymentLogPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Auto-refresh when payments are logged or updated
+  useRealtime(['payments', 'tenants'], load);
 
   async function handleAdd(e) {
     e.preventDefault();

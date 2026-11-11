@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { authService } from '../services/authService';
+import { realtimeBus } from '../services/realtimeBus';
 
 const AuthContext = createContext(null);
 
@@ -45,6 +46,9 @@ export function AuthProvider({ children }) {
         }
 
         setSession(s);
+        if (s?.access_token) {
+          realtimeBus.setAuthToken(s.access_token);
+        }
         if (s?.user) {
           await loadProfile(s.user.id);
         }
@@ -58,6 +62,9 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'INITIAL_SESSION') return;
       setSession(newSession);
+      if (newSession?.access_token) {
+        realtimeBus.setAuthToken(newSession.access_token);
+      }
       if (newSession?.user) {
         await loadProfile(newSession.user.id);
       } else {

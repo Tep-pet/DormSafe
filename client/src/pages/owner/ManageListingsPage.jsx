@@ -20,6 +20,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { Button } from '../../components/common/Button';
 import { Pagination } from '../../components/common/Pagination';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { propertyService } from '../../services/propertyService';
@@ -60,6 +61,9 @@ export function ManageListingsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Auto-refresh when properties or room availabilities change
+  useRealtime(['properties', 'rooms'], load);
 
   async function handleToggle(roomId, isAvailable) {
     try {

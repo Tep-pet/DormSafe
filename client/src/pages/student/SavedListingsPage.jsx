@@ -30,6 +30,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { WalkingTimeBadge } from '../../components/map/WalkingTimeBadge';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
 import { proximityService } from '../../services/proximityService';
@@ -57,15 +58,17 @@ export function SavedListingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const load = useCallback(
-    async (isManual = false) => {
-      if (isManual) setRefreshing(true);
-      else setLoading(true);
+    async (mode = 'initial') => {
+      if (mode === 'manual' || mode === true) setRefreshing(true);
+      else if (mode === 'initial') setLoading(true);
 
       try {
         const res = await studentService.getFavorites(accessToken);
         setItems(res.data || []);
       } catch (err) {
-        toast.error(err.message || 'Failed to load saved listings');
+        if (mode !== 'silent') {
+          toast.error(err.message || 'Failed to load saved listings');
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -75,8 +78,11 @@ export function SavedListingsPage() {
   );
 
   useEffect(() => {
-    load();
+    load('initial');
   }, [load]);
+
+  // Auto-refresh when listings are saved/unsaved or property/room details change
+  useRealtime(['saved_listings', 'rooms', 'properties'], () => load('silent'));
 
   // Fetch full details (rooms, rules, description, contact) for any selected property if missing
   useEffect(() => {

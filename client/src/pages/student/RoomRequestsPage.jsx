@@ -27,6 +27,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Textarea } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { studentService } from '../../services/studentService';
 import { resolvePropertyContact } from '../../utils/parseContact';
@@ -58,9 +59,9 @@ export function RoomRequestsPage() {
   const [confirmCancelItem, setConfirmCancelItem] = useState(null);
 
   const load = useCallback(
-    async (isManual = false) => {
-      if (isManual) setRefreshing(true);
-      else setLoading(true);
+    async (mode = 'initial') => {
+      if (mode === 'manual' || mode === true) setRefreshing(true);
+      else if (mode === 'initial') setLoading(true);
 
       try {
         const res = await studentService.getInquiries(accessToken);
@@ -79,7 +80,9 @@ export function RoomRequestsPage() {
           )
         );
       } catch (err) {
-        toast.error(err.message || 'Failed to load room inquiries');
+        if (mode !== 'silent') {
+          toast.error(err.message || 'Failed to load room inquiries');
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -89,8 +92,11 @@ export function RoomRequestsPage() {
   );
 
   useEffect(() => {
-    load();
+    load('initial');
   }, [load]);
+
+  // Automatically refresh inquiries when owner updates request status in real time
+  useRealtime(['notifications', 'room_reservations'], () => load('silent'));
 
   const updateDraft = (id, field, value) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));

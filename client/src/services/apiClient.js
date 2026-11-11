@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { realtimeBus } from './realtimeBus';
 
 /**
  * HTTP client for Express API (Logic Layer).
@@ -104,6 +105,43 @@ async function executeFetch(url, { method = 'GET', body, token, formData } = {})
   return { response, data };
 }
 
+function notifyMutatedTables(path, method) {
+  if (!method || method === 'GET') return;
+  const p = path.toLowerCase();
+
+  if (p.includes('/inquiries')) {
+    realtimeBus.emit('notifications');
+    realtimeBus.emit('room_reservations');
+  } else if (p.includes('/favorites')) {
+    realtimeBus.emit('saved_listings');
+  } else if (p.includes('/stays')) {
+    realtimeBus.emit('tenants');
+    realtimeBus.emit('room_reservations');
+  } else if (p.includes('/reservations')) {
+    realtimeBus.emit('room_reservations');
+    realtimeBus.emit('rooms');
+  } else if (p.includes('/tenants')) {
+    realtimeBus.emit('tenants');
+    realtimeBus.emit('rooms');
+  } else if (p.includes('/payments') || p.includes('/payment-reminders')) {
+    realtimeBus.emit('payments');
+  } else if (p.includes('/verifications') || p.includes('/verification')) {
+    realtimeBus.emit('account_verifications');
+    realtimeBus.emit('notifications');
+  } else if (p.includes('/rooms')) {
+    realtimeBus.emit('rooms');
+  } else if (p.includes('/properties') || p.includes('/listings')) {
+    realtimeBus.emit('properties');
+    realtimeBus.emit('rooms');
+  } else if (p.includes('/notifications')) {
+    realtimeBus.emit('notifications');
+  } else if (p.includes('/reviews')) {
+    realtimeBus.emit('property_reviews');
+  } else if (p.includes('/maintenance')) {
+    realtimeBus.emit('maintenance_requests');
+  }
+}
+
 async function request(path, { method = 'GET', body, token, formData } = {}) {
   let activeToken = await resolveToken(token);
   const candidates = getUrlCandidates(path);
@@ -142,6 +180,8 @@ async function request(path, { method = 'GET', body, token, formData } = {}) {
       if (!response.ok) {
         throw new Error(data.message || `Request failed (${response.status})`);
       }
+
+      notifyMutatedTables(path, method);
 
       return data;
     } catch (err) {

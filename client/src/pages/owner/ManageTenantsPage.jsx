@@ -35,6 +35,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Badge } from '../../components/common/Badge';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { useOwnerProperty } from '../../context/OwnerPropertyContext';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
@@ -74,21 +75,26 @@ export function ManageTenantsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (mode = 'initial') => {
+    if (mode === 'initial') setLoading(true);
     try {
       const res = await tenantService.list(accessToken, filterPropertyId);
       setTenants(res.data || []);
     } catch (err) {
-      toast.error(err.message || 'Failed to load tenant roster');
+      if (mode !== 'silent') {
+        toast.error(err.message || 'Failed to load tenant roster');
+      }
     } finally {
       setLoading(false);
     }
   }, [accessToken, filterPropertyId, toast]);
 
   useEffect(() => {
-    load();
+    load('initial');
   }, [load]);
+
+  // Auto-refresh when tenants or room occupancies change
+  useRealtime(['tenants', 'rooms'], () => load('silent'));
 
   useEffect(() => {
     if (filterPropertyId) {
@@ -219,7 +225,7 @@ export function ManageTenantsPage() {
         onClick={() => load()}
         startContent={!loading && <RefreshCw size={14} />}
       >
-        Refresh Roster
+        Refresh
       </Button>
     </div>
   );

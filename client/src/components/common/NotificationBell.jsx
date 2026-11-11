@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, RotateCw, Inbox, Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { notificationService } from '../../services/notificationService';
 
 export function NotificationBell() {
@@ -37,6 +38,9 @@ export function NotificationBell() {
   useEffect(() => {
     if (isAuthenticated) load();
   }, [accessToken, isAuthenticated]);
+
+  // Auto-refresh notification count & list in real time
+  useRealtime('notifications', load, { enabled: isAuthenticated });
 
   useEffect(() => {
     function handleClickOutside(event) {

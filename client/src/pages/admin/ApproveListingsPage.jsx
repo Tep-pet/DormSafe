@@ -41,6 +41,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { Select } from '../../components/common/Input';
 import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { useRealtime } from '../../hooks/useRealtime';
 import { useToast } from '../../hooks/useToast';
 import { adminService } from '../../services/adminService';
 import { formatPrice } from '../../utils/formatPrice';
@@ -158,6 +159,12 @@ export function ApproveListingsPage() {
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  // Auto-refresh when new properties or rooms are submitted or updated
+  useRealtime(['properties', 'rooms'], () => {
+    fetchListings();
+    fetchAuxiliaryData();
+  });
 
   // Quick Action: Single Approve
   const handleApprove = async (id, name) => {

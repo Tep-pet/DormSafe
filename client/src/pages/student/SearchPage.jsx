@@ -16,6 +16,7 @@ import { PageSkeleton } from '../../components/common/PageSkeleton';
 import { Button } from '../../components/common/Button';
 import { Pagination } from '../../components/common/Pagination';
 import { useMapSearch } from '../../hooks/useMapSearch';
+import { useRealtime } from '../../hooks/useRealtime';
 import { DEFAULT_GATE, CAMPUS_GATES } from '../../constants/campusGates';
 import { ROUTES } from '../../constants/routes';
 import { ITEMS_PER_PAGE } from '../../constants/pagination';
@@ -42,6 +43,9 @@ export function SearchPage() {
   }, [searchParams]);
 
   const { properties, loading, error, refetch } = useMapSearch(filters);
+
+  // Auto-refresh search results in real time when dorms or room availability changes
+  useRealtime(['rooms', 'properties'], refetch);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
