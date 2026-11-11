@@ -183,7 +183,7 @@ export function SearchPage() {
                   <span>2 km Campus Radius ({activeGateLabel})</span>
                 </div>
                 <span className="text-[11px] font-medium text-slate-400">
-                  {filteredProperties.length} dorms mapped
+                  {filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'} mapped
                 </span>
               </div>
               <div className="h-[320px] sm:h-[400px] lg:h-[540px]">
@@ -264,7 +264,7 @@ export function SearchPage() {
                   <Building2 size={22} strokeWidth={1.5} />
                 </div>
                 <h3 className="text-sm font-semibold text-slate-800">
-                  {filters.q ? 'No matching dorms found' : 'No approved listings found'}
+                  {filters.q ? 'No matching properties found' : 'No approved listings found'}
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                   {filters.q
